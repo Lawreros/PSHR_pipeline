@@ -30,7 +30,19 @@ function PSHR_GUI
     mECG = uimenu(m,'Text', '&Load ECG File');
     mECG.MenuSelectedFcn = @(src,event)LoadSelected('ecg', eax);
     
+    
     %Script for analysis list
+    pipe.HR={'START'};
+    pipe.ECG={'START'};
+    phlist = uilistbox(ofig,'Position', [50 50 125 70], ...
+        'Items', {'Bandpass','Ectopic','Other'}, ... 
+        'ValueChangedFcn', @(src,event)updatepipelist(src,event,'hr'));
+        
+    txt = uitextarea(ofig, 'Position', [125 90 100 82],'Value',pipe.HR);
+    
+    pelist = uilistbox(ofig,'Position', [100 100 100 100], ...
+        'Items', {'ECG', 'Preprocessing','Placeholders'}, ...
+        'ValueChangedFcn',@(src,event)updatepipelist(src,event,'ecg'));
     
     
     %Buttons for Preprocessing HR
@@ -56,7 +68,18 @@ function PSHR_GUI
     %Analysis list:
     disp('done');
     
-    
+    function updatepipelist(src,event,type)
+        switch type
+            case 'hr'
+                %append to processing list
+                pipe.HR{end+1}=src.Value;
+                %update display of what's beign done in the pipeline
+                txt.Value{end+1}=src.Value;
+            case 'ecg'
+                pipe.ECG{end+1}=src.Value;
+                txt.Value{end+1}=src.Value;
+        end
+    end
     
     %Load Selected Files by User
     function LoadSelected(type, axis)
