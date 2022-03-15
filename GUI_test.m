@@ -9,41 +9,58 @@ function PSHR_GUI
     Data.ECG.Raw{1} = {};
     
     %figure for displaying current HR snapshot
-    hfig = figure('Position', [0 100 1000 600]);
-    hax = axes(hfig);
-    set(hfig, 'Name', 'HR Analysis Output Window');
+%     hfig = figure('Position', [0 100 1000 600]);
+%     hax = axes(hfig);
+%     set(hfig, 'Name', 'HR Analysis Output Window');
 
-    %figure for displaying current ECG snapshot
-    efig = figure('Position', [0 500 1000 600]);
-    eax = axes(efig);
-    set(efig, 'Name', 'ECG Analysis Output Window');
     
     %figure for displaying options of analysis
     ofig = uifigure('Name','PSHR Analysis Pipeline','Position', [0 100 1000 600]);
     
+    %Display Loaded files
+    uilabel(ofig, 'Position', [20 570 200 20], 'Text', 'Loaded HR Files');
+    hr_load_list = uilistbox(ofig, 'Position', [20 460 300 100],...
+        'Items', {'None'}, 'Multiselect','on');%,...
+        %'ValueChangedFcn', @(src,event));
     
-    %Buttons to load data:
+    uilabel(ofig, 'Position', [420 570 200 20], 'Text', 'Loaded ECG Files');
+    ecg_load_list = uilistbox(ofig, 'Position', [340 460 300 100],...
+        'Items', {'None'}, 'Multiselect','on');
+    
+    
+    uilabel(ofig, 'Position', [720 570 200 20], 'Text', 'Loaded Affect Files');
+    aff_load_list = uilistbox(ofig, 'Position', [660 460 300 100],...
+        'Items', {'None'}, 'Multiselect', 'on');
+    
+    
+    
+    %% Menu Buttons:
+    
+    %Load Data
     m = uimenu(ofig,'Text','&Import');
-    
     mHR = uimenu(m,'Text', '&Load HR File');
-    mHR.MenuSelectedFcn = @(src,event)LoadSelected('hr', hax);
+    mHR.MenuSelectedFcn = @(src,event)LoadSelected('hr');
     mECG = uimenu(m,'Text', '&Load ECG File');
-    mECG.MenuSelectedFcn = @(src,event)LoadSelected('ecg', eax);
+    mECG.MenuSelectedFcn = @(src,event)LoadSelected('ecg');
     
     
-    %Script for analysis list
+    %% Script for analysis list
     pipe.HR={'START'};
     pipe.ECG={'START'};
-    phlist = uilistbox(ofig,'Position', [50 50 125 70], ...
+    uilabel(ofig, 'Position', [20 370 125 15],'Text', 'RR Preprocessing');
+    phlist = uilistbox(ofig,'Position', [20 300 125 70], ...
         'Items', {'Bandpass','Ectopic','Other'}, ... 
-        'ValueChangedFcn', @(src,event)updatepipelist(src,event,'hr'));
+        'ValueChangedFcn', @(src,event)addpipelist(src,event,'hr'));
         
-    txt = uitextarea(ofig, 'Position', [125 90 100 82],'Value',pipe.HR);
+    phtxt = uitextarea(ofig, 'Position', [220 90 100 282],'Value',pipe.HR);
     
-    pelist = uilistbox(ofig,'Position', [100 100 100 100], ...
+    
+    uilabel(ofig, 'Position', [320 270 125 15],'Text', 'ECG Preprocessing');
+    pelist = uilistbox(ofig,'Position', [320 200 125 70], ...
         'Items', {'ECG', 'Preprocessing','Placeholders'}, ...
-        'ValueChangedFcn',@(src,event)updatepipelist(src,event,'ecg'));
+        'ValueChangedFcn',@(src,event)addpipelist(src,event,'ecg'));
     
+    petxt = uitextarea(ofig, 'Position', [520 90 100 282],'Value',pipe.ECG);
     
     %Buttons for Preprocessing HR
     
@@ -68,21 +85,29 @@ function PSHR_GUI
     %Analysis list:
     disp('done');
     
-    function updatepipelist(src,event,type)
+    function addpipelist(src,event,type)
         switch type
             case 'hr'
                 %append to processing list
                 pipe.HR{end+1}=src.Value;
-                %update display of what's beign done in the pipeline
-                txt.Value{end+1}=src.Value;
+                phtxt.Value{end+1}=src.Value;
             case 'ecg'
                 pipe.ECG{end+1}=src.Value;
-                txt.Value{end+1}=src.Value;
+                petxt.Value{end+1}=src.Value;
+        end
+    end
+
+    function removepipelist(src,event,type)
+        switch type
+            case 'hr'
+                
+            case 'ecg'
+                
         end
     end
     
     %Load Selected Files by User
-    function LoadSelected(type, axis)
+    function LoadSelected(type)
         switch type
             case 'hr'
                 [file, path] = uigetfile('*.txt','MultiSelect','on');
@@ -94,15 +119,14 @@ function PSHR_GUI
                         dump = data_load(strcat(path,file{i}));
                         Data.HR.Raw{i} = vectorize(dump);
                         clear dump;
-                        plot(axis, Data.HR.Raw{i}(:,3));
-                        hold on;
                     end
-                    hold off;
+                    hr_load_list.Items=file;
                 else
                     dump = data_load(strcat(path,file));
                     Data.HR.Raw = vectorize(dump);
-                    plot(axis, Data.HR.Raw(:,3));
                     clear dump;
+                    %Display the files that are loaded
+                    hr_load_list.Items={file};
                 end
                 
             case 'ecg'
@@ -114,16 +138,14 @@ function PSHR_GUI
                     for i = 1:length(file)
                         dump = data_load(strcat(path,file{i}));
                         Data.ECG.Raw{i} = vectorize(dump);
-                        clear dump;
-                        plot(axis, Data.ECG.Raw{i}(:,3));
-                        hold on;
+                        clear dump;                        
                     end
-                    hold off;
+                    ecg_load_list.Items=file;
                 else
                     dump = data_load(strcat(path,file));
                     Data.ECG.Raw = vectorize(dump);
-                    plot(axis, Data.ECG.Raw(:,3));
                     clear dump;
+                    ecg_load_list.Items={file};
                 end
                 
         end
