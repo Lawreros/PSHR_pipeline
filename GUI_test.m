@@ -8,11 +8,16 @@ function PSHR_GUI
     Data.HR.Raw{1} = {};
     Data.ECG.Raw{1} = {};
     
-    %figure for displaying current snapshot
-    dfig = figure('Position', [0 100 1000 600]);
-    dax = axes(dfig);
-    set(dfig, 'Name', 'Analysis Output Window');
+    %figure for displaying current HR snapshot
+    hfig = figure('Position', [0 100 1000 600]);
+    hax = axes(hfig);
+    set(hfig, 'Name', 'HR Analysis Output Window');
 
+    %figure for displaying current ECG snapshot
+    efig = figure('Position', [0 500 1000 600]);
+    eax = axes(efig);
+    set(efig, 'Name', 'ECG Analysis Output Window');
+    
     %figure for displaying options of analysis
     ofig = uifigure('Name','PSHR Analysis Pipeline','Position', [0 100 1000 600]);
     
@@ -21,19 +26,40 @@ function PSHR_GUI
     m = uimenu(ofig,'Text','&Import');
     
     mHR = uimenu(m,'Text', '&Load HR File');
-    mHR.MenuSelectedFcn = @(src,event)LoadSelected('hr');
+    mHR.MenuSelectedFcn = @(src,event)LoadSelected('hr', hax);
     mECG = uimenu(m,'Text', '&Load ECG File');
-    mECG.MenuSelectedFcn = @(src,event)LoadSelected('ecg');
+    mECG.MenuSelectedFcn = @(src,event)LoadSelected('ecg', eax);
+    
+    %Script for analysis list
+    
+    
+    %Buttons for Preprocessing HR
+    
+    %Bandpass Thresholding
+    %Ectopic Heartbeats
+        %Malik Method
+        %Kamath Method
+        %Karlsson Method
+        %Acar Method
+    
+    %Interpolation Methods:
+        %Linear Interpolation
 
+    
+    %Tab for each sample, with basic analysis metrics
+        %SDSD
+        %SDNN
+        %RMSSD
+        %pNNx
+    
     
     %Analysis list:
     disp('done');
     
     
     
-    
-    
-    function LoadSelected(type)
+    %Load Selected Files by User
+    function LoadSelected(type, axis)
         switch type
             case 'hr'
                 [file, path] = uigetfile('*.txt','MultiSelect','on');
@@ -45,10 +71,14 @@ function PSHR_GUI
                         dump = data_load(strcat(path,file{i}));
                         Data.HR.Raw{i} = vectorize(dump);
                         clear dump;
+                        plot(axis, Data.HR.Raw{i}(:,3));
+                        hold on;
                     end
+                    hold off;
                 else
                     dump = data_load(strcat(path,file));
                     Data.HR.Raw = vectorize(dump);
+                    plot(axis, Data.HR.Raw(:,3));
                     clear dump;
                 end
                 
@@ -62,10 +92,14 @@ function PSHR_GUI
                         dump = data_load(strcat(path,file{i}));
                         Data.ECG.Raw{i} = vectorize(dump);
                         clear dump;
+                        plot(axis, Data.ECG.Raw{i}(:,3));
+                        hold on;
                     end
+                    hold off;
                 else
                     dump = data_load(strcat(path,file));
                     Data.ECG.Raw = vectorize(dump);
+                    plot(axis, Data.ECG.Raw(:,3));
                     clear dump;
                 end
                 
