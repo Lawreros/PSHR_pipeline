@@ -4,6 +4,12 @@ https://github.com/Lawreros/PSHR_v2
 
 The purpose of this pipeline is to provide a GUI for analysis and visualization of RR-interval and ECG data. It also serves to output analysis data into formats that allow for easy analysis by other software.
 
+## Repository Contents:
+Relevant files for casual users:
+- `sample` : folder containing sample HR and ECG data
+- `main.m` : the MATLAB script which calls the main GUI. This is the function that you want to run in you MATLAB editor.
+
+
 ## Tutorial (subject to change as pipeline is developed)
 1) Download the repository and open the `main.m` file in your MATLAB editor
 2) Run the program, a GUI should appear
