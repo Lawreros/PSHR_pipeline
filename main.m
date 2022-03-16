@@ -93,13 +93,6 @@ function PSHR_GUI
     
     %Interpolation Methods:
         %Linear Interpolation
-
-    
-    %Tab for each sample, with basic analysis metrics
-        %SDSD
-        %SDNN
-        %RMSSD
-        %pNNx
     
     
     %Analysis list:
