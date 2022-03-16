@@ -49,28 +49,43 @@ function PSHR_GUI
     %Load Data
     m = uimenu(ofig,'Text','&Import');
     mHR = uimenu(m,'Text', '&Load HR File');
-    mHR.MenuSelectedFcn = @(src,event)LoadSelected('hr');
+    mHR.MenuSelectedFcn = @(src,event)LoadSelected('HR');
     mECG = uimenu(m,'Text', '&Load ECG File');
-    mECG.MenuSelectedFcn = @(src,event)LoadSelected('ecg');
+    mECG.MenuSelectedFcn = @(src,event)LoadSelected('ECG');
     
     
     %% Script for analysis list
     pipe.HR={'START'};
     pipe.ECG={'START'};
-    uilabel(ofig, 'Position', [20 370 125 15],'Text', 'RR Preprocessing');
-    phlist = uilistbox(ofig,'Position', [20 300 125 70], ...
+    uilabel(ofig, 'Position', [20 410 125 15],'Text', 'RR Preprocessing');
+    phlist = uilistbox(ofig,'Position', [20 340 125 70], ...
         'Items', {'Bandpass','Ectopic','Other'}, ... 
-        'ValueChangedFcn', @(src,event)addpipelist(src,event,'hr'));
-        
-    phtxt = uitextarea(ofig, 'Position', [220 90 100 282],'Value',pipe.HR);
+        'ValueChangedFcn', @(src,event)addpipelist(src,event,'HR'));
     
     
-    uilabel(ofig, 'Position', [320 270 125 15],'Text', 'ECG Preprocessing');
-    pelist = uilistbox(ofig,'Position', [320 200 125 70], ...
+    uilabel(ofig, 'Position', [20 260 125 15], 'Text', 'RR Analysis');
+    ahlist = uilistbox(ofig, 'Position', [20 190 125 70], ...
+        'Items', {'Place','Holder', 'Stuff'}, ...
+        'ValueChangedFcn', @(src,event)addpipelist(src,event,'HR'));
+    
+    uilabel(ofig, 'Position', [170 410 125 15],'Text', 'RR Pipeline');
+    phtxt = uitextarea(ofig, 'Position', [170 130 140 280],'Value',pipe.HR);
+    
+    
+    
+    uilabel(ofig, 'Position', [340 410 125 15],'Text', 'ECG Preprocessing');
+    pelist = uilistbox(ofig,'Position', [340 340 125 70], ...
         'Items', {'ECG', 'Preprocessing','Placeholders'}, ...
-        'ValueChangedFcn',@(src,event)addpipelist(src,event,'ecg'));
+        'ValueChangedFcn',@(src,event)addpipelist(src,event,'ECG'));
     
-    petxt = uitextarea(ofig, 'Position', [520 90 100 282],'Value',pipe.ECG);
+    uilabel(ofig, 'Position', [340 260 125 15], 'Text', 'ECG Analysis');
+    aelist = uilistbox(ofig,'Position', [340 190 125 70], ...
+        'Items', {'Place','Holder','Stuff'}, ...
+        'ValueChangedFcn', @(src,event)addpipelist(src,event,'ECG'));
+    
+    
+    uilabel(ofig, 'Position', [490 410 125 15], 'Text', 'ECG Pipeline');
+    petxt = uitextarea(ofig, 'Position', [490 130 140 280],'Value',pipe.ECG);
     
     %Buttons for Preprocessing HR
     
@@ -97,22 +112,13 @@ function PSHR_GUI
     
     function addpipelist(src,event,type)
         switch type
-            case 'hr'
+            case 'HR'
                 %append to processing list
                 pipe.HR{end+1}=src.Value;
                 phtxt.Value{end+1}=src.Value;
-            case 'ecg'
+            case 'ECG'
                 pipe.ECG{end+1}=src.Value;
                 petxt.Value{end+1}=src.Value;
-        end
-    end
-
-    function removepipelist(src,event,type)
-        switch type
-            case 'hr'
-                
-            case 'ecg'
-                
         end
     end
     
@@ -125,7 +131,7 @@ function PSHR_GUI
         Data.ECG.Raw{1} = {};
         
         switch type
-            case 'hr'
+            case 'HR'
                 [file, path] = uigetfile('*.txt','MultiSelect','on');
                 Data.HR.path = path;
                 
@@ -146,7 +152,7 @@ function PSHR_GUI
                     hr_load_list.Items={file};
                 end
                 
-            case 'ecg'
+            case 'ECG'
                 [file,path] = uigetfile('*.txt','MultiSelect','on');
                 Data.ECG.path = path;
                 
