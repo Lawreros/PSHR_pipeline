@@ -7,9 +7,9 @@ clear all;
 
 %% Hardcoded Parameters (To be added to GUI)
 
-hr_path = "./sample/HR_03-04-2022.txt";
+hr_path = "./sample/HR_03-09-2022.txt";
 
-ecg_path = "./sample/ECG_03-04-2022.txt";
+ecg_path = "./sample/ECG_03-09-2022.txt";
 
 
 %% Hardcoded Parameters (Immutable)

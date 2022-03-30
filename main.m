@@ -38,7 +38,6 @@ function PSHR_GUI
          'ButtonPushedFcn', @(src,event)line_plot(ecg_load_list.Value,'ECG','Raw'));
     
     
-    
     %% Menu Buttons:
     
     %Load Data
