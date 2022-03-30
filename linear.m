@@ -3,10 +3,15 @@
 % easier, as checking analysis values in a linear script is much easier
 % that the constantly updating/changing GUI.
 
+clear all;
+close all;
+
 %% Test files:
 
-hr_path = "./sample/HR_03-09-2022.txt";
-ecg_path = "./sample/ECG_03-09-2022.txt";
+hr_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
+hr_file = "HR_03-09-2022.txt";
+ecg_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
+ecg_file = "ECG_03-09-2022.txt";
 
 %% Analysis flags
 % As the GUI will most likely chain together preprocessing modules through
@@ -14,20 +19,52 @@ ecg_path = "./sample/ECG_03-09-2022.txt";
 % True/False statements.
 
 
+%% Pipeline
+Data.HR.Raw{1} = {};
+Data.ECG.Raw{1} = {};
+
+Data = LoadSelected(Data, hr_path, hr_file, "HR");
+Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+
+%% RR-Interval Analysis
+
+%Bandpass Thresholding
+%Ectopic Heartbeats
+    %Malik Method
+    
+    
+    
+    %Kamath Method
+    
+    
+    %Karlsson Method
+    
+    
+    
+    %Acar Method
+
+
+    
+    
+%% ECG Analysis
+
+
+
+disp('done');
 
 
 %% Preprocessing
 
-function LoadSelected(type)
+function [Data] = LoadSelected(Data, path, file, type)
         
-        %Clear previously loaded information
-        clear Data;
-        Data.HR.Raw{1} = {};
-        Data.ECG.Raw{1} = {};
+        %Clear previously loaded information (add clear back in for gui)
+        %clear Data;
+        %Data.HR.Raw{1} = {};
+        %Data.ECG.Raw{1} = {};
         
         switch type
             case 'HR'
-                [file, path] = uigetfile('*.txt','MultiSelect','on');
+                %[file, path] = uigetfile('*.txt','MultiSelect','on');
                 Data.HR.path = path;
                 
                 if iscell(file)
@@ -37,18 +74,18 @@ function LoadSelected(type)
                         clear dump;
                     end
                     Data.HR.files = file;
-                    hr_load_list.Items=file;
+                    %hr_load_list.Items=file;
                 else
                     dump = data_load(strcat(path,file));
                     Data.HR.Raw = vectorize(dump);
                     clear dump;
                     %Display the files that are loaded
                     Data.HR.files = {file};
-                    hr_load_list.Items={file};
+                    %hr_load_list.Items={file};
                 end
                 
             case 'ECG'
-                [file,path] = uigetfile('*.txt','MultiSelect','on');
+                %[file,path] = uigetfile('*.txt','MultiSelect','on');
                 Data.ECG.path = path;
                 
                 if iscell(file)
@@ -58,13 +95,13 @@ function LoadSelected(type)
                         clear dump;                        
                     end
                     Data.ECG.files = file;
-                    ecg_load_list.Items=file;
+                    %ecg_load_list.Items=file;
                 else
                     dump = data_load(strcat(path,file));
                     Data.ECG.Raw = vectorize(dump);
                     clear dump;
                     Data.ECG.files = {file};
-                    ecg_load_list.Items={file};
+                    %ecg_load_list.Items={file};
                 end
                 
         end
