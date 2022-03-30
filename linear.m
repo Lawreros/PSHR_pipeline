@@ -19,6 +19,16 @@ ecg_file = "ECG_03-09-2022.txt";
 % True/False statements.
 
 
+%RR-interval
+Bandpass = true;
+u_band = 1200;
+l_band = 400;
+
+
+%ECG-interval
+
+
+
 %% Pipeline
 Data.HR.Raw{1} = {};
 Data.ECG.Raw{1} = {};
@@ -26,9 +36,21 @@ Data.ECG.Raw{1} = {};
 Data = LoadSelected(Data, hr_path, hr_file, "HR");
 Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 
-%% RR-Interval Analysis
+%% RR-Interval Preprocessing
 
 %Bandpass Thresholding
+if Bandpass
+    r = length(Data.HR.Raw);
+    for i = 1:r
+        if (Data.HR.Raw(i,3)>= u_band) || (Data.HR.Raw(i,3) <= l_band)
+            Data.HR.Raw(i,3) = NaN;
+        end
+    end 
+end
+
+
+
+
 %Ectopic Heartbeats
     %Malik Method
     
@@ -44,8 +66,15 @@ Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
     %Acar Method
 
 
+%% RR-Interval Analysis
     
     
+
+
+%% ECG-Preprocessing
+
+
+
 %% ECG Analysis
 
 
@@ -53,7 +82,7 @@ Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 disp('done');
 
 
-%% Preprocessing
+%% RR-Interval Preprocessing Functions
 
 function [Data] = LoadSelected(Data, path, file, type)
         
