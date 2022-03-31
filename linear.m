@@ -45,8 +45,8 @@ Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 if Bandpass
     [r, c] = size(Data.HR.Raw);
     
-    %Create Preprocessed matrix of zeros
-    Data.HR.PP = zeros(r,c);
+    %Create Preprocessed matrix of NaNs
+    Data.HR.PP = nan(r,c);
     
     for i = 1:r
         if (Data.HR.Raw(i,3)>= u_band) || (Data.HR.Raw(i,3) <= l_band)
@@ -64,10 +64,10 @@ end
     %Malik Method
 if Malik
     %input = Data
-    [r,c] = length(Data.HR.Raw);
+    [r,c] = size(Data.HR.Raw);
     
-    %Create Preprocessed matrix of zeros
-    Data.HR.PP = zeros(r,c);
+    %Create Preprocessed matrix of NaNs
+    Data.HR.PP = nan(r,c);
     
     for i = 1:(r-1)
         if abs(Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3)) > (0.2*Data.HR.Raw(i,3))
@@ -82,9 +82,26 @@ end
     %Kamath Method
 if Kamath
     %input = Data
+    [r,c] = size(Data.HR.Raw);
     
+    %Create Preprocessed matrix of NaNs
+    Data.HR.PP = nan(r,c);
     
-    
+    for i = 1:(r-1)
+        a = 0.325 * Data.HR.Raw(i,3);
+        b = 0.245 * Data.HR.Raw(i,3);
+        
+        c = Data.HR.Raw(i+1,3) - Data.HR.Raw(i,3);
+        d = Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3);
+        
+        if (0 <= c) && (c <= a)
+            Data.HR.PP(i,3) = NaN;
+        elseif (0 <= d) && (d <= b)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+    end
 end
     
     %Karlsson Method
