@@ -28,6 +28,10 @@ Malik = true;
 
 Karlsson = false;
 
+Acar = false;
+acar_range = 9;
+
+
 %ECG-interval
 
 
@@ -105,11 +109,48 @@ if Kamath
 end
     
     %Karlsson Method
+if Karlsson
+    %input = Data
+    [r,c] = size(Data.HR.Raw);
     
+    %Create Preprocessed matrix of NaNs
+    Data.HR.PP = nan(r,c);
+    
+    for i = 2:(r-1)
+        a = (Data.HR.Raw(i-1,3)+Data.HR.Raw(i+1,3))/2;
+        
+        if abs(a-Data.HR.Raw(i,3)) > (0.2*a)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+        
+    end
+    
+end
     
     
     %Acar Method
+if Acar
+    %input = Data, acar_range
+    [r,c] = size(Data.HR.Raw);
+    
+    Data.HR.PP = nan(r,c);
+    
+    for i = (acar_range+1):r
+        a = sum(Data.HR.Raw(i-acar_range:i-1,3));
+        
+        if abs(a-Data.HR.Raw(i,3))> (0.2*a)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+    end
+end
+    
 
+% Interpolation
+    
 
 %% RR-Interval Analysis
     
