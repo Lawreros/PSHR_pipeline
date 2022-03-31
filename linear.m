@@ -20,10 +20,13 @@ ecg_file = "ECG_03-09-2022.txt";
 
 
 %RR-interval
-Bandpass = true;
+Bandpass = false;
 u_band = 1200;
 l_band = 400;
 
+Malik = true;
+
+Karlsson = false;
 
 %ECG-interval
 
@@ -40,10 +43,16 @@ Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 
 %Bandpass Thresholding
 if Bandpass
-    r = length(Data.HR.Raw);
+    [r, c] = size(Data.HR.Raw);
+    
+    %Create Preprocessed matrix of zeros
+    Data.HR.PP = zeros(r,c);
+    
     for i = 1:r
         if (Data.HR.Raw(i,3)>= u_band) || (Data.HR.Raw(i,3) <= l_band)
-            Data.HR.Raw(i,3) = NaN;
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
         end
     end 
 end
@@ -53,11 +62,30 @@ end
 
 %Ectopic Heartbeats
     %Malik Method
+if Malik
+    %input = Data
+    [r,c] = length(Data.HR.Raw);
     
+    %Create Preprocessed matrix of zeros
+    Data.HR.PP = zeros(r,c);
+    
+    for i = 1:(r-1)
+        if abs(Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3)) > (0.2*Data.HR.Raw(i,3))
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+    end
+end
     
     
     %Kamath Method
+if Kamath
+    %input = Data
     
+    
+    
+end
     
     %Karlsson Method
     
