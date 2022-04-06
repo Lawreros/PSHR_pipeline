@@ -8,10 +8,10 @@ close all;
 
 %% Test files:
 
-hr_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-hr_file = "HR_03-09-2022.txt";
-ecg_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-ecg_file = "ECG_03-09-2022.txt";
+hr_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
+hr_file = 'HR_03-18-2022_fixed.txt';%"HR_03-09-2022.txt";
+ecg_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
+ecg_file = 'ECG_03-18-2022.txt';%"ECG_03-09-2022.txt";
 
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
 aff_file = "03-18-code.csv";
@@ -43,9 +43,11 @@ acar_range = 9;
 %% Pipeline
 Data.HR.Raw{1} = {};
 Data.ECG.Raw{1} = {};
+Data.Affect.Raw{1} = {};
 
 Data = LoadSelected(Data, hr_path, hr_file, "HR");
 Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
 
@@ -173,6 +175,24 @@ disp('done');
 
 
 %% Affect Loading
+
+function [Data] = Load_Affect(Data, path, file)
+% Load in affect file and add it to the structure
+Data.Affect.path = path;
+
+if iscell(file)
+    for i = 1:length(file)
+        Data.Affect.Raw{i} = readtable(strcat(path,file{i}));
+    end
+    Data.Affect.files = {file};
+else
+    Data.Affect.Raw = readtable(strcat(path,file));
+    Data.Affect.files = {file};
+end
+
+end
+
+
 
 function [Aff_raw] = NO_aff_load_raw(path, file)
 
@@ -545,10 +565,17 @@ function [raw_array] = data_load(fpath)
     i = 1;
     while line ~= -1
         nline = textscan(line, format, 'Delimiter', '\t');
-        ntime = ((((nline{1}*60)+nline{2})*60)+nline{3})*1000; %convert time into milliseconds
-        raw_array(i,:) = [ntime, nline(1,4:end)];
-        line = fgetl(fid);
-        i=i+1;
+        
+        if isempty(nline{5}) %Add check for ERROR entry/issue and add skip entry
+            disp(strcat("ERROR found in row", i));
+            disp("Skipping data packet");
+            line = fgetl(fid);
+        else
+            ntime = ((((nline{1}*60)+nline{2})*60)+nline{3})*1000; %convert time into milliseconds
+            raw_array(i,:) = [ntime, nline(1,4:end)];
+            line = fgetl(fid);
+            i=i+1;
+        end
     end
     disp(strcat(fpath, ': LOADED'));
     raw_array = cell2mat(raw_array);
