@@ -9,13 +9,14 @@ close all;
 %% Test files:
 
 hr_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-hr_file = 'HR_03-18-2022_fixed.txt';%"HR_03-09-2022.txt";
+hr_file = 'HR_03-18-2022.txt';%"HR_03-09-2022.txt";
 ecg_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
 ecg_file = 'ECG_03-18-2022.txt';%"ECG_03-09-2022.txt";
 
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
 aff_file = "03-18-code.csv";
-
+%realtime = "11:19:15"
+%videotime = 728
 
 %% Analysis flags
 % As the GUI will most likely chain together preprocessing modules through
@@ -45,8 +46,8 @@ Data.HR.Raw{1} = {};
 Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
-Data = LoadSelected(Data, hr_path, hr_file, "HR");
-Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+%Data = LoadSelected(Data, hr_path, hr_file, "HR");
+%Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
@@ -176,19 +177,59 @@ disp('done');
 
 %% Affect Loading
 
-function [Data] = Load_Affect(Data, path, file)
+function [Data] = LoadAffect(Data, path, file)
 % Load in affect file and add it to the structure
 Data.Affect.path = path;
 
-if iscell(file)
-    for i = 1:length(file)
-        Data.Affect.Raw{i} = readtable(strcat(path,file{i}));
+    if iscell(file)
+        for i = 1:length(file)
+            Data.Affect.Raw{i} = readtable(strcat(path,file{i}));
+        end
+        Data.Affect.files = {file};
+    else
+        Data.Affect.Raw = readtable(strcat(path,file));
+        Data.Affect.files = {file};
     end
-    Data.Affect.files = {file};
-else
-    Data.Affect.Raw = readtable(strcat(path,file));
-    Data.Affect.files = {file};
-end
+
+    
+    %Get list of all unique affects used in the coding (SINGLE)
+    aff_list = unique(Data.Affect.Raw.Affect1);
+    if isnan(unique(Data.Affect.Raw.Affect2))
+        disp('No entries in column Affect2');
+    else
+        aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)]; 
+    end
+    
+    if isnan(unique(Data.Affect.Raw.Affect3))
+        disp('No entries in column Affect3');
+    else
+        aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)]; 
+    end
+    
+    aff_list = unique(aff_list); %cell array of all affects used
+    
+    
+    %Generate Start and End times for the Affects
+    Data.Affect.Times = {};
+    for i = 1:length(aff_list)
+        starts = [];
+        ends = [];
+        
+        buffer = [true, transpose(diff(strcmp(Data.Affect.Raw.Affect1, aff_list{i}))~=0)];
+        for j = 1:2:length(buffer)
+            starts = [starts, buffer(j)];
+            ends = [ends, buffer(j+1)];
+        end
+        Data.Affect.Times{i,1} = aff_list{i};
+        Data.Affect.Times{i,2} = starts;
+        Data.Affect.Times{i,3} = ends;
+    end
+    
+    
+    
+    %Find and read alignment time
+    disp("done");
+
 
 end
 
@@ -567,7 +608,7 @@ function [raw_array] = data_load(fpath)
         nline = textscan(line, format, 'Delimiter', '\t');
         
         if isempty(nline{5}) %Add check for ERROR entry/issue and add skip entry
-            disp(strcat("ERROR found in row", i));
+            disp(strcat("ERROR found in row: ", int2str(i)));
             disp("Skipping data packet");
             line = fgetl(fid);
         else
