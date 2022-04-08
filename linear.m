@@ -194,23 +194,26 @@ Data.Affect.path = path;
     
     %Get list of all unique affects used in the coding (SINGLE)
     aff_list = unique(Data.Affect.Raw.Affect1);
-    Data.Affect.Raw.Affect1(1) = {"start"};
-    Data.Affect.Raw.Affect1(end+1) = {"end"};
+    Data.Affect.Raw.Affect1{1} = "start";
+    Data.Affect.Raw.Affect1{end+1} = "end";
     
-    if isnan(unique(Data.Affect.Raw.Affect2(1:end-1)))
-        disp('No entries in column Affect2');
+    if iscell(unique(Data.Affect.Raw.Affect2(1:end-1)))
+        ext = unique(Data.Affect.Raw.Affect2(~cellfun(@isempty, Data.Affect.Raw.Affect2)));
+%         aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)];
+        aff_list = [aff_list; ext];
+        Data.Affect.Raw.Affect2{1} = "start";
+        Data.Affect.Raw.Affect2{end} = "end";
     else
-        aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)];
-        Data.Affect.Raw.Affect2(1) = {"start"};
-        Data.Affect.Raw.Affect2(end) = {"end"};
+        disp('No entries in column Affect2');
     end
     
-    if isnan(unique(Data.Affect.Raw.Affect3(1:end-1)))
-        disp('No entries in column Affect3');
+    if iscell(unique(Data.Affect.Raw.Affect3(1:end-1)))
+        ext = unique(Data.Affect.Raw.Affect3(~cellfun(@isempty, Data.Affect.Raw.Affect3)));
+%         aff_list = [aff_list; unique(Data.Affect.Raw.Affect3)];
+        Data.Affect.Raw.Affect3{1} = "start";
+        Data.Affect.Raw.Affect3{end} = "end";
     else
-        aff_list = [aff_list; unique(Data.Affect.Raw.Affect3)];
-        Data.Affect.Raw.Affect3(1) = {"start"};
-        Data.Affect.Raw.Affect3(end) = {"end"};
+        disp('No entries in column Affect3');
     end
     
     aff_list = unique(aff_list); %cell array of all affects used
@@ -221,15 +224,17 @@ Data.Affect.path = path;
     for i = 1:length(aff_list)
         starts = [];
         ends = [];
+        for k = 1:3
+            col = strcat("Affect",string(k));
         
-        buffer = [false, transpose(diff(strcmp(Data.Affect.Raw.Affect1, aff_list{i}))~=0)];
-        buffer = find(buffer);
+            buffer = [false, transpose(diff(strcmp(Data.Affect.Raw.(col), aff_list{i}))~=0)];
+            buffer = find(buffer);
+            
         
-        
-        
-        for j = 1:2:length(buffer)
-            starts = [starts, buffer(j)+1];
-            ends = [ends, buffer(j+1)];
+            for j = 1:2:length(buffer)
+                starts = [starts, buffer(j)];
+                ends = [ends, buffer(j+1)-1];
+            end
         end
         Data.Affect.Times{i,1} = aff_list{i};
         Data.Affect.Times{i,2} = starts;
