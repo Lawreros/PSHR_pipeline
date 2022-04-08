@@ -194,16 +194,23 @@ Data.Affect.path = path;
     
     %Get list of all unique affects used in the coding (SINGLE)
     aff_list = unique(Data.Affect.Raw.Affect1);
-    if isnan(unique(Data.Affect.Raw.Affect2))
+    Data.Affect.Raw.Affect1(1) = {"start"};
+    Data.Affect.Raw.Affect1(end+1) = {"end"};
+    
+    if isnan(unique(Data.Affect.Raw.Affect2(1:end-1)))
         disp('No entries in column Affect2');
     else
-        aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)]; 
+        aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)];
+        Data.Affect.Raw.Affect2(1) = {"start"};
+        Data.Affect.Raw.Affect2(end) = {"end"};
     end
     
-    if isnan(unique(Data.Affect.Raw.Affect3))
+    if isnan(unique(Data.Affect.Raw.Affect3(1:end-1)))
         disp('No entries in column Affect3');
     else
-        aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)]; 
+        aff_list = [aff_list; unique(Data.Affect.Raw.Affect3)];
+        Data.Affect.Raw.Affect3(1) = {"start"};
+        Data.Affect.Raw.Affect3(end) = {"end"};
     end
     
     aff_list = unique(aff_list); %cell array of all affects used
@@ -215,9 +222,13 @@ Data.Affect.path = path;
         starts = [];
         ends = [];
         
-        buffer = [true, transpose(diff(strcmp(Data.Affect.Raw.Affect1, aff_list{i}))~=0)];
+        buffer = [false, transpose(diff(strcmp(Data.Affect.Raw.Affect1, aff_list{i}))~=0)];
+        buffer = find(buffer);
+        
+        
+        
         for j = 1:2:length(buffer)
-            starts = [starts, buffer(j)];
+            starts = [starts, buffer(j)+1];
             ends = [ends, buffer(j+1)];
         end
         Data.Affect.Times{i,1} = aff_list{i};
