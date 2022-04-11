@@ -249,17 +249,21 @@ Data.Affect.path = path;
     %realtime = "11:19:15"
     %videotime = 728
     
-    pol_time = ((((11*60)+19)*60)+15*1000);
+    pol_time = (((((11*60)+19)*60)+15)*1000);
     vid_time = 728*1000;
     algn = pol_time - vid_time;
     
     %Check if there is any HR or ECG data loaded. If so, then generate the
     %index numbers for the start and stop.
     
-    if isempty(Data.HR.Raw) == 0
+    if iscell(Data.HR.Raw) == 0
         disp("HR data found, generating start and stop indexes");
-        Data = time_adjust(Data, algn);
+        Data = time_adjust(Data, algn, "HR");
+    end
         
+    if iscell(Data.ECG.Raw) == 0
+        disp("ECG data found, generating start and stop indexes"); 
+        Data = time_adjust(Data, algn, "ECG");
     end
     
     
@@ -295,22 +299,24 @@ function [Data] = time_adjust(Data, algn, type)
         %Iterate through each start/stop pair
         for j = 1:length(Data.Affect.Times{i,2})
             
-            a = find(Data.HR.Raw(:,1) >= Data.Affect.Times{i,2}(j));
-            b = find(Data.HR.Raw(:,1) <= Data.Affect.Times{i,3}(j));
+            a = find(Data.(type).Raw(:,1) >= (Data.Affect.Times{i,2}(j)*1000+algn));
+            disp(Data.Affect.Times{i,2}(j)*1000+algn);
+            
+            b = find(Data.HR.Raw(:,1) > (Data.Affect.Times{i,3}(j)*1000+algn));
+            disp(Data.Affect.Times{i,3}(j)*1000+algn);
+            
             if isempty(a)==0 && isempty(b)==0
                 if a(1) == b(1)
                         %nothing is there
-                        %This has the side effect of adding 0's due
-                        % to its entry being skipped ...
-                        % so [1,2, nothing, 4,5] => [1,2,0,4,5]
                 else
                         starts = [starts, a(1)];
-                        ends = [ends, b(1)];
-                    
-                        %Seg_HR(i).truestart(j)=a(1);
-                        %Seg_HR(i).trueend(j)=b(1);
+                        ends = [ends, b(1)-1];
                 end
-                
+            elseif isempty(a)==0 && isempty(b)==1
+                fprintf("Affect %s ends after the recording and starts at time %d\n",...
+                    Data.Affect.Times{i,1}, Data.Affect.Times{i,2}(j));
+                    starts = [starts, a(1)];
+                    ends = [ends, length(Data.HR.Raw)];
             else
                 %Issue due to the affects occuring outside of collected
                 %HR/ECG data
@@ -328,201 +334,6 @@ function [Data] = time_adjust(Data, algn, type)
             Data.(type).Affect{i,3} = ends;
     end
 
-
-end
-
-
-
-function [Seg_HR,X,Y] = NO_affect_analysis(RR, Affect, pre, name)
-% Input parameters:
-% RR : Heart rate matrix, consisting of time in the first column and
-%     whatever you want to isolate in the second column
-% Affect : Preprocessed affect matrix
-% pre : number of RR values before the start of an affect to include in the
-%      segmentation
-
-
-% Align video and affect time
-vid_time=Affect(1).align_time{2,2};
-pol_time=Affect(1).align_time{2,1};
-
-T = pol_time-vid_time;
-corr_time=T-RR(1,1);
-
-
-% Align times and replace any zeros with NaN so they don't show up on graph
-for i = 2:length(RR)
-    RR(i,3) = 0;
-    RR(i,4)=0;
-    if isnan(RR(i,1))
-    else
-        RR(i,1) = RR(i,1) - corr_time;
-    end
-    %    if RR(i,2) == 0
-    %        RR(i,2) = NaN;
-    %    end
-end
-
-
-Seg_HR = {};
-
-% locate start and stop of each affect and store the values
-for i = 1:length(Affect)
-    Seg_HR(i).type = Affect(i).type;
-    if isempty(Affect(i).start) ~=1
-        
-        for j = 1:length(Affect(i).start)
-            % find where affect instance starts and ends
-            a = find(RR(2:end,1) >= Affect(i).start(j));
-            b = find(RR(2:end,1) >= Affect(i).end(j));
-            
-            if isempty(a)==0 && isempty(b)==0
-                if a(1) == b(1)
-                    %nothing is there
-                    %This has the side effect of adding 0's due
-                    % to its entry being skipped ...
-                    % so [1,2, nothing, 4,5] => [1,2,0,4,5]
-                else
-                    Seg_HR(i).truestart(j)=a(1);
-                    Seg_HR(i).trueend(j)=b(1);
-                end
-            end
-        end
-    end
-end
-
-%GLM HACK CODE, START:
-GLM = RR;
-GLM(:,1)=[]; %Get rid of time values, not necessary
-GLM(:,2:20)=0;
-
-affect_key = {'SIB';...
-    'freezing';...
-    'repetitive behaviors';...
-    'moving at a fast/abrupt pace';...
-    'contorting face/grimacing';...
-    'crying';...
-    'jumping';...
-    'flapping/clapping';...
-    'calm sitting';...
-    'finger (s) in mouth';...
-    'clothing adjustment/removal';...
-    'attentive/responsive';...
-    'loud/rapid humming';...
-    'loud/rapid speech';...
-    'soft melodic humming';...
-    'laughing';...
-    'smiling';...
-    'polar strap adjustment/removal';...
-    'unresponsive/unable to redirect'};
-
-%GLM HACK CODE, STOP
-
-% Convert RR to cell array for adding strings
-RR=num2cell(RR);
-
-
-% Add "problem behavior" and "on camera" to RR
-for i = 1:length(Seg_HR)
-    for j=1:length(Seg_HR(i).truestart)
-        taken1=0;
-        taken2=0;
-        
-        if Seg_HR(i).truestart(j)~=0 && Seg_HR(i).trueend(j)~=0
-                        
-            for q = Seg_HR(i).truestart(j):Seg_HR(i).trueend(j)
-                if strcmp(Seg_HR(i).type,'camera')
-                    RR{q,3} = 1;
-                end
-                if strcmp(Seg_HR(i).type,'problem_yn')
-                    RR{q,4} = 1;
-                end
-            end
-        end
-    end
-end
-
-
-
-
-
-% GLM HACK CODE START:
-cut=[];
-for i=1:length(GLM)
-    if isnan(GLM(i,1))
-        cut=[cut,i];
-    end
-end
-GLM(cut,:)=[];
-
-X=GLM(:,2:end);
-X(:,end+1)=1; %Add column for constant value (normaly low frequency drift correction)
-
-Y=GLM(:,1);
-
-[r,c]=size(X);
-cut=[];
-for i=1:c
-    if sum(X(:,i))==0
-        cut=[cut,i];
-    end
-end
-%X(:,cut)=[]; %Remove nuisance regressors that don't have any values (absent affects)
-
-% ONLY COMMENTED OUT FOR BIG ANALYSIS, UNCOMMENT
-%disp(cut);
-%B = inv(transpose(X)*X)*transpose(X)*Y;
-%for i=1:length(B)
-%B(i,2)=B(i,1)/(sum(X(:,i)/sum(sum(X)))); %What percentage affect recording this accounts for
-%end
-
-% GLM HACK CODE STOP:
-
-
-% Cut up processed data for affect analysis
-for i = 1:length(Seg_HR)
-    chunk = {};
-    if isempty(Seg_HR(i).truestart) ~=1
-        
-        for j = 1:length(Seg_HR(i).truestart)
-            if Seg_HR(i).truestart(j) <= pre
-                chunk{j,1} = RR(1:Seg_HR(i).trueend(j),2:5);
-            else
-                chunk{j,1} = RR(Seg_HR(i).truestart(j)-pre:Seg_HR(i).trueend(j),2:5);
-            end
-            
-            % Check purity of chunks
-            % Check where the target affect type is in the 'chunk'
-            [r,c] = size(chunk{j,1});
-            
-            if r>=1  %just a quick check whether the chunk contains anything TODO: FIX
-                if strcmp(Seg_HR(i).type, chunk{j,1}{1,2})
-                    target1=3;
-                    target2=4;
-                elseif strcmp(Seg_HR(i).type, chunk{j,1}{1,3})
-                    target1=2;
-                    target2=4;
-                elseif strcmp(Seg_HR(i).type, chunk{j,1}{1,4})
-                    target1=2;
-                    target2=3;
-                else
-                    disp(strcat('ERROR: Affect value corruption in RR ', num2str(Seg_HR(i).truestart(j)-pre),'to', num2str(Seg_HR(i).trueend(j))))
-                end
-                
-                % Check the percentage of "pure" affect and record it
-                count=0;
-                for q=1:r
-                    if isempty(chunk{j,1}{q,target1}) && isempty(chunk{j,1}{1,target2})
-                        count=count+1;
-                    end
-                end
-                chunk{j,2}= count/r;
-            end
-        end
-        Seg_HR(i).HR = chunk;
-        
-    end
-end
 
 end
 
@@ -671,4 +482,12 @@ function [new_array] = vectorize(matrix_array)
             end
         end
     end
+    %Add in NaNs for new rows instead of 0's to make time alignment easier
+    
+    for i = 1:length(new_array)
+        if new_array(i,1)==0
+            new_array(i,1) = NaN;
+        end
+    end
+    
 end
