@@ -46,7 +46,7 @@ Data.HR.Raw{1} = {};
 Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
-%Data = LoadSelected(Data, hr_path, hr_file, "HR");
+Data = LoadSelected(Data, hr_path, hr_file, "HR");
 %Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 Data = LoadAffect(Data, aff_path, aff_file);
 
@@ -244,13 +244,89 @@ Data.Affect.path = path;
         Data.Affect.Times{i,3} = ends;
     end
     
-    %Store alignment time
+    %Load and store alignment time
     
     %realtime = "11:19:15"
     %videotime = 728
     
+    pol_time = ((((11*60)+19)*60)+15*1000);
+    vid_time = 728*1000;
+    algn = pol_time - vid_time;
+    
+    %Check if there is any HR or ECG data loaded. If so, then generate the
+    %index numbers for the start and stop.
+    
+    if isempty(Data.HR.Raw) == 0
+        disp("HR data found, generating start and stop indexes");
+        Data = time_adjust(Data, algn);
+        
+    end
+    
+    
     %Find and read alignment time
     disp("done");
+
+
+end
+
+
+function [Data] = time_adjust(Data, algn, type)
+%Changes the generates indexes for Data.*.Raw that correspond with
+%timestamps found in Data.Affect.Times
+
+%inputs:
+% Data: main Data structure
+% algn: alignment time found with (polar_timestamp - video_time) = corr
+% type: What type of Data you are adjusting the time of
+
+
+    % Iterate through start and stop times
+    [r,c] = size(Data.Affect.Times);
+    
+    % Create place to store new times
+    Data.(type).Affect = {};
+
+    
+    %Iterate through each affect
+    for i = 1:r
+        starts = [];
+        ends = [];
+        
+        %Iterate through each start/stop pair
+        for j = 1:length(Data.Affect.Times{i,2})
+            
+            a = find(Data.HR.Raw(:,1) >= Data.Affect.Times{i,2}(j));
+            b = find(Data.HR.Raw(:,1) <= Data.Affect.Times{i,3}(j));
+            if isempty(a)==0 && isempty(b)==0
+                if a(1) == b(1)
+                        %nothing is there
+                        %This has the side effect of adding 0's due
+                        % to its entry being skipped ...
+                        % so [1,2, nothing, 4,5] => [1,2,0,4,5]
+                else
+                        starts = [starts, a(1)];
+                        ends = [ends, b(1)];
+                    
+                        %Seg_HR(i).truestart(j)=a(1);
+                        %Seg_HR(i).trueend(j)=b(1);
+                end
+                
+            else
+                %Issue due to the affects occuring outside of collected
+                %HR/ECG data
+                fprintf('WARNING: Affect %s from video time %d to %d could not be found in data\n',...
+                    Data.Affect.Times{i,1}, Data.Affect.Times{i,2}(j), Data.Affect.Times{i,3}(j));
+                
+            end
+        end
+            % Store indexes for each affect with their respective data
+            % types, instead of keeping everything in the Affect structure.
+            % This way, every thing you need for each analysis will be
+            % grouped
+            Data.(type).Affect{i,1} = Data.Affect.Times{i,1};
+            Data.(type).Affect{i,2} = starts;
+            Data.(type).Affect{i,3} = ends;
+    end
 
 
 end
