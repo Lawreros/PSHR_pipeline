@@ -181,6 +181,9 @@ function [Data] = LoadAffect(Data, path, file)
 % Load in affect file and add it to the structure
 Data.Affect.path = path;
 
+%TODO: Add functionality for loading and processing multiple affects at a
+%time
+
     if iscell(file)
         for i = 1:length(file)
             Data.Affect.Raw{i} = readtable(strcat(path,file{i}));
@@ -232,8 +235,8 @@ Data.Affect.path = path;
             
         
             for j = 1:2:length(buffer)
-                starts = [starts, buffer(j)];
-                ends = [ends, buffer(j+1)-1];
+                starts = [starts, Data.Affect.Raw.Time_sec(buffer(j))];%buffer(j)];
+                ends = [ends, Data.Affect.Raw.Time_sec(buffer(j+1)-1)];%buffer(j+1)-1];
             end
         end
         Data.Affect.Times{i,1} = aff_list{i};
@@ -241,7 +244,10 @@ Data.Affect.path = path;
         Data.Affect.Times{i,3} = ends;
     end
     
+    %Store alignment time
     
+    %realtime = "11:19:15"
+    %videotime = 728
     
     %Find and read alignment time
     disp("done");
@@ -250,85 +256,6 @@ Data.Affect.path = path;
 end
 
 
-
-function [Aff_raw] = NO_aff_load_raw(path, file)
-
-%Load in file
-fid = fopen(strcat(path,file));
-line = fgetl(fid);
-line = fgetl(fid);
-% Read in information
-i = 1;
-%while line ~= -1
-%    Aff_raw(i,:) = textscan(line,'%d %s%s%s %d%d %s', 'delimiter', ',');
-%    line = fgetl(fid);
-%    i=i+1;
-%end
-aa = readtable(strcat(path,file));
-aa = table2cell(aa);
-Aff_raw = aa(:,[1,2,3,4,25,26,27]);
-
-
-status = strcat(path, file, ': LOADED');
-disp(status);
-end
-
-function [Affect] = NO_aff_preprocess(affect)
-
-for i=1:length(affect)
-    if isempty(affect{i,7})==0
-        a = textscan(affect{i,7}, '%s %s %d:%d:%f','delimiter',' ');
-        
-        Affect.align_time{1,1} = 'Polar time';
-        Affect.align_time{1,2} = 'Video time';
-        Affect.align_time{2,1} = ((a{3}*60+a{4})*60+a{5})*1000;
-        Affect.align_time{2,2} = i*1000;
-
-    end
-        
-end
-
-% Alignment times
-%Affect.align_time{1,1} = 'Polar time';
-%Affect.align_time{1,2} = 'Video time';
-%Affect.align_time{2,1} = ((((affect{1,1}*60)+affect{1,2})*60)+affect{1,3})*1000;
-%Affect.align_time{2,2} = ((((affect{1,4}*60)+affect{1,5})*60)+affect{1,6})*1000;
-
-%if Affect.align_time{2,2} == 0
-    corr = Affect.align_time{2,1};
-%else
-    %corr = 0;
-%end
-
-
-[r, c] = size(affect);
-Affect(1).type = 'camera';
-Affect(2).type = 'problem_yn';
-for q = 1:2
-a=0;
-new=1;
-for i=1:r
-    
-    if affect{i,4+q} == 1 && a ==0
-        a = i;
-    end
-    
-    if (affect{i,4+q} == 0 && a > 0) || (i==r && a>0)
-        b = i;
-        if new==1
-            Affect(q).start = a*1000;
-            Affect(q).end = b*1000;
-            new=0;
-        else
-            Affect(q).start = [Affect(q).start,a*1000];
-            Affect(q).end = [Affect(q).end,b*1000];
-        end
-        a=0;
-        
-    end
-end
-end
-end
 
 function [Seg_HR,X,Y] = NO_affect_analysis(RR, Affect, pre, name)
 % Input parameters:
