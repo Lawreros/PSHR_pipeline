@@ -49,7 +49,7 @@ Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
 Data = LoadSelected(Data, hr_path, hr_file, "HR");
-%Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
@@ -173,6 +173,7 @@ end
 aff = {'SIB','not problem'};
 
 Richard_export(Data, aff, "HR");
+Richard_export(Data, aff, "ECG");
 
 
 %% ECG-Preprocessing
@@ -316,7 +317,7 @@ function [Data] = time_adjust(Data, algn, type)
             a = find(Data.(type).Raw(:,1) >= (Data.Affect.Times{i,2}(j)*1000+algn));
             %disp(Data.Affect.Times{i,2}(j)*1000+algn);
             
-            b = find(Data.HR.Raw(:,1) > (Data.Affect.Times{i,3}(j)*1000+algn));
+            b = find(Data.(type).Raw(:,1) > (Data.Affect.Times{i,3}(j)*1000+algn));
             %disp(Data.Affect.Times{i,3}(j)*1000+algn);
             
             if isempty(a)==0 && isempty(b)==0
@@ -330,7 +331,7 @@ function [Data] = time_adjust(Data, algn, type)
                 fprintf("Affect %s ends after the recording and starts at time %d\n",...
                     Data.Affect.Times{i,1}, Data.Affect.Times{i,2}(j));
                     starts = [starts, a(1)];
-                    ends = [ends, length(Data.HR.Raw)];
+                    ends = [ends, length(Data.(type).Raw)];
             else
                 %Issue due to the affects occuring outside of collected
                 %HR/ECG data
@@ -443,7 +444,7 @@ function [raw_array] = data_load(fpath)
         format = '%f:%f:%f %f %f %f %f';
     else
         disp('ECG file detected:');
-        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 73)); %generate 73 ecg entries
+        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 57)); %generate 73 ecg entries
     end
 
     % Read in information, converting app time into milliseconds
