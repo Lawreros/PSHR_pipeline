@@ -173,7 +173,7 @@ end
 aff = {'SIB','not problem'};
 
 Richard_export(Data, aff, "HR");
-Richard_export(Data, aff, "ECG");
+
 
 
 %% ECG-Preprocessing
@@ -181,11 +181,15 @@ Richard_export(Data, aff, "ECG");
 
 
 %% ECG Analysis
+peak = 800;
+dist = 40;
+ecg_rr = ecg_rr_conversion(Data, peak, dist);
 
 
 
 %% ECG Exports
 
+Richard_export(Data, aff, "ECG");
 disp('done');
 
 
@@ -353,9 +357,7 @@ function [Data] = time_adjust(Data, algn, type)
 end
 
 
-
 %% RR-Interval Preprocessing Functions
-
 function [Data] = LoadSelected(Data, path, file, type)
         
         %Clear previously loaded information (add clear back in for gui)
@@ -507,6 +509,30 @@ function [new_array] = vectorize(matrix_array)
     
 end
 
+%% ECG Analysis Functions
+function [locs] = ecg_rr_conversion(Data, peak, dist)
+% Function to take the ECG data and estimate RR-intervals from them
+
+%inputs:
+%   Data: Data structure containing Data.ECG and Data.HR
+%   peak: minimum peak prominence for peak
+%   dist: minimum distance in index number for peaks
+
+
+[pks, locs] = findpeaks(Data.ECG.Raw(:,3), 'MinPeakProminence', peak, 'MinPeakDistance', dist);
+
+for i = 2:length(locs)
+    %convert to milliseconds assuming a 130Hz sampling frequency
+    locs(i,2) = (locs(i,1)-locs(i-1,1))*(100/13);
+end
+    
+%15 on locs = 377 on Data.HR.Raw
+disp('done');
+
+end
+
+
+%% Export Functions
 function [] = Richard_export(Data,aff,type)
 %This function takes the Data information and saves them as .csv files for
 %sending to Richard
