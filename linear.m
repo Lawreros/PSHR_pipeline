@@ -14,7 +14,9 @@ ecg_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/s
 ecg_file = 'ECG_03-18-2022.txt';%"ECG_03-09-2022.txt";
 
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-aff_file = "03-18-code.csv";
+%aff_file = "03-18-code.csv";
+aff_file = "2022-03-18_Kessler.csv";
+
 %realtime = "11:19:15"
 %videotime = 728
 
@@ -30,7 +32,7 @@ u_band = 1200;
 l_band = 400;
 
 Malik = false;
-
+Kamath = false;
 Karlsson = false;
 
 Acar = false;
@@ -164,6 +166,15 @@ end
     
 
 
+%% RR-Interval Exports
+% This is where files are exported and saved
+
+%Export RR-intervals with affects denoted for Richard
+aff = {'SIB','not problem'};
+
+Richard_export(Data, aff, "HR");
+
+
 %% ECG-Preprocessing
 
 
@@ -171,6 +182,8 @@ end
 %% ECG Analysis
 
 
+
+%% ECG Exports
 
 disp('done');
 
@@ -186,11 +199,16 @@ Data.Affect.path = path;
 
     if iscell(file)
         for i = 1:length(file)
-            Data.Affect.Raw{i} = readtable(strcat(path,file{i}));
+            %For some reason you have to set Format to auto in order for
+            %readtable to not ignore affects in sparsely filled columns
+            %(i.e. if there is only like 4 entries in Affect2, without
+            %auto, MATLAB will disregard Affect2 and have the column be all
+            %NaNs)
+            Data.Affect.Raw{i} = readtable(strcat(path,file{i}),'Format','auto');
         end
         Data.Affect.files = {file};
     else
-        Data.Affect.Raw = readtable(strcat(path,file));
+        Data.Affect.Raw = readtable(strcat(path,file),'Format','auto');
         Data.Affect.files = {file};
     end
 
@@ -265,10 +283,6 @@ Data.Affect.path = path;
         disp("ECG data found, generating start and stop indexes"); 
         Data = time_adjust(Data, algn, "ECG");
     end
-    
-    
-    %Find and read alignment time
-    disp("done");
 
 
 end
@@ -300,10 +314,10 @@ function [Data] = time_adjust(Data, algn, type)
         for j = 1:length(Data.Affect.Times{i,2})
             
             a = find(Data.(type).Raw(:,1) >= (Data.Affect.Times{i,2}(j)*1000+algn));
-            disp(Data.Affect.Times{i,2}(j)*1000+algn);
+            %disp(Data.Affect.Times{i,2}(j)*1000+algn);
             
             b = find(Data.HR.Raw(:,1) > (Data.Affect.Times{i,3}(j)*1000+algn));
-            disp(Data.Affect.Times{i,3}(j)*1000+algn);
+            %disp(Data.Affect.Times{i,3}(j)*1000+algn);
             
             if isempty(a)==0 && isempty(b)==0
                 if a(1) == b(1)
@@ -490,4 +504,43 @@ function [new_array] = vectorize(matrix_array)
         end
     end
     
+end
+
+function [] = Richard_export(Data,aff,type)
+%This function takes the Data information and saves them as .csv files for
+%sending to Richard
+
+%input:
+%   Data: The data structure
+%   aff: Cell array listing the different Affects that should be denoted as
+%   problem behaviors
+%   type: What type of data you want to export, "HR" or "ECG"
+
+
+    %TODO: add functionality for multiple sets of data
+    new_mat = Data.(type).Raw(:,[1,3]);
+    new_mat(1,3) = 0;
+
+    
+    for i = 1:length(Data.(type).Affect)
+        
+        %only put a 1 in the third column for affects in the list
+        if any(strcmp(aff, Data.(type).Affect(i,1))) %if the affect is in the list of aff
+            if isempty(Data.(type).Affect(i,2))==1 || isempty(Data.(type).Affect(i,3))==1
+                %There are no/missing start and stop indexes for this
+                %affect, so do nothing
+            else
+                %Mark the 3rd column on the new_mat with a 1, denoting that
+                %an affect of interest occurs there
+                for j = 1:length(Data.(type).Affect{i,2})
+                    %this should also take care of the issue of overlapping
+                    %affects
+                    new_mat(Data.(type).Affect{i,2}(j):Data.(type).Affect{i,3}(j),3) = 1;
+                    
+                end
+            end
+        end
+    end
+    
+    writematrix(new_mat,strcat(type,"_List.csv"));
 end
