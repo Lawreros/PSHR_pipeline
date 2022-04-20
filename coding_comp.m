@@ -26,7 +26,73 @@ clear tab_1 tab_2;
 
 
 %Begin comparison iterations
+[r,c] = size(comp_tab);
+
+comp_results = {'Disagreement','nothing';'nothing',0};
+
+for i = 1:r
+    comp_1 = table2cell(comp_tab(i,2:4));
+    comp_2 = table2cell(comp_tab(i,7:9));
+    
+    qq = comp_1(~ismember(comp_1, comp_2));
+    zz = comp_2(~ismember(comp_2, comp_1));
+    
+    if ~isempty(qq) || ~isempty(zz) %If there is a disagreement
+        disp('Disagreement found');
+        
+        if isempty(qq)
+            b = strjoin(zz,'&');
+            a = 'nothing';
+        elseif isempty(zz)
+            b = 'nothing';
+            a = strjoin(qq, '&');
+        else % Both groups have a unique affect
+            b = strjoin(zz,'&');
+            a = strjoin(qq,'&');
+        end
+        
+        %key = strcat(a, '_vs_', b);
+        
+        
+%         % Add to the array
+%         if ismember(key, comp_results(:,1))
+%             %find where the row for this category of disagreement is
+%             j = find(ismember(comp_results(:,1),key));
+%             %append time of disagreement
+%             comp_results{j,2} = [comp_results{j,2},comp_tab{i,1}];
+%         else
+%             comp_results{end+1,1} = key;
+%             comp_results{end,2} = comp_tab{i,1};
+%         end
+        
+        %Add to the array
+        
+        if ismember(a,comp_results(:,1)) && ismember(b,comp_results(1,:))
+            j = find(ismember(comp_results(:,1),a));
+            k = find(ismember(comp_results(1,:),b));
+            comp_results{j,k} = [comp_results{j,k},comp_tab{i,1}];
+            
+        elseif ismember(a,comp_results(:,1)) && ~ismember(b,comp_results(1,:)) %only a already exists
+            j = find(ismember(comp_results(:,1),a));
+            comp_results{1,end+1} = b; %add the b category
+            comp_results{j,end} = comp_tab{i,1};
+        
+        elseif ismember(b,comp_results(1,:)) %only b already exists
+            k = find(ismember(comp_results(1,:),b));
+            comp_results{end+1,1} = a;
+            comp_results{end,k} = comp_tab{i,1};
+            
+        else %neither exist
+            comp_results{end+1,1} = a;
+            comp_results{1,end+1} = b;
+            comp_results{end,end} = comp_tab{i,1};
+            
+        end
+        
 
 
+    end
+    
+end
 
 disp('done');
