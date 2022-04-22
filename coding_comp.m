@@ -3,8 +3,8 @@
 %different people
 clear all;
 
-aff_1 = 'ignore_samples/2022-03-25_Montanez.csv';
-aff_2 = 'ignore_samples/2022-03-25_Kessler.csv';
+aff_1 = 'ignore_samples/2022-03-18_Montanez.csv';
+aff_2 = 'ignore_samples/2022-03-18_Kessler.csv';
 
 
 tab_1 = readtable(aff_1, 'Format', 'auto');
@@ -97,6 +97,18 @@ for i = 1:r
     end
     
 end
+
+% Convert the comp_index to cells with strings so they can be saved as
+% excell files
+
+bb = comp_index;
+[r,c] = size(comp_index);
+for i = 3:r
+    for j = 3:c
+        bb{i,j} = strjoin(string(bb{i,j}),',');
+    end
+end
+
 
 %Pad out and organize comp_index so that it has the same number of affects
 %for both reviewers
