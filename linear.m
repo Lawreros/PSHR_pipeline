@@ -43,6 +43,7 @@ acar_range = 9;
 sdsd = true;
 sdnn = true;
 rmssd = true;
+pnnx = true;
 
 
 %ECG-interval Analysis
@@ -168,17 +169,27 @@ end
 %% RR-Interval Analysis
 
 % pNN50
+if pnnx
+    Data = pnnx_calc(Data, "Raw", 50, false);
+end
 
 % SDNN
-Data = sdnn_calc(Data, "Raw", false);
-
+if sdnn
+    Data = sdnn_calc(Data, "Raw", false);
+end
 
 % SDSD
-Data = sdsd_calc(Data, "Raw", false);
+if sdsd
+    Data = sdsd_calc(Data, "Raw", false);
+end
 
+% RMSSD
+if rmssd
+    Data = rmssd_calc(Data, "Raw", false);
+end
 
-% Poincare Plot
-
+%% Simple Plot of raw RR data
+plot(Data.HR.Raw(:,3))
 
 %% RR-Interval Exports
 % This is where files are exported and saved
@@ -200,8 +211,8 @@ dist = 40;
 ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
 
 
-%
-
+%% Simple Plot of raw ECG data
+plot(Data.ECG.Raw(:,3));
 
 %% ECG Exports
 
@@ -527,6 +538,39 @@ end
 
 %% RR-Interval Analysis Functions
 
+function [Data] = pnnx_calc(Data,source,diff,band)
+    % Calculates the percentage of adjacent NN-intervals that differ from
+    % each other by more than "diff" milliseconds
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       diff: [int] The minimum difference in milliseconds between
+    %       successive NN-intervalse that you want to count
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to calculate the pnnX of. If false, then analyze the whole
+    %       range
+    
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2,c] = size(Data.HR.(source));
+        r_1 = 2;
+    end
+    
+    count = 0;
+    for i = r_1:r_2
+        if (Data.HR.(source)(i,3)-Data.HR.(source)(i-1,3))>= diff
+            count = count+1;
+        end
+    end
+
+    Data.HR.(strcat('pNN', string(diff))).(strcat('time_',string(r_1),'_to_',string(r_2))) = count/(r_2-r_1);
+    disp(strcat('pNN', string(diff), "=", string(Data.HR.(strcat('pNN', string(diff))).(strcat('time_',string(r_1),'_to_',string(r_2))))));
+    
+end
+
 function [Data] = sdnn_calc(Data,source,band)
     % Calculates the standard deviation of "NN-intervals" (or preprocessed
     % RR-intervals)
@@ -551,17 +595,15 @@ function [Data] = sdnn_calc(Data,source,band)
 
 end
 
-
-
 function [Data] = sdsd_calc(Data,source,band)
     % Calculates the standard deviation of successive differences (SDSD)
     % for the vector of measurements provided
-    % Inputs:
-    %   Data: The Data structure
-    %   source: [string], Which matrix from the structure you want to use (this is
-    %   here to allow you to analyze both Raw and preprocessed)
-    %   band: [2 int vector] The range [start, end] of values you want to calculate SDSD for.
-    %   If false, then analyze the whole range
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to use (this is
+    %       here to allow you to analyze both Raw and preprocessed)
+    %       band: [2 int vector] The range [start, end] of values you want to calculate SDSD for.
+    %       If false, then analyze the whole range
     
     if band
         r_1 = band(1);
@@ -574,6 +616,34 @@ function [Data] = sdsd_calc(Data,source,band)
     Data.HR.SDSD = std(Data.HR.(source)(r_1:r_2-1,3)-Data.HR.(source)(r_1+1:r_2,3));
     disp(strcat('SDSD calculated:', string(Data.HR.SDSD)));
 
+end
+
+function [Data] = rmssd_calc(Data, source, band)
+    % Calculates the root mean square of successive differences (RMSSD) for
+    % the vector of mesasurements provided.
+    % Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to calculate RMSSD for. If false, then analyze the whole range
+
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2,c] = size(Data.HR.(source));
+        r_1 = 1;
+    end
+    
+    summation = 0;
+    for  i = r_1:(r_2-1)
+        summation = summation+(Data.HR.(source)(i+1,3)-Data.HR.(source)(i,3))^2;
+    end
+    
+    Data.HR.RMSSD = sqrt(1/((r_2-r_1)-1)*summation);
+    disp(strcat('RMSSD calculated:', string(Data.HR.RMSSD)));
+    
 end
 
 
