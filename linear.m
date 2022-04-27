@@ -26,7 +26,7 @@ aff_file = "2022-03-18_Kessler.csv";
 % True/False statements.
 
 
-%RR-interval
+%RR-interval Analysis
 Bandpass = false;
 u_band = 1200;
 l_band = 400;
@@ -39,7 +39,11 @@ Acar = false;
 acar_range = 9;
 
 
-%ECG-interval
+
+
+
+
+%ECG-interval Analysis
 
 
 
@@ -161,9 +165,16 @@ end
 % Interpolation
     
 
+
 %% RR-Interval Analysis
-    
-    
+
+% pNN50
+
+% SDNN
+
+% SDSD
+
+% Poincare Plot
 
 
 %% RR-Interval Exports
@@ -172,7 +183,7 @@ end
 %Export RR-intervals with affects denoted for Richard
 aff = {'SIB','not problem'};
 
-Richard_export(Data, aff, "HR");
+Richard_export(Data, aff, "HR", "test_HR_output");
 
 
 
@@ -183,13 +194,15 @@ Richard_export(Data, aff, "HR");
 %% ECG Analysis
 peak = 800;
 dist = 40;
-ecg_rr = ecg_rr_conversion(Data, peak, dist);
+ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
 
+
+%
 
 
 %% ECG Exports
 
-Richard_export(Data, aff, "ECG");
+Richard_export(Data, aff, "ECG", "test_ECG_output");
 disp('done');
 
 
@@ -533,7 +546,7 @@ end
 
 
 %% Export Functions
-function [] = Richard_export(Data,aff,type)
+function [] = Richard_export(Data,aff,type,fil_name)
 %This function takes the Data information and saves them as .csv files for
 %sending to Richard
 
@@ -542,6 +555,8 @@ function [] = Richard_export(Data,aff,type)
 %   aff: Cell array listing the different Affects that should be denoted as
 %   problem behaviors
 %   type: What type of data you want to export, "HR" or "ECG"
+%   fil_name: What you want the created csv file to be called. This will be
+%   saved locally unless full path is specified in file name
 
 
     %TODO: add functionality for multiple sets of data
@@ -569,5 +584,5 @@ function [] = Richard_export(Data,aff,type)
         end
     end
     
-    writematrix(new_mat,strcat(type,"_List.csv"));
+    writematrix(new_mat,strcat(fil_name,"_List.csv"));
 end
