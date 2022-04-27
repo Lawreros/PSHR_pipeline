@@ -26,7 +26,7 @@ aff_file = "2022-03-18_Kessler.csv";
 % True/False statements.
 
 
-%RR-interval Analysis
+%RR-interval Preprocess
 Bandpass = false;
 u_band = 1200;
 l_band = 400;
@@ -39,8 +39,10 @@ Acar = false;
 acar_range = 9;
 
 
-
-
+%RR-interval Analysis
+sdsd = true;
+sdnn = true;
+rmssd = true;
 
 
 %ECG-interval Analysis
@@ -73,9 +75,6 @@ if Bandpass
         end
     end 
 end
-
-
-
 
 %Ectopic Heartbeats
     %Malik Method
@@ -171,8 +170,12 @@ end
 % pNN50
 
 % SDNN
+Data = sdnn_calc(Data, "Raw", false);
+
 
 % SDSD
+Data = sdsd_calc(Data, "Raw", false);
+
 
 % Poincare Plot
 
@@ -521,6 +524,131 @@ function [new_array] = vectorize(matrix_array)
     end
     
 end
+
+%% RR-Interval Analysis Functions
+
+function [Data] = sdnn_calc(Data,source,band)
+    % Calculates the standard deviation of "NN-intervals" (or preprocessed
+    % RR-intervals)
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to calculade the SDNN of. If false, then analyze the whole
+    %       range
+
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2,c] = size(Data.HR.(source));
+        r_1 = 1;
+    end
+    
+    Data.HR.SDNN = std(Data.HR.(source)(r_1:r_2,3));
+    disp(strcat('SDNN calculated:', string(Data.HR.SDNN)));
+
+end
+
+
+
+function [Data] = sdsd_calc(Data,source,band)
+    % Calculates the standard deviation of successive differences (SDSD)
+    % for the vector of measurements provided
+    % Inputs:
+    %   Data: The Data structure
+    %   source: [string], Which matrix from the structure you want to use (this is
+    %   here to allow you to analyze both Raw and preprocessed)
+    %   band: [2 int vector] The range [start, end] of values you want to calculate SDSD for.
+    %   If false, then analyze the whole range
+    
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2,c] = size(Data.HR.(source));
+        r_1 = 2;
+    end
+    
+    Data.HR.SDSD = std(Data.HR.(source)(r_1:r_2-1,3)-Data.HR.(source)(r_1+1:r_2,3));
+    disp(strcat('SDSD calculated:', string(Data.HR.SDSD)));
+
+end
+
+
+%% RR-Interval Plotting
+function [] = poincare_plot(fname, RR, plot_num, max_plot_num)
+    % Generates a poincare plot from the data
+    % Inputs:
+    %       RR: [n-by-1 array], vector containing all RR values
+    %       plot_num: [int], plot position on the subplot figure
+    %       max_plot_number: [int], maximum intended entries into subplot figure
+
+
+    cut = [];
+    for i=1:length(RR)              % Eliminate NaN's
+        if RR(i,1) == 0 || isnan(RR(i,1))
+            cut = [cut,i];
+        end
+    end
+    RR(cut) = [];
+    RR(:,2) = [RR(2:end,1);0];
+    RR(end,:) = [];
+
+    % Calculate SD1 and SD2
+    xc = sum(RR(1:end-1,1))/(length(RR)-1);
+    yc = sum(RR(2:end,2))/(length(RR)-1);
+
+    SD1 = sqrt((1/length(RR))*nansum(((RR(:,1)-RR(:,2))-nanmean(RR(:,1)-RR(:,2))).^2)/2);
+    SD2 = sqrt((1/length(RR))*nansum(((RR(:,1)+RR(:,2))-nanmean(RR(:,1)+RR(:,2))).^2)/2);
+
+    % Making a rotated elipsoid to display SD1 and SD2 https://www.mathworks.com/matlabcentral/answers/342148-how-can-i-rotate-an-ellipse
+    x = zeros(1000,1);
+    y = zeros(1000,1);
+    theta = linspace(0, 2*pi, 1000);
+    for k = 1:1000
+        x(k) = SD2*cos(theta(k));
+        y(k) = SD1*sin(theta(k));
+    end
+    alpha = pi/4;
+    R = [cos(alpha) -sin(alpha); sin(alpha) cos(alpha)];
+    rCoords = R*[x'; y'];
+    xr = rCoords(1,:)';
+    yr = rCoords(2,:)';
+
+
+    if max_plot_num <= 10    %calculate number of rows and columns for subplots
+        if max_plot_num == 1
+            p_c = 1;
+        else
+            p_c = 2;
+        end
+        p_r = ceil(max_plot_num/p_c);
+    else
+        p_c = floor(sqrt(max_plot_num));
+        p_r = ceil(max_plot_num/p_c);
+    end
+
+    min_RR = nanmin(RR(:,1));
+    max_RR = nanmax(RR(:,1));
+
+
+    figure(1);
+    % plot onto subplot
+    subplot(p_r,p_c,plot_num)
+    scatter(RR(:,1), RR(:,2), 15)
+    axis([min_RR-50 max_RR+50 min_RR-50 max_RR+50])
+    xlabel('RR_n (ms)');
+    ylabel('RR_n_+_1 Interval (ms)');
+    title(fname)
+    hold on;
+    plot(xr+xc, yr+yc, 'r');
+    plot([0:1600],[0:1600],'r');
+    hold off;
+
+end
+
 
 %% ECG Analysis Functions
 function [locs] = ecg_rr_conversion(Data, peak, dist)
