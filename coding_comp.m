@@ -3,8 +3,8 @@
 %different people
 clear all;
 
-aff_1 = 'ignore_samples/2022-03-18_Montanez.csv';
-aff_2 = 'ignore_samples/2022-03-18_Kessler.csv';
+aff_1 = 'ignore_samples/2022-03-25_Montanez_V2.csv';
+aff_2 = 'ignore_samples/2022-03-25_Kessler_V2.csv';
 
 
 tab_1 = readtable(aff_1, 'Format', 'auto');
