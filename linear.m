@@ -8,15 +8,21 @@ close all;
 
 %% Test files:
 
-hr_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-hr_file = 'HR_03-18-2022.txt';%"HR_03-09-2022.txt";
-ecg_path = '/home/ross/Downloads/';%"/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-ecg_file = 'ECG_03-18-2022.txt';%"ECG_03-09-2022.txt";
-
+%HR file
+hr_path = '/home/ross/Downloads/';
+hr_file = 'HR_03-18-2022.txt';
+%ECG file
+ecg_path = '/home/ross/Downloads/';
+ecg_file = 'ECG_03-18-2022.txt';
+%Affect file
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-%aff_file = "03-18-code.csv";
 aff_file = "2022-03-18_Kessler.csv";
 
+
+%Export RR-intervals with affects denoted for Richard
+aff = {'SIB','not problem','Freezing','loud/rapid speech'};
+
+%
 %realtime = "11:19:15"
 %videotime = 728
 
@@ -26,8 +32,8 @@ aff_file = "2022-03-18_Kessler.csv";
 % True/False statements.
 
 
-%RR-interval Preprocess
-Bandpass = false;
+%RR-interval Preprocess Flags
+Bandpass = true;
 u_band = 1200;
 l_band = 400;
 
@@ -39,14 +45,16 @@ Acar = false;
 acar_range = 9;
 
 
-%RR-interval Analysis
+%RR-interval Analysis Flags
 sdsd = true;
 sdnn = true;
 rmssd = true;
 pnnx = true;
 
+%ECG-interval Preprocess Flags
 
-%ECG-interval Analysis
+
+%ECG-interval Analysis Flags
 
 
 
@@ -63,18 +71,7 @@ Data = LoadAffect(Data, aff_path, aff_file);
 
 %Bandpass Thresholding
 if Bandpass
-    [r, c] = size(Data.HR.Raw);
-    
-    %Create Preprocessed matrix of NaNs
-    Data.HR.PP = nan(r,c);
-    
-    for i = 1:r
-        if (Data.HR.Raw(i,3)>= u_band) || (Data.HR.Raw(i,3) <= l_band)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
-        end
-    end 
+    bandpass(Data,"Raw", l_band, u_band, false);
 end
 
 %Ectopic Heartbeats
@@ -189,17 +186,14 @@ if rmssd
 end
 
 %% Simple Plot of raw RR data
+fig1 = figure(1);
 plot(Data.HR.Raw(:,3))
+title("Raw RR-interval Data");
 
 %% RR-Interval Exports
 % This is where files are exported and saved
 
-%Export RR-intervals with affects denoted for Richard
-aff = {'SIB','not problem'};
-
 Richard_export(Data, aff, "HR", "test_HR_output");
-
-
 
 %% ECG-Preprocessing
 
@@ -212,7 +206,9 @@ ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG da
 
 
 %% Simple Plot of raw ECG data
+fig2 = figure(2);
 plot(Data.ECG.Raw(:,3));
+title("Raw ECG Data");
 
 %% ECG Exports
 
@@ -535,6 +531,141 @@ function [new_array] = vectorize(matrix_array)
     end
     
 end
+
+function [Data] = bandpass(Data, source, l_band, u_band, rang)
+    % Applies a bandpass filtering to the HR data provided. Any RR-interval
+    % value outside of the range specified by the lower and upper bounds is
+    % replaced with a NaN
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       l_band: [int], the lower bounding value for the bandpass filter
+    %       u_band: [int], the upper bounding value for the bandpass filter
+    %       rang: [2 int vector] The range [start, end] of values you want
+    %       to calculate the pnnX of. If false, then analyze the whole
+    %       range
+
+    if rang
+        r_1 = rang(1);
+        r_2 = rang(2);
+    else
+        [r_2,c] = size(Data.HR.(source));
+        r_1 = 1;
+    end
+
+    %Create copy of matrix to edit
+    Data.HR.PP = Data.HR.(source);
+    
+    for i = r_1:r_2
+        if (Data.HR.(source)(i,3)>= u_band) || (Data.HR.(source)(i,3) <= l_band)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
+        end
+    end 
+end
+
+function [Data] = malik(Data, source, band)
+    % Applies the malik filtering method to the data provided. Any
+    % RR-inverval which is outside of the acceptable bounds will be
+    % replaced with a NaN
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix form the sturcture you want to
+    %       use
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to calculate the pnnX of. If false, then analyze the whole
+    %       range
+    
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2, c] = size(Data.HR.(source));
+        r_1 = 1;
+    end
+        
+    %Create copy of matrix to edit
+    Data.HR.PP = Data.HR.(source);
+    
+    for i = r_1:(r_2-1)
+        if abs(Data.HR.(source)(i,3) - Data.HR.(source)(i+1,3)) > (0.2*Data.HR.(source)(i,3))
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
+        end
+    end
+
+end
+    
+    %Kamath Method
+if Kamath
+    %input = Data
+    [r,c] = size(Data.HR.Raw);
+    
+    %Create Preprocessed matrix of NaNs
+    Data.HR.PP = nan(r,c);
+    
+    for i = 1:(r-1)
+        a = 0.325 * Data.HR.Raw(i,3);
+        b = 0.245 * Data.HR.Raw(i,3);
+        
+        c = Data.HR.Raw(i+1,3) - Data.HR.Raw(i,3);
+        d = Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3);
+        
+        if (0 <= c) && (c <= a)
+            Data.HR.PP(i,3) = NaN;
+        elseif (0 <= d) && (d <= b)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+    end
+end
+    
+    %Karlsson Method
+if Karlsson
+    %input = Data
+    [r,c] = size(Data.HR.Raw);
+    
+    %Create Preprocessed matrix of NaNs
+    Data.HR.PP = nan(r,c);
+    
+    for i = 2:(r-1)
+        a = (Data.HR.Raw(i-1,3)+Data.HR.Raw(i+1,3))/2;
+        
+        if abs(a-Data.HR.Raw(i,3)) > (0.2*a)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+        
+    end
+    
+end
+    
+    
+    %Acar Method
+if Acar
+    %input = Data, acar_range
+    [r,c] = size(Data.HR.Raw);
+    
+    Data.HR.PP = nan(r,c);
+    
+    for i = (acar_range+1):r
+        a = sum(Data.HR.Raw(i-acar_range:i-1,3));
+        
+        if abs(a-Data.HR.Raw(i,3))> (0.2*a)
+            Data.HR.PP(i,3) = NaN;
+        else
+            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+        end
+    end
+end
+
+
+
 
 %% RR-Interval Analysis Functions
 
