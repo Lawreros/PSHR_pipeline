@@ -642,21 +642,37 @@ function kamath(Data, source, band)
 
 end
 
-    %Karlsson Method
-if Karlsson
-    %input = Data
-    [r,c] = size(Data.HR.Raw);
-    
-    %Create Preprocessed matrix of NaNs
-    Data.HR.PP = nan(r,c);
-    
-    for i = 2:(r-1)
-        a = (Data.HR.Raw(i-1,3)+Data.HR.Raw(i+1,3))/2;
+
+function [Data] = karlsson(Data, source, band)
+    % Applies the Karlsson filtering method to the data provided. Any
+    % RR-interval which is outside of the acceptable bounds will be
+    % replaced with a NaN
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to use the Karlsson filter on. If false, then analyse the whole
+    %       range
+
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2, c] = size(Data.HR.(source));
+        r_1 = 2;
+    end
         
-        if abs(a-Data.HR.Raw(i,3)) > (0.2*a)
+    %Create copy of matrix to edit
+    Data.HR.PP = Data.HR.(source);
+    
+    for i = r_1:(r_2-1)
+        a = (Data.HR.(source)(i-1,3)+Data.HR.(source)(i+1,3))/2;
+        
+        if abs(a-Data.HR.(source)(i,3)) > (0.2*a)
             Data.HR.PP(i,3) = NaN;
         else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
         end
         
     end
@@ -664,20 +680,42 @@ if Karlsson
 end
     
     
-    %Acar Method
-if Acar
-    %input = Data, acar_range
-    [r,c] = size(Data.HR.Raw);
+function [Data] = acar(Data, source, acar_range, band)
+    % Applies the Acar filtering method to the data provided. Any
+    % RR-interval which is outside of the acceptable bounds will be
+    % replaced with a NaN
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       acar_range: [int] 
+    %       band: [2 int vector] The range [start, end] of values you wish
+    %       to use the Acar filter on. If false, then analyze the full
+    %       range
+
+
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2, c] = size(Data.HR.(source));
+        r_1 = acar_range+1;
+    end
     
-    Data.HR.PP = nan(r,c);
+    if r_1 < acar_range
+        disp("starting point less than acar range, changing starting point to (acar range)+1");
+        r_1 = acar_range+1;
+    end
     
-    for i = (acar_range+1):r
-        a = sum(Data.HR.Raw(i-acar_range:i-1,3));
+    Data.HR.PP = Data.HR.(source);
+    
+    for i = r_1:r_2
+        a = sum(Data.HR.(source)(i-acar_range:i-1,3));
         
-        if abs(a-Data.HR.Raw(i,3))> (0.2*a)
+        if abs(a-Data.HR.(source)(i,3))> (0.2*a)
             Data.HR.PP(i,3) = NaN;
         else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
         end
     end
 end
