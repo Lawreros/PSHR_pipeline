@@ -543,7 +543,7 @@ function [Data] = bandpass(Data, source, l_band, u_band, rang)
     %       l_band: [int], the lower bounding value for the bandpass filter
     %       u_band: [int], the upper bounding value for the bandpass filter
     %       rang: [2 int vector] The range [start, end] of values you want
-    %       to calculate the pnnX of. If false, then analyze the whole
+    %       to use the bandpass on. If false, then analyze the whole
     %       range
 
     if rang
@@ -572,10 +572,10 @@ function [Data] = malik(Data, source, band)
     % replaced with a NaN
     %   Inputs:
     %       Data: The Data structure
-    %       source: [string], Which matrix form the sturcture you want to
+    %       source: [string], Which matrix from the structure you want to
     %       use
     %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the pnnX of. If false, then analyze the whole
+    %       to use the malik filter on. If false, then analyze the whole
     %       range
     
     if band
@@ -598,32 +598,50 @@ function [Data] = malik(Data, source, band)
     end
 
 end
+
+
+function kamath(Data, source, band)
+    % Applies the kamath filtering method to the data provided. Any
+    % RR-interval which is outside of the acceptable bounds will be
+    % replaced with a NaN
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to use the kamath filter on. If false, then analyze the whole
+    %       range
+
     
-    %Kamath Method
-if Kamath
-    %input = Data
-    [r,c] = size(Data.HR.Raw);
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2, c] = size(Data.HR.(source));
+        r_1 = 1;
+    end
     
-    %Create Preprocessed matrix of NaNs
-    Data.HR.PP = nan(r,c);
+    %Create copy of matrix to edit
+    Data.HR.PP = Data.HR.(source);
     
-    for i = 1:(r-1)
-        a = 0.325 * Data.HR.Raw(i,3);
-        b = 0.245 * Data.HR.Raw(i,3);
+    for i = r_1:(r_2-1)
+        a = 0.325 * Data.HR.(source)(i,3);
+        b = 0.245 * Data.HR.(source)(i,3);
         
-        c = Data.HR.Raw(i+1,3) - Data.HR.Raw(i,3);
-        d = Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3);
+        c = Data.HR.(source)(i+1,3) - Data.HR.(source)(i,3);
+        d = Data.HR.(source)(i,3) - Data.HR.(source)(i+1,3);
         
         if (0 <= c) && (c <= a)
             Data.HR.PP(i,3) = NaN;
         elseif (0 <= d) && (d <= b)
             Data.HR.PP(i,3) = NaN;
         else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
+            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
         end
     end
+
 end
-    
+
     %Karlsson Method
 if Karlsson
     %input = Data
