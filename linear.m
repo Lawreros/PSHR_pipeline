@@ -46,10 +46,10 @@ acar_range = 9;
 
 
 %RR-interval Analysis Flags
-sdsd = true;
-sdnn = true;
-rmssd = true;
-pnnx = true;
+sdsd = false;
+sdnn = false;
+rmssd = false;
+pnnx = false;
 
 %ECG-interval Preprocess Flags
 
@@ -64,98 +64,37 @@ Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
 Data = LoadSelected(Data, hr_path, hr_file, "HR");
-Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+%Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
 
 %Bandpass Thresholding
 if Bandpass
-    bandpass(Data,"Raw", l_band, u_band, false);
+    Data = bandpass(Data,"Raw", l_band, u_band, false);
 end
 
 %Ectopic Heartbeats
     %Malik Method
 if Malik
-    %input = Data
-    [r,c] = size(Data.HR.Raw);
-    
-    %Create Preprocessed matrix of NaNs
-    Data.HR.PP = nan(r,c);
-    
-    for i = 1:(r-1)
-        if abs(Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3)) > (0.2*Data.HR.Raw(i,3))
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
-        end
-    end
+    Data = malik(Data, "Raw", false);
 end
     
     
     %Kamath Method
 if Kamath
-    %input = Data
-    [r,c] = size(Data.HR.Raw);
-    
-    %Create Preprocessed matrix of NaNs
-    Data.HR.PP = nan(r,c);
-    
-    for i = 1:(r-1)
-        a = 0.325 * Data.HR.Raw(i,3);
-        b = 0.245 * Data.HR.Raw(i,3);
-        
-        c = Data.HR.Raw(i+1,3) - Data.HR.Raw(i,3);
-        d = Data.HR.Raw(i,3) - Data.HR.Raw(i+1,3);
-        
-        if (0 <= c) && (c <= a)
-            Data.HR.PP(i,3) = NaN;
-        elseif (0 <= d) && (d <= b)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
-        end
-    end
+    Data = malik(Data, "Raw", false);
 end
     
     %Karlsson Method
 if Karlsson
-    %input = Data
-    [r,c] = size(Data.HR.Raw);
-    
-    %Create Preprocessed matrix of NaNs
-    Data.HR.PP = nan(r,c);
-    
-    for i = 2:(r-1)
-        a = (Data.HR.Raw(i-1,3)+Data.HR.Raw(i+1,3))/2;
-        
-        if abs(a-Data.HR.Raw(i,3)) > (0.2*a)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
-        end
-        
-    end
-    
+    Data = karlsson(Data, "Raw", false);
 end
     
     
     %Acar Method
 if Acar
-    %input = Data, acar_range
-    [r,c] = size(Data.HR.Raw);
-    
-    Data.HR.PP = nan(r,c);
-    
-    for i = (acar_range+1):r
-        a = sum(Data.HR.Raw(i-acar_range:i-1,3));
-        
-        if abs(a-Data.HR.Raw(i,3))> (0.2*a)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.Raw(i,3);
-        end
-    end
+    Data = acar(Data, "Raw", acar_range, false);
 end
     
 
@@ -164,6 +103,9 @@ end
 
 
 %% RR-Interval Analysis
+
+qqq = pnnx_calc_2(Data.HR.Raw(:,3),50,{5,'second'},false);
+
 
 % pNN50
 if pnnx
@@ -599,8 +541,7 @@ function [Data] = malik(Data, source, band)
 
 end
 
-
-function kamath(Data, source, band)
+function [Data] = kamath(Data, source, band)
     % Applies the kamath filtering method to the data provided. Any
     % RR-interval which is outside of the acceptable bounds will be
     % replaced with a NaN
@@ -642,7 +583,6 @@ function kamath(Data, source, band)
 
 end
 
-
 function [Data] = karlsson(Data, source, band)
     % Applies the Karlsson filtering method to the data provided. Any
     % RR-interval which is outside of the acceptable bounds will be
@@ -678,8 +618,7 @@ function [Data] = karlsson(Data, source, band)
     end
     
 end
-    
-    
+        
 function [Data] = acar(Data, source, acar_range, band)
     % Applies the Acar filtering method to the data provided. Any
     % RR-interval which is outside of the acceptable bounds will be
@@ -721,8 +660,6 @@ function [Data] = acar(Data, source, acar_range, band)
 end
 
 
-
-
 %% RR-Interval Analysis Functions
 
 function [Data] = pnnx_calc(Data,source,diff,band)
@@ -748,7 +685,7 @@ function [Data] = pnnx_calc(Data,source,diff,band)
     
     count = 0;
     for i = r_1:r_2
-        if (Data.HR.(source)(i,3)-Data.HR.(source)(i-1,3))>= diff
+        if abs(Data.HR.(source)(i,3)-Data.HR.(source)(i-1,3))>= diff
             count = count+1;
         end
     end
@@ -833,6 +770,91 @@ function [Data] = rmssd_calc(Data, source, band)
     
 end
 
+
+% Change the above analysis functions to not depend on Data structure
+function [ret] = pnnx_calc_2(mat,diff,bin,band)
+    % Calculates the percentage of adjacent NN-intervals that differ from
+    % each other by more than "diff" milliseconds
+    %   Inputs:
+    %       mat: A [n-by-1] vector which contains the data you want to
+    %       calculate pNNX for
+    %       diff: [int] The minimum difference in milliseconds between
+    %       successive NN-intervalse that you want to count
+    %
+    %       bin: [1-by-2 cell array] Used for creating a vector of the pNNX
+    %       results from a sliding bin of Y seconds or entries. This takes the
+    %       format of {index, 'units'}, so if you want to have a bin of the
+    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
+    %       If you don't want this, set bin to false.
+    %
+    %       band: [2 int vector] The range [start, end] of values you want
+    %       to calculate the pnnX of. If false, then analyze the whole
+    %       range
+    
+    if band
+        r_1 = band(1);
+        r_2 = band(2);
+    else
+        [r_2,c] = size(mat);
+        r_1 = 2;
+    end
+    
+    % If they've decided to use the bin values
+    if iscell(bin)
+        a = bin{1}; % value
+        b = bin{2}; % units
+        
+        ret = zeros(r_2-r_1,1);
+        
+        if strcmp(b,'second')
+            for i = r_1:r_2
+                count = 0;
+                j = 0;
+                
+                % Check loop backward until you have reached the 'b'
+                % seconds in the past through summing
+                while (sum(mat(i-j:i,1))/1000) <= a
+                    j = j+1;
+                    if j == i
+                        break;
+                    end
+                end
+                
+                if j > 1 && j < i % If there is more than one entry
+                    for k = (i-j+2):i
+                        if abs(mat(k,1) - mat(k-1,1))>= diff
+                            count = count+1;
+                        end
+                    end
+                    ret(i-r_1+1,1) = count/(j-1);
+                else
+                    ret(i-r_1+1,1) = 0;
+                end
+        
+            end
+        else % Looking at the past 'b' entries for the calculation
+            for i = (a+1):(r_2-r_1)
+                count = 0;
+                for j = 1:a
+                    if abs(mat(i-j,1) - mat(i-j-1,1))>= diff
+                        count = count+1;
+                    end
+                end
+                ret(i,1) = count;
+            end
+        end
+        
+    else
+        % If they just want a percentage for a matrix
+        count = 0;
+        for i = r_1:r_2
+            if (mat(i,3)-mat(i-1,3))>= diff
+                count = count+1;
+            end
+        end
+        ret = count/(r_2-r_1-1);
+    end
+end
 
 %% RR-Interval Plotting
 function [] = poincare_plot(fname, RR, plot_num, max_plot_num)
