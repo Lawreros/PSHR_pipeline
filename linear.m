@@ -104,8 +104,8 @@ end
 
 %% RR-Interval Analysis
 
-qqq = pnnx_calc_2(Data.HR.Raw(:,3),50,{5,'second'},false);
-ppp = rmssd_calc_2(Data.HR.Raw(:,3),{5,'seconds'},false);
+% qqq = pnnx_calc_2(Data.HR.Raw(:,3),50,{5,'second'},false);
+% ppp = rmssd_calc_2(Data.HR.Raw(:,3),{5,'seconds'},false);
 
 % pNN50
 if pnnx
@@ -135,7 +135,8 @@ title("Raw RR-interval Data");
 %% RR-Interval Exports
 % This is where files are exported and saved
 
-Richard_export(Data, aff, "HR", "test_HR_output");
+Derek_export(Data, aff, "HR", "Derek_HR_output");
+%Richard_export(Data, aff, "HR", "test_HR_output");
 
 %% ECG-Preprocessing
 
@@ -796,7 +797,7 @@ function [ret] = pnnx_calc_2(mat,diff,bin,band)
         r_2 = band(2);
     else
         [r_2,c] = size(mat);
-        r_1 = 2;
+        r_1 = 1;
     end
     
     % If they've decided to use the bin values
@@ -879,7 +880,7 @@ function [ret] = rmssd_calc_2(mat,bin,band)
         r_2 = band(2);
     else
         [r_2,c] = size(mat);
-        r_1 = 2;
+        r_1 = 1;
     end
     
     %If they've decided to use the bin values
@@ -904,12 +905,6 @@ function [ret] = rmssd_calc_2(mat,bin,band)
                 end
                 
                 if j > 1 && j < i % If there is more than one entry
-%                     for k = (i-j+2):i
-%                         if abs(mat(k,1) - mat(k-1,1))>= diff
-%                             count = count+1;
-%                         end
-%                     end
-%                    ret(i-r_1+1,1) = count/(j-1);
                     for  k = (i-j+2):i
                         summation = summation+(mat(k,1)-mat(k-1,1))^2;
                     end
@@ -920,13 +915,6 @@ function [ret] = rmssd_calc_2(mat,bin,band)
             end
         else % Looking at the past 'a' entries for the calculation
             for i = (a+1):(r_2-r_1)
-%                 count = 0;
-%                 for j = 1:a
-%                     if abs(mat(i-j,1) - mat(i-j-1,1))>= diff
-%                         count = count+1;
-%                     end
-%                 end
-%                 ret(i,1) = count;
                 summation = 0;
                 for j = 1:a
                     summation = summation+(mat(i-j,1)-mat(i-j-1,1))^2;
@@ -1004,10 +992,7 @@ function [ret] = sdnn_calc_2(mat,bin,band)
         
     else
         % If they just want a single value for the input vector
-        for  i = r_1:(r_2-1)
-            summation = summation+(mat(i+1,3)-mat(i,3))^2;
-        end
-        ret = sqrt(1/((r_2-r_1)-1)*summation);
+        ret = std(mat(r_1:r_2,1));
     end
 
 end
@@ -1033,7 +1018,7 @@ function [ret] = sdsd_calc_2(mat,bin,band)
         r_2 = band(2);
     else
         [r_2,c]=size(mat);
-        r_1=2;
+        r_1=1;
     end
     
     %If they've decided to use the bin values
@@ -1055,7 +1040,7 @@ function [ret] = sdsd_calc_2(mat,bin,band)
                 end
                 
                 if j > 1 && j < i % If there is more than one entry
-                    ret(i-r_1+1,1) = std(mat((i-j:i),1) - mat((i-j+1:i)));
+                    ret(i-r_1+1,1) = std(mat((i-j:i-1),1) - mat((i-j+1:i)));
                 else
                     ret(i-r_1+1,1) = 0;
                 end
@@ -1066,7 +1051,7 @@ function [ret] = sdsd_calc_2(mat,bin,band)
             end
         end
     else
-        Data.HR.SDSD = std(mat(r_1:r_2-1,1)-mat(r_1+1:r_2,1));
+        ret = std(mat(r_1:r_2-1,1)-mat(r_1+1:r_2,1));
     end
 end
 
@@ -1212,5 +1197,49 @@ function [] = Derek_export(Data,aff,type,fil_name)
 
 % RR interval data with: [Timestamp, RR, pnn50, rmssd, sdnn, problem]
 
+
+%This function takes the Data information and saves them as .csv files for
+%sending to Richard
+
+%input:
+%   Data: The data structure
+%   aff: Cell array listing the different Affects that should be denoted as
+%   problem behaviors
+%   type: What type of data you want to export, "HR" or "ECG"
+%   fil_name: What you want the created csv file to be called. This will be
+%   saved locally unless full path is specified in file name
+
+
+    %TODO: add functionality for multiple sets of data
+    new_mat = Data.(type).Raw(:,[1,3]);
+    
+    new_mat(:,end+1) = pnnx_calc_2(new_mat(:,2),50,{5,'second'},false);
+    new_mat(:,end+1) = rmssd_calc_2(new_mat(:,2),{5,'second'},false);
+    new_mat(:,end+1) = sdnn_calc_2(new_mat(:,2),{5,'second'},false);
+    new_mat(:,end+1) = sdsd_calc_2(new_mat(:,2),{5,'second'},false);
+    
+    new_mat(:,end+1) = zeros(length(new_mat),1);
+    
+    for i = 1:length(Data.(type).Affect)
+        
+        %only put a 1 in the third column for affects in the list
+        if any(strcmp(aff, Data.(type).Affect(i,1))) %if the affect is in the list of aff
+            if isempty(Data.(type).Affect(i,2))==1 || isempty(Data.(type).Affect(i,3))==1
+                %There are no/missing start and stop indexes for this
+                %affect, so do nothing
+            else
+                %Mark the 3rd column on the new_mat with a 1, denoting that
+                %an affect of interest occurs there
+                for j = 1:length(Data.(type).Affect{i,2})
+                    %this should also take care of the issue of overlapping
+                    %affects
+                    new_mat(Data.(type).Affect{i,2}(j):Data.(type).Affect{i,3}(j),end) = 1;
+                    
+                end
+            end
+        end
+    end
+    
+    writematrix(new_mat,strcat(fil_name,"_List.csv"));
 
 end
