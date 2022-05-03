@@ -236,7 +236,7 @@ Data.Affect.path = path;
     %Load and store alignment time
     
     %realtime = "11:19:15"
-    %videotime = 728
+    %videotime = 728 + 1 for lag
     
     pol_time = (((((11*60)+19)*60)+15)*1000);
     vid_time = 728*1000;
@@ -738,7 +738,7 @@ function [Data] = sdsd_calc(Data,source,band)
         r_1 = 2;
     end
     
-    Data.HR.SDSD = std(Data.HR.(source)(r_1:r_2-1,3)-Data.HR.(source)(r_1+1:r_2,3));
+    Data.HR.SDSD = std(Data.HR.(source)(r_1+1:r_2,3)-Data.HR.(source)(r_1:r_2-1,3));
     disp(strcat('SDSD calculated:', string(Data.HR.SDSD)));
 
 end
@@ -834,26 +834,26 @@ function [ret] = pnnx_calc_2(mat,diff,bin,band)
         
             end
         else % Looking at the past 'b' entries for the calculation
-            for i = (a+1):(r_2-r_1)
+            for i = (a+1):(r_2-r_1+1)
                 count = 0;
-                for j = 1:a
+                for j = 0:(a-1)
                     if abs(mat(i-j,1) - mat(i-j-1,1))>= diff
                         count = count+1;
                     end
                 end
-                ret(i,1) = count;
+                ret(i,1) = count/a;
             end
         end
         
     else
         % If they just want a percentage for a matrix
         count = 0;
-        for i = r_1:r_2
-            if (mat(i,3)-mat(i-1,3))>= diff
+        for i = (r_1+1):r_2
+            if abs(mat(i,1)-mat(i-1,1))>= diff
                 count = count+1;
             end
         end
-        ret = count/(r_2-r_1-1);
+        ret = count/(r_2-r_1);
     end
 end
 
@@ -914,22 +914,22 @@ function [ret] = rmssd_calc_2(mat,bin,band)
                 end
             end
         else % Looking at the past 'a' entries for the calculation
-            for i = (a+1):(r_2-r_1)
+            for i = (a+1):(r_2-r_1+1)
                 summation = 0;
-                for j = 1:a
+                for j = 0:(a-1)
                     summation = summation+(mat(i-j,1)-mat(i-j-1,1))^2;
                 end
-                ret(i,1) = sqrt((1/(a-1))*summation);
+                ret(i,1) = sqrt((1/a)*summation);
             end
         end
         
     else
         % If they just want a single value for the input vector
         summation = 0;
-        for  i = r_1:(r_2-1)
-            summation = summation+(mat(i+1,3)-mat(i,3))^2;
+        for  i = (r_1+1):r_2
+            summation = summation+(mat(i,1)-mat(i-1,1))^2;
         end
-        ret = sqrt(1/((r_2-r_1)-1)*summation);
+        ret = sqrt(1/(r_2-r_1)*summation);
     end
 
 end
@@ -985,7 +985,7 @@ function [ret] = sdnn_calc_2(mat,bin,band)
                 end
             end
         else % Looking at the past 'a' entries for the calculation
-            for i = (a+1):(r_2-r_1)
+            for i = (a+1):(r_2-r_1+1)
                 ret(i,1) = std(mat(i-a:i,1));
             end
         end
@@ -1040,18 +1040,18 @@ function [ret] = sdsd_calc_2(mat,bin,band)
                 end
                 
                 if j > 1 && j < i % If there is more than one entry
-                    ret(i-r_1+1,1) = std(mat((i-j:i-1),1) - mat((i-j+1:i)));
+                    ret(i-r_1+1,1) = std(mat(i-j+2:i)-mat((i-j+1:i-1),1));
                 else
                     ret(i-r_1+1,1) = 0;
                 end
             end
         else
-            for i = (a+1):(r_2-r_1)
-                ret(i,1) = std(mat((i-a:i),1) - mat((i-a+1:i)));
+            for i = (a+1):(r_2-r_1+1)
+                ret(i,1) = std(mat((i-a+1:i)) - mat((i-a:i-1),1));
             end
         end
     else
-        ret = std(mat(r_1:r_2-1,1)-mat(r_1+1:r_2,1));
+        ret = std(mat(r_1+1:r_2,1)-mat(r_1:r_2-1,1));
     end
 end
 
@@ -1212,13 +1212,25 @@ function [] = Derek_export(Data,aff,type,fil_name)
 
     %TODO: add functionality for multiple sets of data
     new_mat = Data.(type).Raw(:,[1,3]);
+%     
+%     new_mat(:,end+1) = pnnx_calc_2(new_mat(:,2),50,{5,'second'},false);
+%     new_mat(:,end+1) = rmssd_calc_2(new_mat(:,2),{5,'second'},false);
+%     new_mat(:,end+1) = sdnn_calc_2(new_mat(:,2),{5,'second'},false);
+%     new_mat(:,end+1) = sdsd_calc_2(new_mat(:,2),{5,'second'},false);
+%     
+%     new_mat(:,end+1) = zeros(length(new_mat),1);
     
-    new_mat(:,end+1) = pnnx_calc_2(new_mat(:,2),50,{5,'second'},false);
-    new_mat(:,end+1) = rmssd_calc_2(new_mat(:,2),{5,'second'},false);
-    new_mat(:,end+1) = sdnn_calc_2(new_mat(:,2),{5,'second'},false);
-    new_mat(:,end+1) = sdsd_calc_2(new_mat(:,2),{5,'second'},false);
     
-    new_mat(:,end+1) = zeros(length(new_mat),1);
+    %Test
+    a = pnnx_calc_2(new_mat(:,2),50,{5,'units'},false);
+    b = rmssd_calc_2(new_mat(:,2),{5,'units'},false);
+    c = sdnn_calc_2(new_mat(:,2),{5,'units'},false);
+    d = sdsd_calc_2(new_mat(:,2),{5,'units'},false);
+    
+    e = pnnx_calc_2(new_mat(:,2),50,false,[10,20]);
+    f = rmssd_calc_2(new_mat(:,2),false,[10,20]);
+    g = sdnn_calc_2(new_mat(:,2),false,[10,20]);
+    h = sdsd_calc_2(new_mat(:,2),false,[10,20]);
     
     for i = 1:length(Data.(type).Affect)
         
