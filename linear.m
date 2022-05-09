@@ -20,7 +20,7 @@ aff_file = "2022-03-18_Kessler.csv";
 
 
 %Export RR-intervals with affects denoted for Richard
-aff = {'SIB','not problem','Freezing','loud/rapid speech'};
+aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming','loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal','repetitive behaviors','unresponsive/unable to redirect'};
 
 %
 %realtime = "11:19:15"
@@ -50,6 +50,7 @@ sdsd = false;
 sdnn = false;
 rmssd = false;
 pnnx = false;
+poincare = true;
 
 %ECG-interval Preprocess Flags
 
@@ -131,6 +132,10 @@ end
 fig1 = figure(1);
 plot(Data.HR.Raw(:,3))
 title("Raw RR-interval Data");
+
+
+fig2 = figure(2);
+[SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
 
 %% RR-Interval Exports
 % This is where files are exported and saved
@@ -236,10 +241,10 @@ Data.Affect.path = path;
     %Load and store alignment time
     
     %realtime = "11:19:15"
-    %videotime = 728 + 1 for lag
+    %videotime = 728 -1 for lag
     
     pol_time = (((((11*60)+19)*60)+15)*1000);
-    vid_time = 728*1000;
+    vid_time = 727*1000;
     algn = pol_time - vid_time;
     
     %Check if there is any HR or ECG data loaded. If so, then generate the
@@ -1056,7 +1061,7 @@ function [ret] = sdsd_calc_2(mat,bin,band)
 end
 
 %% RR-Interval Plotting
-function [] = poincare_plot(fname, RR, plot_num, max_plot_num)
+function [SD1, SD2] = poincare_plot(mat, fig)
     % Generates a poincare plot from the data
     % Inputs:
     %       RR: [n-by-1 array], vector containing all RR values
@@ -1065,21 +1070,21 @@ function [] = poincare_plot(fname, RR, plot_num, max_plot_num)
 
 
     cut = [];
-    for i=1:length(RR)              % Eliminate NaN's
-        if RR(i,1) == 0 || isnan(RR(i,1))
+    for i=1:length(mat)              % Eliminate NaN's
+        if mat(i,1) == 0 || isnan(mat(i,1))
             cut = [cut,i];
         end
     end
-    RR(cut) = [];
-    RR(:,2) = [RR(2:end,1);0];
-    RR(end,:) = [];
+    mat(cut) = [];
+    mat(:,2) = [mat(2:end,1);0];
+    mat(end,:) = [];
 
     % Calculate SD1 and SD2
-    xc = sum(RR(1:end-1,1))/(length(RR)-1);
-    yc = sum(RR(2:end,2))/(length(RR)-1);
+    xc = sum(mat(1:end-1,1))/(length(mat)-1);
+    yc = sum(mat(2:end,2))/(length(mat)-1);
 
-    SD1 = sqrt((1/length(RR))*nansum(((RR(:,1)-RR(:,2))-nanmean(RR(:,1)-RR(:,2))).^2)/2);
-    SD2 = sqrt((1/length(RR))*nansum(((RR(:,1)+RR(:,2))-nanmean(RR(:,1)+RR(:,2))).^2)/2);
+    SD1 = sqrt((1/length(mat))*nansum(((mat(:,1)-mat(:,2))-nanmean(mat(:,1)-mat(:,2))).^2)/2);
+    SD2 = sqrt((1/length(mat))*nansum(((mat(:,1)+mat(:,2))-nanmean(mat(:,1)+mat(:,2))).^2)/2);
 
     % Making a rotated elipsoid to display SD1 and SD2 https://www.mathworks.com/matlabcentral/answers/342148-how-can-i-rotate-an-ellipse
     x = zeros(1000,1);
@@ -1095,31 +1100,16 @@ function [] = poincare_plot(fname, RR, plot_num, max_plot_num)
     xr = rCoords(1,:)';
     yr = rCoords(2,:)';
 
-
-    if max_plot_num <= 10    %calculate number of rows and columns for subplots
-        if max_plot_num == 1
-            p_c = 1;
-        else
-            p_c = 2;
-        end
-        p_r = ceil(max_plot_num/p_c);
-    else
-        p_c = floor(sqrt(max_plot_num));
-        p_r = ceil(max_plot_num/p_c);
-    end
-
-    min_RR = nanmin(RR(:,1));
-    max_RR = nanmax(RR(:,1));
+    min_RR = nanmin(mat(:,1));
+    max_RR = nanmax(mat(:,1));
 
 
-    figure(1);
-    % plot onto subplot
-    subplot(p_r,p_c,plot_num)
-    scatter(RR(:,1), RR(:,2), 15)
+    figure(fig);
+    scatter(mat(:,1), mat(:,2), 15)
     axis([min_RR-50 max_RR+50 min_RR-50 max_RR+50])
     xlabel('RR_n (ms)');
     ylabel('RR_n_+_1 Interval (ms)');
-    title(fname)
+    title('Poincare Plot placeholder title')
     hold on;
     plot(xr+xc, yr+yc, 'r');
     plot([0:1600],[0:1600],'r');
@@ -1212,25 +1202,14 @@ function [] = Derek_export(Data,aff,type,fil_name)
 
     %TODO: add functionality for multiple sets of data
     new_mat = Data.(type).Raw(:,[1,3]);
-%     
-%     new_mat(:,end+1) = pnnx_calc_2(new_mat(:,2),50,{5,'second'},false);
-%     new_mat(:,end+1) = rmssd_calc_2(new_mat(:,2),{5,'second'},false);
-%     new_mat(:,end+1) = sdnn_calc_2(new_mat(:,2),{5,'second'},false);
-%     new_mat(:,end+1) = sdsd_calc_2(new_mat(:,2),{5,'second'},false);
-%     
-%     new_mat(:,end+1) = zeros(length(new_mat),1);
     
-    
-    %Test
-    a = pnnx_calc_2(new_mat(:,2),50,{5,'units'},false);
-    b = rmssd_calc_2(new_mat(:,2),{5,'units'},false);
-    c = sdnn_calc_2(new_mat(:,2),{5,'units'},false);
-    d = sdsd_calc_2(new_mat(:,2),{5,'units'},false);
-    
-    e = pnnx_calc_2(new_mat(:,2),50,false,[10,20]);
-    f = rmssd_calc_2(new_mat(:,2),false,[10,20]);
-    g = sdnn_calc_2(new_mat(:,2),false,[10,20]);
-    h = sdsd_calc_2(new_mat(:,2),false,[10,20]);
+    new_mat(:,end+1) = pnnx_calc_2(new_mat(:,2),50,{10,'second'},false);
+    new_mat(:,end+1) = rmssd_calc_2(new_mat(:,2),{10,'second'},false);
+    new_mat(:,end+1) = sdnn_calc_2(new_mat(:,2),{10,'second'},false);
+    new_mat(:,end+1) = sdsd_calc_2(new_mat(:,2),{10,'second'},false);
+     
+    new_mat(:,end+1) = zeros(length(new_mat),1);
+
     
     for i = 1:length(Data.(type).Affect)
         
