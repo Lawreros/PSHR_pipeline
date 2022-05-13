@@ -9,8 +9,8 @@ close all;
 %% Test files:
 
 %HR file
-hr_path = '/home/ross/Downloads/';
-hr_file = 'HR_03-18-2022.txt';
+hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Art/';
+hr_file = {'HR_03-21-2022.txt', 'HR_03-28-2022.txt', 'HR_04-25-2022.txt', 'HR_05-09-2022.txt'};
 %ECG file
 ecg_path = '/home/ross/Downloads/';
 ecg_file = 'ECG_03-18-2022.txt';
@@ -33,7 +33,7 @@ aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming','l
 
 
 %RR-interval Preprocess Flags
-Bandpass = true;
+Bandpass = false;
 u_band = 1200;
 l_band = 400;
 
@@ -50,7 +50,7 @@ sdsd = false;
 sdnn = false;
 rmssd = false;
 pnnx = false;
-poincare = true;
+poincare = false;
 
 %ECG-interval Preprocess Flags
 
@@ -66,7 +66,7 @@ Data.Affect.Raw{1} = {};
 
 Data = LoadSelected(Data, hr_path, hr_file, "HR");
 %Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
-Data = LoadAffect(Data, aff_path, aff_file);
+%Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
 
@@ -105,9 +105,6 @@ end
 
 %% RR-Interval Analysis
 
-% qqq = pnnx_calc_2(Data.HR.Raw(:,3),50,{5,'second'},false);
-% ppp = rmssd_calc_2(Data.HR.Raw(:,3),{5,'seconds'},false);
-
 % pNN50
 if pnnx
     Data = pnnx_calc(Data, "Raw", 50, false);
@@ -129,18 +126,20 @@ if rmssd
 end
 
 %% Simple Plot of raw RR data
-fig1 = figure(1);
-plot(Data.HR.Raw(:,3))
-title("Raw RR-interval Data");
+%fig1 = figure(1);
+%plot(Data.HR.Raw(:,3))
+%title("Raw RR-interval Data");
 
-
-fig2 = figure(2);
-[SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
-
+if poincare
+    fig2 = figure(2);
+    [SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
+end
 %% RR-Interval Exports
 % This is where files are exported and saved
 
-Derek_export(Data, aff, "HR", "Derek_HR_output");
+group_analysis(Data, "HR", {20,'second'});
+
+%Derek_export(Data, aff, "HR", "Derek_HR_output");
 %Richard_export(Data, aff, "HR", "test_HR_output");
 
 %% ECG-Preprocessing
@@ -148,9 +147,9 @@ Derek_export(Data, aff, "HR", "Derek_HR_output");
 
 
 %% ECG Analysis
-peak = 800;
-dist = 40;
-ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
+%peak = 800;
+%dist = 40;
+%ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
 
 
 %% Simple Plot of raw ECG data
@@ -263,7 +262,6 @@ Data.Affect.path = path;
 
 end
 
-
 function [Data] = time_adjust(Data, algn, type)
 %Changes the generates indexes for Data.*.Raw that correspond with
 %timestamps found in Data.Affect.Times
@@ -328,7 +326,7 @@ function [Data] = time_adjust(Data, algn, type)
 end
 
 
-%% RR-Interval Preprocessing Functions
+%% HR/ECG Loading Functions
 function [Data] = LoadSelected(Data, path, file, type)
         
         %Clear previously loaded information (add clear back in for gui)
@@ -480,6 +478,8 @@ function [new_array] = vectorize(matrix_array)
     
 end
 
+%% RR-Interval Prerpocessing Functions
+
 function [Data] = bandpass(Data, source, l_band, u_band, rang)
     % Applies a bandpass filtering to the HR data provided. Any RR-interval
     % value outside of the range specified by the lower and upper bounds is
@@ -510,6 +510,38 @@ function [Data] = bandpass(Data, source, l_band, u_band, rang)
             Data.HR.PP(i,3) = NaN;
         else
             Data.HR.PP(i,3) = Data.HR.(source)(i,3);
+        end
+    end 
+end
+
+function [ret] = bandpass_2(mat, l_band, u_band, rang)
+    % Applies a bandpass filtering to vector provided. Any RR-interval
+    % value outside of the range specified by the lower and upper bounds is
+    % replaced with a NaN
+    %   Inputs:
+    %       Data: The Data structure
+    %       source: [string], Which matrix from the structure you want to
+    %       use
+    %       l_band: [int], the lower bounding value for the bandpass filter
+    %       u_band: [int], the upper bounding value for the bandpass filter
+    %       rang: [2 int vector] The range [start, end] of values you want
+    %       to use the bandpass on. If false, then analyze the whole
+    %       range
+
+    if rang
+        r_1 = rang(1);
+        r_2 = rang(2);
+    else
+        [r_2,c] = size(mat);
+        r_1 = 1;
+    end
+
+    %Create copy of matrix to edit
+    ret = mat;
+    
+    for i = r_1:r_2
+        if (ret(i,1)>= u_band) || (ret(i,1) <= l_band)
+            ret(i,3) = NaN;
         end
     end 
 end
@@ -1233,4 +1265,25 @@ function [] = Derek_export(Data,aff,type,fil_name)
     
     writematrix(new_mat,strcat(fil_name,"_List.csv"));
 
+end
+
+function [] = group_analysis(Data, type, bin)
+% RR-interval analysis for looking at statistics of multiple recording
+% sesisons
+
+%inputs:
+%   Data: The data structure
+%   type: [string] What type of data you want to analyze, "HR" or "ECG"
+%   bin: [1-by-2 cell array] The bin type you want to use. If false, no
+%   binning is done
+
+    Data.(type).RMSSD{1}={};
+    Data.(type).pnnx{1}={};
+
+    for i = 1:length(Data.(type).Raw)
+        Data.(type).RMSSD{i} = rmssd_calc_2(Data.(type).Raw{i}(:,3),bin,false);
+        Data.(type).pnnx{i} = pnnx_calc_2(Data.(type).Raw{i}(:,3),50,bin,false);
+    end
+
+    disp('done');
 end
