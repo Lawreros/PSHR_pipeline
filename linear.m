@@ -9,11 +9,33 @@ close all;
 %% Test files:
 
 %HR file
-hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Art/';
-hr_file = {'HR_03-21-2022.txt', 'HR_03-28-2022.txt', 'HR_04-25-2022.txt', 'HR_05-09-2022.txt'};
+hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/';
+hr_file = {'HR_03-21-2022.txt', 'HR_03-28-2022.txt', 'HR_04-25-2022.txt', 'HR_05-09-2022.txt',...
+    'HR_03-18-2022.txt', 'HR_03-25-2022.txt', 'HR_04-22-2022.txt', 'HR_05-06-2022.txt',...
+    'HR_04-28-2022.txt'};
+
+%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Ross/';
+%hr_file = {'HR_05-16-2022_cooking.txt', 'HR_05-16-2022_gym.txt', 'HR_05-17-2022.txt','HR_05-17-2022_normwalk.txt', 'HR_05-17-2022_lowwalk.txt'};
+
+%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/old_student/';
+%hr_file = {'2020-02-26_OGCP_PhysMon_AI_Rosensweig.txt','2020-01-08_1255_AI_Giansanti.txt'};
+
+%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/sample/';
+%hr_file = {'HR_03-09-2022.txt'};
+
+%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
+%hr_file = {'HR_05-24-2022_2.txt'};
+
 %ECG file
-ecg_path = '/home/ross/Downloads/';
-ecg_file = 'ECG_03-18-2022.txt';
+%ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
+%ecg_file = {'ECG_05-24-2022_2.txt'};
+
+ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/';
+ecg_file = {'ECG_03-21-2022.txt', 'ECG_03-28-2022.txt', 'ECG_04-25-2022.txt', 'ECG_05-09-2022.txt',...
+    'ECG_03-18-2022.txt', 'ECG_03-25-2022.txt', 'ECG_04-22-2022.txt', 'ECG_05-06-2022.txt',...
+    'ECG_04-28-2022.txt'};
+
+
 %Affect file
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
 aff_file = "2022-03-18_Kessler.csv";
@@ -65,7 +87,7 @@ Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
 Data = LoadSelected(Data, hr_path, hr_file, "HR");
-%Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
 %Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
@@ -137,7 +159,16 @@ end
 %% RR-Interval Exports
 % This is where files are exported and saved
 
-group_analysis(Data, "HR", {20,'second'});
+Data = group_analysis(Data, "HR", false,false);
+
+cuts = {[1,1920],[1,1060],false,[1,3180],[1,1462],false,false,false,false};
+Data = group_analysis(Data, 'HR', false, cuts);
+Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
+Data = group_analysis(Data, 'HR', {10, 'second'},cuts);
+Data = group_analysis(Data, 'HR', {15, 'second'},cuts);
+Data = group_analysis(Data, 'HR', {20, 'second'},cuts);
+Data = group_analysis(Data, 'HR', {25, 'second'},cuts);
+Data = group_analysis(Data, 'HR', {30, 'second'},cuts);
 
 %Derek_export(Data, aff, "HR", "Derek_HR_output");
 %Richard_export(Data, aff, "HR", "test_HR_output");
@@ -409,13 +440,19 @@ function [raw_array] = data_load(fpath)
     %Load in file
     fid = fopen(fpath);
     line = fgetl(fid);
+    
+    % Count number of entries in line to determine HR or ECG data
+    num = length(strfind(line,'	'));
 
-    if length(line) < 80
+    if num < 5
         disp('HR file detected:');
         format = '%f:%f:%f %f %f %f %f';
+    elseif num < 70
+        disp('ECG file detected:');
+        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 57));
     else
         disp('ECG file detected:');
-        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 57)); %generate 73 ecg entries
+        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 73)); %generate 73 ecg entries
     end
 
     % Read in information, converting app time into milliseconds
@@ -1267,7 +1304,7 @@ function [] = Derek_export(Data,aff,type,fil_name)
 
 end
 
-function [] = group_analysis(Data, type, bin)
+function [Data] = group_analysis(Data, type, bin, band)
 % RR-interval analysis for looking at statistics of multiple recording
 % sesisons
 
@@ -1277,13 +1314,47 @@ function [] = group_analysis(Data, type, bin)
 %   bin: [1-by-2 cell array] The bin type you want to use. If false, no
 %   binning is done
 
-    Data.(type).RMSSD{1}={};
-    Data.(type).pnnx{1}={};
+    if iscell(bin)
+        rname = strcat('RMSSD_',string(bin{1}));
+        pname = strcat('pnnx_',string(bin{1}));
+    else
+        rname = strcat('RMSSD_','nbin');
+        pname = strcat('pnnx_','nbin');
+    end
+    
+    if iscell(band)
+        rname = strcat(rname, '_band');
+        pname = strcat(pname, '_band');
+    else
+        band = cell(1,length(Data.(type).Raw));
+        band(:) = {false};
+    end
+    
+    Data.(type).(rname){1}={};
+    Data.(type).(pname){1}={};
+    
+    rst_tab = strcat(rname,'_stats');
+    Data.(type).(rst_tab){1} = {};
+    pst_tab = strcat(pname,'_stats');
+    Data.(type).(pst_tab){1} = {};
 
     for i = 1:length(Data.(type).Raw)
-        Data.(type).RMSSD{i} = rmssd_calc_2(Data.(type).Raw{i}(:,3),bin,false);
-        Data.(type).pnnx{i} = pnnx_calc_2(Data.(type).Raw{i}(:,3),50,bin,false);
+        Data.(type).(rname){i} = rmssd_calc_2(Data.(type).Raw{i}(:,3),bin,band{i});
+        Data.(type).(pname){i} = pnnx_calc_2(Data.(type).Raw{i}(:,3),50,bin,band{i});
+        
+        % Record mean and standard deviation for dataset
+        index = Data.(type).(rname){i}==Inf;
+        
+        Data.(type).(rst_tab){i,1} = mean(Data.(type).(rname){i}(index==0));
+        Data.(type).(rst_tab){i,2} = std(Data.(type).(rname){i}(index==0));
+        
+        index = Data.(type).(pname){i}==Inf;
+        
+        Data.(type).(pst_tab){i,1} = mean(Data.(type).(pname){i}(index==0));
+        Data.(type).(pst_tab){i,2} = std(Data.(type).(pname){i}(index==0));
     end
+    
+    
 
     disp('done');
 end
