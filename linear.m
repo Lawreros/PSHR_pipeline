@@ -6,6 +6,13 @@
 clear all;
 close all;
 
+% Add location of supporting functions to path for use. Doing this without
+% saving the new path makes this addition only exist for the current MATLAB
+% session
+
+addpath('./Analysis');
+
+
 %% Test files:
 
 %HR file
@@ -20,20 +27,21 @@ ecg_file = {'ECG_05-24-2022.txt'};
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
 aff_file = "2022-03-18_Kessler.csv";
 
+%realtime = "11:19:15"
+%videotime = 728
 
 %Export RR-intervals with affects denoted for Richard
 aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming',...
     'loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal',...
     'repetitive behaviors','unresponsive/unable to redirect'};
 
-%
-%realtime = "11:19:15"
-%videotime = 728
 
 %% Analysis flags
 % As the GUI will most likely chain together preprocessing modules through
 % the use of binary triggers, it's good to simulate that with a group of
 % True/False statements.
+
+% TODO: Create structure to store flags in compact manner
 
 %RR-interval Preprocess Flags
 Bandpass = false;
@@ -55,11 +63,19 @@ rmssd = false;
 pnnx = false;
 poincare = false;
 
-%ECG-interval Preprocess Flags
+%RR-interval Plotting Flags
+raw_hr_plot = false;
 
+%ECG-interval Preprocess Flags
+ecg2rr = false;
+peak = 800;
+dist = 40;
 
 %ECG-interval Analysis Flags
 
+
+%ECG-interval Plotting Flags
+raw_ecg_plot = false;
 
 
 %% Pipeline
@@ -87,7 +103,7 @@ end
     
     %Kamath Method
 if Kamath
-    Data = malik(Data, "Raw", false);
+    Data = kamath(Data, "Raw", false);
 end
     
     %Karlsson Method
@@ -129,9 +145,12 @@ if rmssd
 end
 
 %% Simple Plot of raw RR data
-%fig1 = figure(1);
-%plot(Data.HR.Raw(:,3))
-%title("Raw RR-interval Data");
+
+if raw_hr_plot
+    fig1 = figure(1);
+    plot(Data.HR.Raw(:,3))
+    title("Raw RR-interval Data");
+end
 
 if poincare
     fig2 = figure(2);
@@ -145,7 +164,6 @@ Data = group_analysis(Data, "HR", false,false);
 cuts = {[1,1462],[1,1920],false,[1,1060],false,false,false,false,[1,3180],[1,4900],false};
 Data = group_analysis(Data, 'HR', false, cuts);
 Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
-Data = group_analysis(Data, 'HR', {10, 'second'},cuts);
 
 %Derek_export(Data, aff, "HR", "Derek_HR_output");
 %Richard_export(Data, aff, "HR", "test_HR_output");
@@ -155,19 +173,20 @@ Data = group_analysis(Data, 'HR', {10, 'second'},cuts);
 
 
 %% ECG Analysis
-peak = 800;
-dist = 40;
-ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
-
+if ecg2rr
+    ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
+end
 
 %% Simple Plot of raw ECG data
-fig2 = figure(2);
-plot(Data.ECG.Raw(:,3));
-title("Raw ECG Data");
-
+if raw_ecg_plot
+    fig2 = figure(2);
+    plot(Data.ECG.Raw(:,3));
+    title("Raw ECG Data");
+end
+    
 %% ECG Exports
 
-Richard_export(Data, aff, "ECG", "test_ECG_output");
+%Richard_export(Data, aff, "ECG", "test_ECG_output");
 disp('done');
 
 
@@ -493,42 +512,9 @@ function [new_array] = vectorize(matrix_array)
 end
 
 %% RR-Interval Preprocessing Functions
+% TODO: Convert to new function format
 
-function [Data] = bandpass(Data, source, l_band, u_band, rang)
-    % Applies a bandpass filtering to the HR data provided. Any RR-interval
-    % value outside of the range specified by the lower and upper bounds is
-    % replaced with a NaN
-    %   Inputs:
-    %       Data: The Data structure
-    %       source: [string], Which matrix from the structure you want to
-    %       use
-    %       l_band: [int], the lower bounding value for the bandpass filter
-    %       u_band: [int], the upper bounding value for the bandpass filter
-    %       rang: [2 int vector] The range [start, end] of values you want
-    %       to use the bandpass on. If false, then analyze the whole
-    %       range
-
-    if rang
-        r_1 = rang(1);
-        r_2 = rang(2);
-    else
-        [r_2,c] = size(Data.HR.(source));
-        r_1 = 1;
-    end
-
-    %Create copy of matrix to edit
-    Data.HR.PP = Data.HR.(source);
-    
-    for i = r_1:r_2
-        if (Data.HR.(source)(i,3)>= u_band) || (Data.HR.(source)(i,3) <= l_band)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
-        end
-    end 
-end
-
-function [ret] = bandpass_2(mat, l_band, u_band, rang)
+function [ret] = bandpass(mat, l_band, u_band, rang)
     % Applies a bandpass filtering to vector provided. Any RR-interval
     % value outside of the range specified by the lower and upper bounds is
     % replaced with a NaN
@@ -712,289 +698,6 @@ function [Data] = acar(Data, source, acar_range, band)
 end
 
 
-%% RR-Interval Analysis Functions
-function [ret] = pnnx_calc_2(mat,diff,bin,band)
-    % Calculates the percentage of adjacent NN-intervals that differ from
-    % each other by more than "diff" milliseconds
-    %   Inputs:
-    %       mat: A [n-by-1] vector which contains the data you want to
-    %       calculate pNNX for
-    %       diff: [int] The minimum difference in milliseconds between
-    %       successive NN-intervalse that you want to count
-    %
-    %       bin: [1-by-2 cell array] Used for creating a vector of the pNNX
-    %       results from a sliding bin of Y seconds or entries. This takes the
-    %       format of {index, 'units'}, so if you want to have a bin of the
-    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
-    %       If you don't want this, set bin to false.
-    %
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the pnnX of. If false, then analyze the whole
-    %       range
-    
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2,c] = size(mat);
-        r_1 = 1;
-    end
-    
-    % If they've decided to use the bin values
-    if iscell(bin)
-        a = bin{1}; % value
-        b = bin{2}; % units
-        
-        ret = zeros(r_2-r_1,1);
-        
-        if strcmp(b,'second')
-            for i = r_1:r_2
-                count = 0;
-                j = 0;
-                
-                % Check loop backward until you have reached the 'b'
-                % seconds in the past through summing
-                while (sum(mat(i-j:i,1))/1000) <= a
-                    j = j+1;
-                    if j == i
-                        break;
-                    end
-                end
-                
-                if j > 1 && j < i % If there is more than one entry
-                    for k = (i-j+2):i
-                        if abs(mat(k,1) - mat(k-1,1))>= diff
-                            count = count+1;
-                        end
-                    end
-                    ret(i-r_1+1,1) = count/(j-1);
-                else
-                    ret(i-r_1+1,1) = 0;
-                end
-        
-            end
-        else % Looking at the past 'b' entries for the calculation
-            for i = (a+1):(r_2-r_1+1)
-                count = 0;
-                for j = 0:(a-1)
-                    if abs(mat(i-j,1) - mat(i-j-1,1))>= diff
-                        count = count+1;
-                    end
-                end
-                ret(i,1) = count/a;
-            end
-        end
-        
-    else
-        % If they just want a percentage for a matrix
-        count = 0;
-        for i = (r_1+1):r_2
-            if abs(mat(i,1)-mat(i-1,1))>= diff
-                count = count+1;
-            end
-        end
-        ret = count/(r_2-r_1);
-    end
-end
-
-function [ret] = rmssd_calc_2(mat,bin,band)
-    % Calculates the root mean square of successive differences (RMSSD) for
-    % the vector of mesasurements provided.
-    %   Inputs:
-    %       mat: A [n-by-1] vector which contains the data you want to
-    %       calculate RMSSD for
-    %
-    %       bin: [1-by-2 cell array] Used for creating a vector of the
-    %       RMSSD
-    %       results from a sliding bin of Y seconds or entries. This takes the
-    %       format of {index, 'units'}, so if you want to have a bin of the
-    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
-    %       If you don't want this, set bin to false.
-    %
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the RMSSD of. If false, then analyze the whole
-    %       range
-    
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2,c] = size(mat);
-        r_1 = 1;
-    end
-    
-    %If they've decided to use the bin values
-    if iscell(bin)
-        a = bin{1}; % value
-        b = bin{2}; % units
-        
-        ret = zeros(r_2-r_1,1);
-        
-        if strcmp(b,'second')
-            for i = r_1:r_2
-                summation = 0;
-                j = 0;
-                
-                % Check loop backward until you have reached the 'b'
-                % seconds in the past through summing
-                while (sum(mat(i-j:i,1))/1000) <= a
-                    j = j+1;
-                    if j == i
-                        break;
-                    end
-                end
-                
-                if j > 1 && j < i % If there is more than one entry
-                    for  k = (i-j+2):i
-                        summation = summation+(mat(k,1)-mat(k-1,1))^2;
-                    end
-                    ret(i-r_1+1,1) = sqrt((1/(j-2))*summation);
-                else
-                    ret(i-r_1+1,1) = 0;
-                end
-            end
-        else % Looking at the past 'a' entries for the calculation
-            for i = (a+1):(r_2-r_1+1)
-                summation = 0;
-                for j = 0:(a-1)
-                    summation = summation+(mat(i-j,1)-mat(i-j-1,1))^2;
-                end
-                ret(i,1) = sqrt((1/a)*summation);
-            end
-        end
-        
-    else
-        % If they just want a single value for the input vector
-        summation = 0;
-        for  i = (r_1+1):r_2
-            summation = summation+(mat(i,1)-mat(i-1,1))^2;
-        end
-        ret = sqrt(1/(r_2-r_1)*summation);
-    end
-
-end
-
-function [ret] = sdnn_calc_2(mat,bin,band)
-    % Calculates the standard deviation for the vector of mesasurements provided.
-    %   Inputs:
-    %       mat: A [n-by-1] vector which contains the data you want to
-    %       calculate standard deviation for
-    %       bin: [1-by-2 cell array] Used for creating a vector of the
-    %       standard deviations
-    %       results from a sliding bin of Y seconds or entries. This takes the
-    %       format of {index, 'units'}, so if you want to have a bin of the
-    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
-    %       If you don't want this, set bin to false.
-    %
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the RMSSD of. If false, then analyze the whole
-    %       range
-    
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2,c] = size(mat);
-        r_1 = 1;
-    end
-    
-    %If they've decided to use the bin values
-    if iscell(bin)
-        a = bin{1}; % value
-        b = bin{2}; % units
-        
-        ret = zeros(r_2-r_1,1);
-        
-        if strcmp(b,'second')
-            for i = r_1:r_2
-                j = 0;
-                
-                % Check loop backward until you have reached the 'b'
-                % seconds in the past through summing
-                while (sum(mat(i-j:i,1))/1000) <= a
-                    j = j+1;
-                    if j == i
-                        break;
-                    end
-                end
-                
-                if j > 1 && j < i % If there is more than one entry
-                    ret(i-r_1+1,1) = std(mat((i-j+1:i),1));
-                else
-                    ret(i-r_1+1,1) = 0;
-                end
-            end
-        else % Looking at the past 'a' entries for the calculation
-            for i = (a+1):(r_2-r_1+1)
-                ret(i,1) = std(mat(i-a:i,1));
-            end
-        end
-        
-    else
-        % If they just want a single value for the input vector
-        ret = std(mat(r_1:r_2,1));
-    end
-
-end
-
-function [ret] = sdsd_calc_2(mat,bin,band)
-    % Calculates the standard deviation of successive differences (SDSD)
-    % for the vector of measurements provided
-    %   Inputs:
-    %       mat: A [n-by-1] vector which contains the data you want to
-    %       calculate SDSD for
-    %       bin: [1-by-2 cell array] Used for creating a vector of the
-    %       standard deviations
-    %       results from a sliding bin of Y seconds or entries. This takes the
-    %       format of {index, 'units'}, so if you want to have a bin of the
-    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
-    %       If you don't want this, set bin to false.
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the RMSSD of. If false, then analyze the whole
-    %       range
-    
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2,c]=size(mat);
-        r_1=1;
-    end
-    
-    %If they've decided to use the bin values
-    if iscell(bin)
-        a = bin{1}; % value
-        b = bin{2}; % units
-        
-        ret = zeros(r_2-r_1,1);
-        
-        if strcmp(b, 'second')
-            for i = r_1:r_2
-                j = 0;
-                
-                while (sum(mat(i-j:i,1))/1000) <= a
-                    j = j+1;
-                    if j == i
-                        break;
-                    end
-                end
-                
-                if j > 1 && j < i % If there is more than one entry
-                    ret(i-r_1+1,1) = std(mat(i-j+2:i)-mat((i-j+1:i-1),1));
-                else
-                    ret(i-r_1+1,1) = 0;
-                end
-            end
-        else
-            for i = (a+1):(r_2-r_1+1)
-                ret(i,1) = std(mat((i-a+1:i)) - mat((i-a:i-1),1));
-            end
-        end
-    else
-        ret = std(mat(r_1+1:r_2,1)-mat(r_1:r_2-1,1));
-    end
-end
-
 %% RR-Interval Plotting
 function [SD1, SD2] = poincare_plot(mat, fig)
     % Generates a poincare plot from the data
@@ -1138,10 +841,10 @@ function [] = Derek_export(Data,aff,type,fil_name)
     %TODO: add functionality for multiple sets of data
     new_mat = Data.(type).Raw(:,[1,3]);
     
-    new_mat(:,end+1) = pnnx_calc_2(new_mat(:,2),50,{10,'second'},false);
-    new_mat(:,end+1) = rmssd_calc_2(new_mat(:,2),{10,'second'},false);
-    new_mat(:,end+1) = sdnn_calc_2(new_mat(:,2),{10,'second'},false);
-    new_mat(:,end+1) = sdsd_calc_2(new_mat(:,2),{10,'second'},false);
+    new_mat(:,end+1) = pnnx_calc(new_mat(:,2),50,{10,'second'},false);
+    new_mat(:,end+1) = rmssd_calc(new_mat(:,2),{10,'second'},false);
+    new_mat(:,end+1) = sdnn_calc(new_mat(:,2),{10,'second'},false);
+    new_mat(:,end+1) = sdsd_calc(new_mat(:,2),{10,'second'},false);
      
     new_mat(:,end+1) = zeros(length(new_mat),1);
 
@@ -1205,8 +908,8 @@ function [Data] = group_analysis(Data, type, bin, band)
     Data.(type).(pst_tab){1} = {};
 
     for i = 1:length(Data.(type).Raw)
-        Data.(type).(rname){i} = rmssd_calc_2(Data.(type).Raw{i}(:,3),bin,band{i});
-        Data.(type).(pname){i} = pnnx_calc_2(Data.(type).Raw{i}(:,3),50,bin,band{i});
+        Data.(type).(rname){i} = rmssd_calc(Data.(type).Raw{i}(:,3),bin,band{i});
+        Data.(type).(pname){i} = pnnx_calc(Data.(type).Raw{i}(:,3),50,bin,band{i});
         
         % Record mean and standard deviation for dataset
         index = Data.(type).(rname){i}==Inf;
