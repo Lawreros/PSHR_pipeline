@@ -9,32 +9,12 @@ close all;
 %% Test files:
 
 %HR file
-hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/';
-hr_file = {'HR_03-21-2022.txt', 'HR_03-28-2022.txt', 'HR_04-25-2022.txt', 'HR_05-09-2022.txt',...
-    'HR_03-18-2022.txt', 'HR_03-25-2022.txt', 'HR_04-22-2022.txt', 'HR_05-06-2022.txt',...
-    'HR_04-28-2022.txt'};
-
-%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Ross/';
-%hr_file = {'HR_05-16-2022_cooking.txt', 'HR_05-16-2022_gym.txt', 'HR_05-17-2022.txt','HR_05-17-2022_normwalk.txt', 'HR_05-17-2022_lowwalk.txt'};
-
-%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/old_student/';
-%hr_file = {'2020-02-26_OGCP_PhysMon_AI_Rosensweig.txt','2020-01-08_1255_AI_Giansanti.txt'};
-
-%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/sample/';
-%hr_file = {'HR_03-09-2022.txt'};
-
-%hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
-%hr_file = {'HR_05-24-2022_2.txt'};
+hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
+hr_file = {'HR_05-24-2022.txt'};
 
 %ECG file
-%ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
-%ecg_file = {'ECG_05-24-2022_2.txt'};
-
-ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/';
-ecg_file = {'ECG_03-21-2022.txt', 'ECG_03-28-2022.txt', 'ECG_04-25-2022.txt', 'ECG_05-09-2022.txt',...
-    'ECG_03-18-2022.txt', 'ECG_03-25-2022.txt', 'ECG_04-22-2022.txt', 'ECG_05-06-2022.txt',...
-    'ECG_04-28-2022.txt'};
-
+ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
+ecg_file = {'ECG_05-24-2022.txt'};
 
 %Affect file
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
@@ -42,7 +22,9 @@ aff_file = "2022-03-18_Kessler.csv";
 
 
 %Export RR-intervals with affects denoted for Richard
-aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming','loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal','repetitive behaviors','unresponsive/unable to redirect'};
+aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming',...
+    'loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal',...
+    'repetitive behaviors','unresponsive/unable to redirect'};
 
 %
 %realtime = "11:19:15"
@@ -161,14 +143,11 @@ end
 
 Data = group_analysis(Data, "HR", false,false);
 
-cuts = {[1,1920],[1,1060],false,[1,3180],[1,1462],false,false,false,false};
+cuts = {[1,1462],[1,1920],false,[1,1060],false,false,false,false,[1,3180],[1,4900],false};
+%cuts = {[1,1920],[1,1060],false,[1,3180],[1,1462],false,false,false,false};
 Data = group_analysis(Data, 'HR', false, cuts);
 Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
 Data = group_analysis(Data, 'HR', {10, 'second'},cuts);
-Data = group_analysis(Data, 'HR', {15, 'second'},cuts);
-Data = group_analysis(Data, 'HR', {20, 'second'},cuts);
-Data = group_analysis(Data, 'HR', {25, 'second'},cuts);
-Data = group_analysis(Data, 'HR', {30, 'second'},cuts);
 
 %Derek_export(Data, aff, "HR", "Derek_HR_output");
 %Richard_export(Data, aff, "HR", "test_HR_output");
