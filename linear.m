@@ -77,7 +77,7 @@ dist = 40;
 
 
 %ECG-interval Plotting Flags
-raw_ecg_plot = false;
+
 
 
 %% Pipeline
@@ -118,13 +118,6 @@ Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
 
 %% ECG-Preprocessing
 
-
-%% Simple Plot of raw ECG data
-if raw_ecg_plot
-    fig2 = figure(2);
-    plot(Data.ECG.Raw(:,3));
-    title("Raw ECG Data");
-end
     
 %% ECG Exports
 
