@@ -91,35 +91,6 @@ Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
 
-%Bandpass Thresholding
-if Bandpass
-    Data = bandpass(Data,"Raw", l_band, u_band, false);
-end
-
-%Ectopic Heartbeats
-    %Malik Method
-if Malik
-    Data = malik(Data, "Raw", false);
-end
-    
-    
-    %Kamath Method
-if Kamath
-    Data = kamath(Data, "Raw", false);
-end
-    
-    %Karlsson Method
-if Karlsson
-    Data = karlsson(Data, "Raw", false);
-end
-    
-    
-    %Acar Method
-if Acar
-    Data = acar(Data, "Raw", acar_range, false);
-end
-    
-
 
 %% Simple Plot of raw RR data
 
@@ -147,12 +118,6 @@ Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
 
 %% ECG-Preprocessing
 
-
-
-%% ECG Analysis
-if ecg2rr
-    ecg_rr = ecg_rr_conversion(Data, peak, dist, 130); %This function converts the ECG data into RR-intervals through peak detection
-end
 
 %% Simple Plot of raw ECG data
 if raw_ecg_plot
@@ -487,93 +452,6 @@ function [new_array] = vectorize(matrix_array)
     end
     
 end
-
-%% RR-Interval Preprocessing Functions
-% TODO: Convert to new function format
-
-function [Data] = kamath(Data, source, band)
-    % Applies the kamath filtering method to the data provided. Any
-    % RR-interval which is outside of the acceptable bounds will be
-    % replaced with a NaN
-    %   Inputs:
-    %       Data: The Data structure
-    %       source: [string], Which matrix from the structure you want to
-    %       use
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to use the kamath filter on. If false, then analyze the whole
-    %       range
-
-    
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2, c] = size(Data.HR.(source));
-        r_1 = 1;
-    end
-    
-    %Create copy of matrix to edit
-    Data.HR.PP = Data.HR.(source);
-    
-    for i = r_1:(r_2-1)
-        a = 0.325 * Data.HR.(source)(i,3);
-        b = 0.245 * Data.HR.(source)(i,3);
-        
-        c = Data.HR.(source)(i+1,3) - Data.HR.(source)(i,3);
-        d = Data.HR.(source)(i,3) - Data.HR.(source)(i+1,3);
-        
-        if (0 <= c) && (c <= a)
-            Data.HR.PP(i,3) = NaN;
-        elseif (0 <= d) && (d <= b)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
-        end
-    end
-
-end
-        
-function [Data] = acar(Data, source, acar_range, band)
-    % Applies the Acar filtering method to the data provided. Any
-    % RR-interval which is outside of the acceptable bounds will be
-    % replaced with a NaN
-    %   Inputs:
-    %       Data: The Data structure
-    %       source: [string], Which matrix from the structure you want to
-    %       use
-    %       acar_range: [int] 
-    %       band: [2 int vector] The range [start, end] of values you wish
-    %       to use the Acar filter on. If false, then analyze the full
-    %       range
-
-
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2, c] = size(Data.HR.(source));
-        r_1 = acar_range+1;
-    end
-    
-    if r_1 < acar_range
-        disp("starting point less than acar range, changing starting point to (acar range)+1");
-        r_1 = acar_range+1;
-    end
-    
-    Data.HR.PP = Data.HR.(source);
-    
-    for i = r_1:r_2
-        a = sum(Data.HR.(source)(i-acar_range:i-1,3));
-        
-        if abs(a-Data.HR.(source)(i,3))> (0.2*a)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
-        end
-    end
-end
-
-
 
 %% Export Functions
 function [] = Richard_export(Data,aff,type,fil_name)

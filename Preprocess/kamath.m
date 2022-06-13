@@ -1,7 +1,6 @@
-function [ret] = karlsson(mat, band)
-% Applies the Karlsson filtering method to the data provided. Any
-% entry which changes more or less than 20% of the mean of the entries
-% directly before and after it will be replaced with a NaN
+function [ret] = kamath(mat, band)
+% Applies the Kamath filtering method to the data provided. Any
+% entry which falls outside the bounds will be replaced with a NaN
 %   Inputs:
 %       mat: A [n-by-1] vector which contains the data you want to 
 %       process.
@@ -11,24 +10,31 @@ function [ret] = karlsson(mat, band)
 %
 %   Returns:
 %       ret: [band by 1] vector with filtered data
-
+   
     if band
         r_1 = band(1);
         r_2 = band(2);
     else
         [r_2, c] = size(mat);
-        r_1 = 2;
+        r_1 = 1;
     end
-        
+    
     %Create copy of matrix to edit
     ret = mat(r_1:r_2,1);
     
-    for i = 2:(length(r_2)-1)
-        a = (ret(i-1,1)+ret(i+1,1))/2;
+    for i = 1:(length(ret)-1)
+        a = 0.325 * ret(i,1);
+        b = 0.245 * ret(i,1);
         
-        if abs(a-ret(i,1)) > (0.2*a)
+        c = ret(i+1,1) - ret(i,1);
+        d = ret(i,1) - ret(i+1,1);
+        
+        if (0 <= c) && (c <= a)
+            ret(i,1) = NaN;
+        elseif (0 <= d) && (d <= b)
             ret(i,1) = NaN;
         end
     end
+
 end
 
