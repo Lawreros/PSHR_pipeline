@@ -11,6 +11,8 @@ close all;
 % session
 
 addpath('./Analysis');
+addpath('./Preprocess');
+addpath('./Export');
 
 
 %% Test files:
@@ -118,31 +120,6 @@ if Acar
 end
     
 
-% Interpolation
-    
-
-
-%% RR-Interval Analysis
-
-% pNN50
-if pnnx
-    Data = pnnx_calc(Data, "Raw", 50, false);
-end
-
-% SDNN
-if sdnn
-    Data = sdnn_calc(Data, "Raw", false);
-end
-
-% SDSD
-if sdsd
-    Data = sdsd_calc(Data, "Raw", false);
-end
-
-% RMSSD
-if rmssd
-    Data = rmssd_calc(Data, "Raw", false);
-end
 
 %% Simple Plot of raw RR data
 
@@ -174,7 +151,7 @@ Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
 
 %% ECG Analysis
 if ecg2rr
-    ecg_rr = ecg_rr_conversion(Data, peak, dist); %This function converts the ECG data into RR-intervals through peak detection
+    ecg_rr = ecg_rr_conversion(Data, peak, dist, 130); %This function converts the ECG data into RR-intervals through peak detection
 end
 
 %% Simple Plot of raw ECG data
@@ -514,71 +491,6 @@ end
 %% RR-Interval Preprocessing Functions
 % TODO: Convert to new function format
 
-function [ret] = bandpass(mat, l_band, u_band, rang)
-    % Applies a bandpass filtering to vector provided. Any RR-interval
-    % value outside of the range specified by the lower and upper bounds is
-    % replaced with a NaN
-    %   Inputs:
-    %       Data: The Data structure
-    %       source: [string], Which matrix from the structure you want to
-    %       use
-    %       l_band: [int], the lower bounding value for the bandpass filter
-    %       u_band: [int], the upper bounding value for the bandpass filter
-    %       rang: [2 int vector] The range [start, end] of values you want
-    %       to use the bandpass on. If false, then analyze the whole
-    %       range
-
-    if rang
-        r_1 = rang(1);
-        r_2 = rang(2);
-    else
-        [r_2,c] = size(mat);
-        r_1 = 1;
-    end
-
-    %Create copy of matrix to edit
-    ret = mat;
-    
-    for i = r_1:r_2
-        if (ret(i,1)>= u_band) || (ret(i,1) <= l_band)
-            ret(i,3) = NaN;
-        end
-    end 
-end
-
-function [Data] = malik(Data, source, band)
-    % Applies the malik filtering method to the data provided. Any
-    % RR-inverval which is outside of the acceptable bounds will be
-    % replaced with a NaN
-    %   Inputs:
-    %       Data: The Data structure
-    %       source: [string], Which matrix from the structure you want to
-    %       use
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to use the malik filter on. If false, then analyze the whole
-    %       range
-    
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2, c] = size(Data.HR.(source));
-        r_1 = 1;
-    end
-        
-    %Create copy of matrix to edit
-    Data.HR.PP = Data.HR.(source);
-    
-    for i = r_1:(r_2-1)
-        if abs(Data.HR.(source)(i,3) - Data.HR.(source)(i+1,3)) > (0.2*Data.HR.(source)(i,3))
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
-        end
-    end
-
-end
-
 function [Data] = kamath(Data, source, band)
     % Applies the kamath filtering method to the data provided. Any
     % RR-interval which is outside of the acceptable bounds will be
@@ -619,42 +531,6 @@ function [Data] = kamath(Data, source, band)
         end
     end
 
-end
-
-function [Data] = karlsson(Data, source, band)
-    % Applies the Karlsson filtering method to the data provided. Any
-    % RR-interval which is outside of the acceptable bounds will be
-    % replaced with a NaN
-    %   Inputs:
-    %       Data: The Data structure
-    %       source: [string], Which matrix from the structure you want to
-    %       use
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to use the Karlsson filter on. If false, then analyse the whole
-    %       range
-
-    if band
-        r_1 = band(1);
-        r_2 = band(2);
-    else
-        [r_2, c] = size(Data.HR.(source));
-        r_1 = 2;
-    end
-        
-    %Create copy of matrix to edit
-    Data.HR.PP = Data.HR.(source);
-    
-    for i = r_1:(r_2-1)
-        a = (Data.HR.(source)(i-1,3)+Data.HR.(source)(i+1,3))/2;
-        
-        if abs(a-Data.HR.(source)(i,3)) > (0.2*a)
-            Data.HR.PP(i,3) = NaN;
-        else
-            Data.HR.PP(i,3) = Data.HR.(source)(i,3);
-        end
-        
-    end
-    
 end
         
 function [Data] = acar(Data, source, acar_range, band)
@@ -697,86 +573,6 @@ function [Data] = acar(Data, source, acar_range, band)
     end
 end
 
-
-%% RR-Interval Plotting
-function [SD1, SD2] = poincare_plot(mat, fig)
-    % Generates a poincare plot from the data
-    % Inputs:
-    %       RR: [n-by-1 array], vector containing all RR values
-    %       plot_num: [int], plot position on the subplot figure
-    %       max_plot_number: [int], maximum intended entries into subplot figure
-
-
-    cut = [];
-    for i=1:length(mat)              % Eliminate NaN's
-        if mat(i,1) == 0 || isnan(mat(i,1))
-            cut = [cut,i];
-        end
-    end
-    mat(cut) = [];
-    mat(:,2) = [mat(2:end,1);0];
-    mat(end,:) = [];
-
-    % Calculate SD1 and SD2
-    xc = sum(mat(1:end-1,1))/(length(mat)-1);
-    yc = sum(mat(2:end,2))/(length(mat)-1);
-
-    SD1 = sqrt((1/length(mat))*nansum(((mat(:,1)-mat(:,2))-nanmean(mat(:,1)-mat(:,2))).^2)/2);
-    SD2 = sqrt((1/length(mat))*nansum(((mat(:,1)+mat(:,2))-nanmean(mat(:,1)+mat(:,2))).^2)/2);
-
-    % Making a rotated elipsoid to display SD1 and SD2 https://www.mathworks.com/matlabcentral/answers/342148-how-can-i-rotate-an-ellipse
-    x = zeros(1000,1);
-    y = zeros(1000,1);
-    theta = linspace(0, 2*pi, 1000);
-    for k = 1:1000
-        x(k) = SD2*cos(theta(k));
-        y(k) = SD1*sin(theta(k));
-    end
-    alpha = pi/4;
-    R = [cos(alpha) -sin(alpha); sin(alpha) cos(alpha)];
-    rCoords = R*[x'; y'];
-    xr = rCoords(1,:)';
-    yr = rCoords(2,:)';
-
-    min_RR = nanmin(mat(:,1));
-    max_RR = nanmax(mat(:,1));
-
-
-    figure(fig);
-    scatter(mat(:,1), mat(:,2), 15)
-    axis([min_RR-50 max_RR+50 min_RR-50 max_RR+50])
-    xlabel('RR_n (ms)');
-    ylabel('RR_n_+_1 Interval (ms)');
-    title('Poincare Plot placeholder title')
-    hold on;
-    plot(xr+xc, yr+yc, 'r');
-    plot([0:1600],[0:1600],'r');
-    hold off;
-
-end
-
-
-%% ECG Analysis Functions
-function [locs] = ecg_rr_conversion(Data, peak, dist)
-% Function to take the ECG data and estimate RR-intervals from them
-
-%inputs:
-%   Data: Data structure containing Data.ECG and Data.HR
-%   peak: minimum peak prominence for peak
-%   dist: minimum distance in index number for peaks
-
-
-[pks, locs] = findpeaks(Data.ECG.Raw(:,3), 'MinPeakProminence', peak, 'MinPeakDistance', dist);
-
-for i = 2:length(locs)
-    %convert to milliseconds assuming a 130Hz sampling frequency
-    locs(i,2) = (locs(i,1)-locs(i-1,1))*(100/13);
-end
-    
-%15 on locs = 377 on Data.HR.Raw
-disp('done');
-
-end
 
 
 %% Export Functions
