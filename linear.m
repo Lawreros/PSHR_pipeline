@@ -13,21 +13,22 @@ close all;
 addpath('./Analysis');
 addpath('./Preprocess');
 addpath('./Export');
+addpath('./Import');
 
 
 %% Test files:
 
 %HR file
-hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
-hr_file = {'HR_05-24-2022.txt'};
+hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/sample/';
+hr_file = {'HR_A.txt'};
 
 %ECG file
-ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/group_HR_analysis/Derek/';
-ecg_file = {'ECG_05-24-2022.txt'};
+ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/sample/';
+ecg_file = {'ECG_A.txt'};
 
 %Affect file
 aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-aff_file = "2022-03-18_Kessler.csv";
+aff_file = "A_coding.csv";
 
 %realtime = "11:19:15"
 %videotime = 728
@@ -85,8 +86,8 @@ Data.HR.Raw{1} = {};
 Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
-Data = LoadSelected(Data, hr_path, hr_file, "HR");
-Data = LoadSelected(Data, ecg_path, ecg_file, "ECG");
+Data = pshr_load_data(Data, hr_path, hr_file, "HR");
+Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
 Data = LoadAffect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
@@ -211,12 +212,12 @@ Data.Affect.path = path;
     %Check if there is any HR or ECG data loaded. If so, then generate the
     %index numbers for the start and stop.
     
-    if iscell(Data.HR.Raw) == 0
+    if iscell(Data.HR.Raw) == 1
         disp("HR data found, generating start and stop indexes");
         Data = time_adjust(Data, algn, "HR");
     end
         
-    if iscell(Data.ECG.Raw) == 0
+    if iscell(Data.ECG.Raw) == 1
         disp("ECG data found, generating start and stop indexes"); 
         Data = time_adjust(Data, algn, "ECG");
     end
@@ -288,163 +289,7 @@ function [Data] = time_adjust(Data, algn, type)
 end
 
 
-%% HR/ECG Loading Functions
-function [Data] = LoadSelected(Data, path, file, type)
-        
-        %Clear previously loaded information (add clear back in for gui)
-        %clear Data;
-        %Data.HR.Raw{1} = {};
-        %Data.ECG.Raw{1} = {};
-        
-        switch type
-            case 'HR'
-                %[file, path] = uigetfile('*.txt','MultiSelect','on');
-                Data.HR.path = path;
-                
-                if iscell(file)
-                    for i = 1:length(file)
-                        dump = data_load(strcat(path,file{i}));
-                        Data.HR.Raw{i} = vectorize(dump);
-                        clear dump;
-                    end
-                    Data.HR.files = file;
-                    %hr_load_list.Items=file;
-                else
-                    dump = data_load(strcat(path,file));
-                    Data.HR.Raw = vectorize(dump);
-                    clear dump;
-                    %Display the files that are loaded
-                    Data.HR.files = {file};
-                    %hr_load_list.Items={file};
-                end
-                
-            case 'ECG'
-                %[file,path] = uigetfile('*.txt','MultiSelect','on');
-                Data.ECG.path = path;
-                
-                if iscell(file)
-                    for i = 1:length(file)
-                        dump = data_load(strcat(path,file{i}));
-                        Data.ECG.Raw{i} = vectorize(dump);
-                        clear dump;                        
-                    end
-                    Data.ECG.files = file;
-                    %ecg_load_list.Items=file;
-                else
-                    dump = data_load(strcat(path,file));
-                    Data.ECG.Raw = vectorize(dump);
-                    clear dump;
-                    Data.ECG.files = {file};
-                    %ecg_load_list.Items={file};
-                end
-                
-        end
-        disp(strcat('Loading file: ', path, file));
-    end
 
-function [entries] = entry_select(list, target)
-    %Given a list of strings and set of target(s), returns the entry number
-    %in the list of each of the targets.
-    
-    %list : cell array of strings
-    %target : cell array of strings or single string
-    %entries : matrix vector containing the entry numbers
-    
-    %create cell array if target is single string
-    
-    disp(target);
-    disp(list);
-    if iscell(target) == 0
-        target = {target};
-    end
-    
-    if iscell(list) == 0
-        list = {list};
-    end
-    
-    matches = ismember(list,target);
-    entries = find(matches);
-
-end
-
-function [raw_array] = data_load(fpath)
-    %Load in file
-    fid = fopen(fpath);
-    line = fgetl(fid);
-    
-    % Count number of entries in line to determine HR or ECG data
-    num = length(strfind(line,'	'));
-
-    if num < 5
-        disp('HR file detected:');
-        format = '%f:%f:%f %f %f %f %f';
-    elseif num < 70
-        disp('ECG file detected:');
-        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 57));
-    else
-        disp('ECG file detected:');
-        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 73)); %generate 73 ecg entries
-    end
-
-    % Read in information, converting app time into milliseconds
-    i = 1;
-    while line ~= -1
-        nline = textscan(line, format, 'Delimiter', '\t');
-        
-        if isempty(nline{5}) %Add check for ERROR entry/issue and add skip entry
-            disp(strcat("ERROR found in row: ", int2str(i)));
-            disp("Skipping data packet");
-            line = fgetl(fid);
-        else
-            ntime = ((((nline{1}*60)+nline{2})*60)+nline{3})*1000; %convert time into milliseconds
-            raw_array(i,:) = [ntime, nline(1,4:end)];
-            line = fgetl(fid);
-            i=i+1;
-        end
-    end
-    disp(strcat(fpath, ': LOADED'));
-    raw_array = cell2mat(raw_array);
-end
-
-function [new_array] = vectorize(matrix_array)
-    %Take the raw array and concatonate all of the data entries into a
-    %vector for easy manipulation later
-    
-
-    [r, c] = size(matrix_array);
-    if c < 10 %might not matter, but keeping in case app format changes
-        disp('HR cell array detected:');
-        skip = 3;
-    else
-        disp('ECG cell array detected:');
-        skip = 3;
-    end
-
-    % Convert array into one were the ecg values/RR intervals are all in
-    % one column
-    %Lines with no RR intervals are automatically removed during this
-    %process, as they contain no valuable information.
-    entry = 1;
-    new_array=[];
-    
-    for i = 1:r
-        new_array(entry,1:2) = matrix_array(i,1:2);
-        for j = skip:c
-            if matrix_array(i,j) ~= 0
-                new_array(entry,3) = matrix_array(i,j);
-                entry=entry+1;
-            end
-        end
-    end
-    %Add in NaNs for new rows instead of 0's to make time alignment easier
-    
-    for i = 1:length(new_array)
-        if new_array(i,1)==0
-            new_array(i,1) = NaN;
-        end
-    end
-    
-end
 
 %% Export Functions
 function [] = Richard_export(Data,aff,type,fil_name)
