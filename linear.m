@@ -1,7 +1,7 @@
 % PHYSMON Pipeline
 % The purpose of this file is to make debugging the functions in the GUI
 % easier, as checking analysis values in a linear script is much easier
-% that the constantly updating/changing GUI.
+% that the constantly updating/changing GUI
 
 clear all;
 close all;
