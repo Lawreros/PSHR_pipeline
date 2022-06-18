@@ -3,8 +3,8 @@
 %different people
 clear all;
 
-aff_1 = 'ignore_samples/2022-03-25_Montanez_V2.csv';
-aff_2 = 'ignore_samples/2022-03-25_Kessler_V2.csv';
+aff_1 = 'ignore_samples/2022-03-21_Montanez_NEW.csv';
+aff_2 = 'ignore_samples/2022-03-21_Kessler_NEW.csv';
 
 
 tab_1 = readtable(aff_1, 'Format', 'auto');
@@ -14,12 +14,12 @@ tab_2 = readtable(aff_2, 'Format', 'auto');
 tab_2.Properties.VariableNames{2} = 'Affect1_2';
 tab_2.Properties.VariableNames{3} = 'Affect2_2';
 tab_2.Properties.VariableNames{4} = 'Affect3_2';
-tab_2.Properties.VariableNames{25} = 'on_camera_2';
-tab_2.Properties.VariableNames{26} = 'problem_yn_2';
+tab_2.Properties.VariableNames{17} = 'on_camera_2'; %TODO: This is for the new coding format, will be wrong for 03-18 coding
+tab_2.Properties.VariableNames{18} = 'problem_yn_2'; % ""
 
 %Make table for comparison
-comp_tab = tab_1(:,[1:4,25,26]);
-comp_tab = [comp_tab, tab_2(:,[2:4,25,26])];
+comp_tab = tab_1(:,[1:4,17,18]);%25,26]);
+comp_tab = [comp_tab, tab_2(:,[2:4,17,18])];%25,26])];
 
 %free up some memory
 clear tab_1 tab_2;

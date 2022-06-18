@@ -7,8 +7,8 @@ The purpose of this pipeline is to provide a GUI for analysis and visualization 
 ## Repository Contents:
 Relevant files for casual users:
 - `sample` : folder containing sample HR and ECG data
-- `main.m` : the MATLAB script which calls the main GUI. This is the function that you want to run in you MATLAB editor.
-
+- `linear.m` : a linear version of the MATLAB script found in `main.m`, used for new function development and debugging
+- `main.m` : the MATLAB script which calls the main GUI
 
 ## Tutorial (subject to change as pipeline is developed)
 1) Download the repository and open the `main.m` file in your MATLAB editor

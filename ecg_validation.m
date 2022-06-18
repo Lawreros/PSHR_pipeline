@@ -1,18 +1,21 @@
 % File for exploration of collected ECG data from the Student
 clear all;
 
-ecg_file = '~/Downloads/OneDrive_1_6-6-2022/AI2_20191007_023246.mat';
-%ecg_file = '~/Downloads/OneDrive_1_6-6-2022/AI_20191007_022054.mat';
+%ecg_file = '~/Downloads/OneDrive_1_6-6-2022/AI2_20191007_023246.mat';
+ecg_file = '~/Downloads/OneDrive_1_6-6-2022/AI_20191007_022054.mat';
+%ecg_file = './group_HR_analysis/Derek/999_20220607_014111.mat';
 
 load(ecg_file);
 
 peak = 800;
-dis = 40;
+dis = 110;%40
 
-[pks, locs] = findpeaks(transpose(AI2_20191007_023246mffECG), 'MinPeakProminence', peak, 'MinPeakDistance', dis);
-plot(AI2_20191007_023246mffECG)
-% [pks, locs] = findpeaks(transpose(AI_20191007_022054mffECG), 'MinPeakProminence', peak, 'MinPeakDistance', dis);
+% [pks, locs] = findpeaks(transpose(AI2_20191007_023246mffECG), 'MinPeakProminence', peak, 'MinPeakDistance', dis);
+% plot(AI2_20191007_023246mffECG)
+[pks, locs] = findpeaks(transpose(AI_20191007_022054mffECG), 'MinPeakProminence', peak, 'MinPeakDistance', dis);
 % plot(AI_20191007_022054mffECG)
+
+%[pks, locs] = findpeaks(transpose(a999_20220607_014111mffECG), 'MinPeakProminence', peak, 'MinPeakDistance', dis);
 
 
 % Generate RR-intervals form the index locations of the peaks

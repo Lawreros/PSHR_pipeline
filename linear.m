@@ -88,7 +88,7 @@ Data.Affect.Raw{1} = {};
 
 Data = pshr_load_data(Data, hr_path, hr_file, "HR");
 Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
-Data = LoadAffect(Data, aff_path, aff_file);
+Data = load_affect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
 
@@ -128,7 +128,7 @@ disp('done');
 
 %% Affect Loading
 
-function [Data] = LoadAffect(Data, path, file)
+function [Data] = load_affect(Data, path, file)
 % Load in affect file and add it to the structure
 Data.Affect.path = path;
 
