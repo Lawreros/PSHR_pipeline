@@ -19,16 +19,16 @@ addpath('./Import');
 %% Test files:
 
 %HR file
-hr_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/sample/';
+hr_path = './sample/';
 hr_file = {'HR_A.txt'};
 
 %ECG file
-ecg_path = '/home/ross/Documents/MATLAB/PSHR_pipeline/sample/';
+ecg_path = './sample/';
 ecg_file = {'ECG_A.txt'};
 
 %Affect file
-aff_path = "/home/ross/Documents/MATLAB/PSHR_pipeline/sample/";
-aff_file = "A_coding.csv";
+aff_path = "./sample/";
+aff_file = {'A_coding.csv'};
 
 %realtime = "11:19:15"
 %videotime = 728
@@ -127,166 +127,6 @@ disp('done');
 
 
 %% Affect Loading
-
-function [Data] = load_affect(Data, path, file)
-% Load in affect file and add it to the structure
-Data.Affect.path = path;
-
-%TODO: Add functionality for loading and processing multiple affects at a
-%time
-
-    if iscell(file)
-        for i = 1:length(file)
-            %For some reason you have to set Format to auto in order for
-            %readtable to not ignore affects in sparsely filled columns
-            %(i.e. if there is only like 4 entries in Affect2, without
-            %auto, MATLAB will disregard Affect2 and have the column be all
-            %NaNs)
-            Data.Affect.Raw{i} = readtable(strcat(path,file{i}),'Format','auto');
-        end
-        Data.Affect.files = {file};
-    else
-        Data.Affect.Raw = readtable(strcat(path,file),'Format','auto');
-        Data.Affect.files = {file};
-    end
-
-    
-    %Get list of all unique affects used in the coding (SINGLE)
-    aff_list = unique(Data.Affect.Raw.Affect1);
-    Data.Affect.Raw.Affect1{1} = "start";
-    Data.Affect.Raw.Affect1{end+1} = "end";
-    
-    if iscell(unique(Data.Affect.Raw.Affect2(1:end-1)))
-        ext = unique(Data.Affect.Raw.Affect2(~cellfun(@isempty, Data.Affect.Raw.Affect2)));
-%         aff_list = [aff_list; unique(Data.Affect.Raw.Affect2)];
-        aff_list = [aff_list; ext];
-        Data.Affect.Raw.Affect2{1} = "start";
-        Data.Affect.Raw.Affect2{end} = "end";
-    else
-        disp('No entries in column Affect2');
-    end
-    
-    if iscell(unique(Data.Affect.Raw.Affect3(1:end-1)))
-        ext = unique(Data.Affect.Raw.Affect3(~cellfun(@isempty, Data.Affect.Raw.Affect3)));
-%         aff_list = [aff_list; unique(Data.Affect.Raw.Affect3)];
-        Data.Affect.Raw.Affect3{1} = "start";
-        Data.Affect.Raw.Affect3{end} = "end";
-    else
-        disp('No entries in column Affect3');
-    end
-    
-    aff_list = unique(aff_list); %cell array of all affects used
-    
-    
-    %Generate Start and End times for the Affects
-    Data.Affect.Times = {};
-    for i = 1:length(aff_list)
-        starts = [];
-        ends = [];
-        for k = 1:3
-            col = strcat("Affect",string(k));
-        
-            buffer = [false, transpose(diff(strcmp(Data.Affect.Raw.(col), aff_list{i}))~=0)];
-            buffer = find(buffer);
-            
-        
-            for j = 1:2:length(buffer)
-                starts = [starts, Data.Affect.Raw.Time_sec(buffer(j))];%buffer(j)];
-                ends = [ends, Data.Affect.Raw.Time_sec(buffer(j+1)-1)];%buffer(j+1)-1];
-            end
-        end
-        Data.Affect.Times{i,1} = aff_list{i};
-        Data.Affect.Times{i,2} = starts;
-        Data.Affect.Times{i,3} = ends;
-    end
-    
-    %Load and store alignment time
-    
-    %realtime = "11:19:15"
-    %videotime = 728 -1 for lag
-    
-    pol_time = (((((11*60)+19)*60)+15)*1000);
-    vid_time = 727*1000;
-    algn = pol_time - vid_time;
-    
-    %Check if there is any HR or ECG data loaded. If so, then generate the
-    %index numbers for the start and stop.
-    
-    if iscell(Data.HR.Raw) == 1
-        disp("HR data found, generating start and stop indexes");
-        Data = time_adjust(Data, algn, "HR");
-    end
-        
-    if iscell(Data.ECG.Raw) == 1
-        disp("ECG data found, generating start and stop indexes"); 
-        Data = time_adjust(Data, algn, "ECG");
-    end
-
-
-end
-
-function [Data] = time_adjust(Data, algn, type)
-%Changes the generates indexes for Data.*.Raw that correspond with
-%timestamps found in Data.Affect.Times
-
-%inputs:
-% Data: main Data structure
-% algn: alignment time found with (polar_timestamp - video_time) = corr
-% type: What type of Data you are adjusting the time of
-
-
-    % Iterate through start and stop times
-    [r,c] = size(Data.Affect.Times);
-    
-    % Create place to store new times
-    Data.(type).Affect = {};
-
-    
-    %Iterate through each affect
-    for i = 1:r
-        starts = [];
-        ends = [];
-        
-        %Iterate through each start/stop pair
-        for j = 1:length(Data.Affect.Times{i,2})
-            
-            a = find(Data.(type).Raw(:,1) >= (Data.Affect.Times{i,2}(j)*1000+algn));
-            %disp(Data.Affect.Times{i,2}(j)*1000+algn);
-            
-            b = find(Data.(type).Raw(:,1) > (Data.Affect.Times{i,3}(j)*1000+algn));
-            %disp(Data.Affect.Times{i,3}(j)*1000+algn);
-            
-            if isempty(a)==0 && isempty(b)==0
-                if a(1) == b(1)
-                        %nothing is there
-                else
-                        starts = [starts, a(1)];
-                        ends = [ends, b(1)-1];
-                end
-            elseif isempty(a)==0 && isempty(b)==1
-                fprintf("Affect %s ends after the recording and starts at time %d\n",...
-                    Data.Affect.Times{i,1}, Data.Affect.Times{i,2}(j));
-                    starts = [starts, a(1)];
-                    ends = [ends, length(Data.(type).Raw)];
-            else
-                %Issue due to the affects occuring outside of collected
-                %HR/ECG data
-                fprintf('WARNING: Affect %s from video time %d to %d could not be found in data\n',...
-                    Data.Affect.Times{i,1}, Data.Affect.Times{i,2}(j), Data.Affect.Times{i,3}(j));
-                
-            end
-        end
-            % Store indexes for each affect with their respective data
-            % types, instead of keeping everything in the Affect structure.
-            % This way, every thing you need for each analysis will be
-            % grouped
-            Data.(type).Affect{i,1} = Data.Affect.Times{i,1};
-            Data.(type).Affect{i,2} = starts;
-            Data.(type).Affect{i,3} = ends;
-    end
-
-
-end
 
 
 
@@ -418,6 +258,8 @@ function [Data] = group_analysis(Data, type, bin, band)
     Data.(type).(rst_tab){1} = {};
     pst_tab = strcat(pname,'_stats');
     Data.(type).(pst_tab){1} = {};
+    
+    
 
     for i = 1:length(Data.(type).Raw)
         Data.(type).(rname){i} = rmssd_calc(Data.(type).Raw{i}(:,3),bin,band{i});
