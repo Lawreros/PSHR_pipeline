@@ -33,52 +33,10 @@ aff_file = {'A_coding.csv'};
 %realtime = "11:19:15"
 %videotime = 728
 
-%Export RR-intervals with affects denoted for Richard
-aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming',...
-    'loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal',...
-    'repetitive behaviors','unresponsive/unable to redirect'};
-
-
 %% Analysis flags
 % As the GUI will most likely chain together preprocessing modules through
 % the use of binary triggers, it's good to simulate that with a group of
 % True/False statements.
-
-% TODO: Create structure to store flags in compact manner
-
-%RR-interval Preprocess Flags
-Bandpass = false;
-u_band = 1200;
-l_band = 400;
-
-Malik = false;
-Kamath = false;
-Karlsson = false;
-
-Acar = false;
-acar_range = 9;
-
-
-%RR-interval Analysis Flags
-sdsd = false;
-sdnn = false;
-rmssd = false;
-pnnx = false;
-poincare = false;
-
-%RR-interval Plotting Flags
-raw_hr_plot = false;
-
-%ECG-interval Preprocess Flags
-ecg2rr = false;
-peak = 800;
-dist = 40;
-
-%ECG-interval Analysis Flags
-
-
-%ECG-interval Plotting Flags
-
 
 
 %% Pipeline
@@ -107,31 +65,21 @@ if poincare
 end
 %% RR-Interval Exports
 % This is where files are exported and saved
-
 Data = group_analysis(Data, "HR", false,false);
 
-cuts = {[1,1462],[1,1920],false,[1,1060],false,false,false,false,[1,3180],[1,4900],false};
-Data = group_analysis(Data, 'HR', false, cuts);
-Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
-
-%Derek_export(Data, aff, "HR", "Derek_HR_output");
-%Richard_export(Data, aff, "HR", "test_HR_output");
-
-%% ECG-Preprocessing
-
-    
-%% ECG Exports
-
-%Richard_export(Data, aff, "ECG", "test_ECG_output");
-disp('done');
-
-
-%% Affect Loading
-
+% cuts = {[1,1462],[1,1920],false,[1,1060],false,false,false,false,[1,3180],[1,4900],false};
+% Data = group_analysis(Data, 'HR', false, cuts);
+% Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
 
 
 
 %% Export Functions
+
+%Export RR-intervals with affects denoted for Richard
+aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming',...
+    'loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal',...
+    'repetitive behaviors','unresponsive/unable to redirect'};
+
 function [] = Richard_export(Data,aff,type,fil_name)
 %This function takes the Data information and saves them as .csv files for
 %sending to Richard
