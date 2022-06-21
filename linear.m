@@ -53,16 +53,16 @@ Data = load_affect(Data, aff_path, aff_file);
 
 %% Simple Plot of raw RR data
 
-if raw_hr_plot
-    fig1 = figure(1);
-    plot(Data.HR.Raw(:,3))
-    title("Raw RR-interval Data");
-end
+% if raw_hr_plot
+%     fig1 = figure(1);
+%     plot(Data.HR.Raw(:,3))
+%     title("Raw RR-interval Data");
+% end
 
-if poincare
-    fig2 = figure(2);
-    [SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
-end
+% if poincare
+%     fig2 = figure(2);
+%     [SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
+% end
 %% RR-Interval Exports
 % This is where files are exported and saved
 Data = group_analysis(Data, "HR", false,false);
