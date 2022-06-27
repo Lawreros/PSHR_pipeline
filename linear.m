@@ -80,6 +80,7 @@ aff = {'clothing adjustment/removal','flapping/clapping','loud/rapid humming',..
     'loud/rapid speech','moving at a fast/abrupt pace','polar strap adjustment/removal',...
     'repetitive behaviors','unresponsive/unable to redirect'};
 
+
 function [] = Richard_export(Data,aff,type,fil_name)
 %This function takes the Data information and saves them as .csv files for
 %sending to Richard
