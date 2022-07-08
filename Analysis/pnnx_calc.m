@@ -30,7 +30,7 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
         a = bin{1}; % value
         b = bin{2}; % units
         
-        ret = zeros(r_2-r_1,1);
+        ret = NaN(r_2-r_1,1);
         
         if strcmp(b,'second')
             for i = r_1:r_2
@@ -54,7 +54,7 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
                     end
                     ret(i-r_1+1,1) = count/(j-1);
                 else
-                    ret(i-r_1+1,1) = 0;
+                    ret(i-r_1+1,1) = NaN;
                 end
         
             end

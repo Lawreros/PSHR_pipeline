@@ -27,7 +27,7 @@ function [ret] = sdsd_calc(mat,bin,band)
         a = bin{1}; % value
         b = bin{2}; % units
         
-        ret = zeros(r_2-r_1,1);
+        ret = NaN(r_2-r_1,1);
         
         if strcmp(b, 'second')
             for i = r_1:r_2
@@ -43,7 +43,7 @@ function [ret] = sdsd_calc(mat,bin,band)
                 if j > 1 && j < i % If there is more than one entry
                     ret(i-r_1+1,1) = std(mat(i-j+2:i)-mat((i-j+1:i-1),1));
                 else
-                    ret(i-r_1+1,1) = 0;
+                    ret(i-r_1+1,1) = NaN;
                 end
             end
         else

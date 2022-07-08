@@ -29,7 +29,7 @@ function [ret] = rmssd_calc(mat,bin,band)
         a = bin{1}; % value
         b = bin{2}; % units
         
-        ret = zeros(r_2-r_1,1);
+        ret = NaN(r_2-r_1,1);
         
         if strcmp(b,'second')
             for i = r_1:r_2
@@ -51,7 +51,7 @@ function [ret] = rmssd_calc(mat,bin,band)
                     end
                     ret(i-r_1+1,1) = sqrt((1/(j-2))*summation);
                 else
-                    ret(i-r_1+1,1) = 0;
+                    ret(i-r_1+1,1) = NaN;
                 end
             end
         else % Looking at the past 'a' entries for the calculation
