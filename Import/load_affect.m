@@ -1,6 +1,20 @@
 function [Data] = load_affect(Data, path, file)
-% Load in affect file and add it to the structure
-Data.Affect.path = path;
+% Loads the data from the provided affect file and organizes 
+    % it into a structure that can be used for future analysis
+    %   Inputs:
+    %       Data: [cell array or struct] cell array which will be converted into the
+    %       structure that is output. If HR or ECG data is already
+    %       contained in the Data structure, then affect start and stop
+    %       times are calculated using the time_adjust function
+    %       path: [string] the path to the folder containing the file you
+    %       want to load in
+    %       file: [string] name of the file that you want to load
+    
+    %   Returns:
+    %       Data: [struct] structure containing relevant information loaded
+    %       from the file you specify
+    
+    Data.Affect.path = path;
 
     if iscell(file)
         for i = 1:length(file)

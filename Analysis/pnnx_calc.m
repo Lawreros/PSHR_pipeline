@@ -15,7 +15,11 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
     %
     %       band: [2 int vector] The range [start, end] of values you want
     %       to calculate the pnnX of. If false, then analyze the whole
-    %       range
+    %       range of mat
+    %
+    %   Returns:
+    %       ret: Either a [n-by-1] vector containing the results (if bin is
+    %       not false) or an [int] if bin is false.
     
     if band
         r_1 = band(1);

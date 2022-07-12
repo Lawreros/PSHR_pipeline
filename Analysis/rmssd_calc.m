@@ -16,6 +16,10 @@ function [ret] = rmssd_calc(mat,bin,band)
     %       to calculate the RMSSD of. If false, then analyze the whole
     %       range
     
+    %   Returns:
+    %       ret: Either a [n-by-1] vector containing the results (if bin is
+    %       not false) or an [int] if bin is false.
+    
     if band
         r_1 = band(1);
         r_2 = band(2);

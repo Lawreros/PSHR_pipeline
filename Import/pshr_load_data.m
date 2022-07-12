@@ -1,4 +1,20 @@
 function [Data] = pshr_load_data(Data, path, file, type)
+    % Loads the data from the provided HR or ECG file and organizes 
+    % it into a structure that can be used for future analysis
+    %   Inputs:
+    %       Data: [cell array] cell array which will be converted into the
+    %       structure that is output
+    %       path: [string] the path to the folder containing the file you
+    %       want to load in
+    %       file: [string] name of the file that you want to load
+    %       type: [string] the type of the data in the file you are
+    %       loading, either "HR" or "ECG"
+    
+    %   Returns:
+    %       Data: [struct] structure containing relevant information loaded
+    %       from the file you specify
+    
+
         
         %Clear previously loaded information (add clear back in for gui)
         %clear Data;
