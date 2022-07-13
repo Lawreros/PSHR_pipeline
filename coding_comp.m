@@ -5,10 +5,10 @@ clear all;
 
 inp_dir = 'Reliability_Training/';
 
-aff_1 = 'Chat&Chew_2022-04-29_1255_V01_ANSWER_KEY.csv';
-aff_2 = {'Chat&Chew_2022-04-29_1255_V01_Liu.csv',...
-    'Chat&Chew_2022-04-29_1255_V01_Baldie1.csv',...
-    'Chat&Chew_2022-04-29_1255_V01_Zhao.csv'};
+aff_1 = 'Chat&Chew_2022-04-01_1255_V01_ANSWER_KEY.csv';
+aff_2 = {'Chat&Chew_2022-04-01_1255_V01_Liu.csv',...
+    'Chat&Chew_2022-04-01_1255_V01_Baldie.csv',...
+    'Chat&Chew_2022-04-01_1255_V01_Zhao.csv'};
 out_file = 'test_comp.xlsx';
 
 
@@ -162,6 +162,15 @@ for z = 1:length(aff_2)
     comp_agree{1,2} = "Seconds of Agreement";
     comp_agree{1,3} = "Seconds of Disagreement";
     for i = 2:length(comp_agree)
+        
+        if isempty(comp_agree{i,2})
+            comp_agree{i,2} = 0;
+        end
+        
+        if isempty(comp_agree{i,3})
+            comp_agree{i,3} = 0;
+        end
+        
         comp_agree{i,4} = comp_agree{i,2} / (comp_agree{i,2}+comp_agree{i,3});
     end
     
