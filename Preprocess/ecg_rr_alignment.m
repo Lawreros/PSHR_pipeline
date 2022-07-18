@@ -1,8 +1,11 @@
-function ecg_rr_alignment(rr, ecg)
+function [aligned_values]=ecg_rr_alignment(rr, ecg)
 % Function which attempts to align the ecg data with the RR-interval data
 % Inputs:
-%   rr: [matrix]
-%   ecg: [matrix]
+%   rr: [n-by-2 matrix] matrix which contains the timestamps and
+%   RR-interval values in the format [timestamp, RR]. This allows for the
+%   comparison of timestamps between RR and ECG
+%   ecg: [n-by-2 matrix] matrix which contains the timestamps and
+%   ECG values in the format [timestamp, RR].
 
 
     % Get the rr-interval estimates from the ECG data
@@ -10,25 +13,14 @@ function ecg_rr_alignment(rr, ecg)
     dist = 40;
     freq = 130;
     ecg_rr = ecg_rr_conversion(ecg, peak, dist, freq);
-    ecg_rr = ecg_rr(:,2);
-
-
-
-    % Convert RR and ECG vectors into very long strings that are comma
-    % seperated. Also divide by 10 in order to ignore very minor differences
-%     rr_string = "";
-%     for i = 1:length(rr)
-%         rr_string = strcat(rr_string, string(rr(i)));
-%     end
-% 
-% 
-%     ecg_string = "";
-%     for i=1:length(locs)
-%         ecg_string = strcat(ecg_string,string(locs(i)));
-%     end
-
+    ecg_times = ecg_rr(:,1);
+    ecg_rr = ecg_rr(:,3);
     
-    
+    % Create matrix for timestamp comparison
+    rr_times = rr(:,1);
+    rr = rr(:,2);
+
+    % Create matrix for alignment values for levenshtein distance
     lev = zeros(length(rr),length(ecg_rr));
     lev(1,1) = 0;
 
@@ -103,19 +95,25 @@ function ecg_rr_alignment(rr, ecg)
     % Realign
     j = 1;
     aligned_values=[];
+    aligned_times=[];
 
     for i = 1:length(move)
         if move(1,i) == 0
             aligned_values(end+1) = ecg_rr(j);
+            aligned_times(end+1) = ecg_times(j);
             j = j+1;
         elseif move(1,i) == 1
             j = j+1;
         elseif move(1,i) == 2
             aligned_values(end+1) = NaN;
+            aligned_times(end+1) = ecg_times(j);
         end
 
     end
 
+    
+    %Append RR-values to bottom
+    aligned_values(2,:) = flip(rr_times,2);
     
     % TODO: Provide some analysis metrics for the alignment steps, i.e.
     % metrics for variable `move`
