@@ -19,16 +19,16 @@ addpath('./Import');
 %% Test files:
 
 %HR file
-hr_path = './sample/';
-hr_file = {'HR_A.txt'};
+hr_path = './group_HR_analysis/';
+hr_file = {'HR_03-18-2022.txt'};%{'HR_05-27-2022.txt','HR_06-03-2022.txt','HR_06-17-2022.txt','HR_06-23-2022.txt','HR_06-24-2022.txt'};
 
 %ECG file
-ecg_path = './sample/';
-ecg_file = {'ECG_A.txt'};
+ecg_path = './group_HR_analysis/';
+ecg_file = {'ECG_03-18-2022.txt'};%{'ECG_05-27-2022.txt','ECG_06-03-2022.txt','ECG_06-17-2022.txt','ECG_06-23-2022.txt','ECG_06-24-2022.txt'};
 
 %Affect file
-aff_path = "./sample/";
-aff_file = {'A_coding.csv'};
+aff_path = "./ignore_samples/";
+aff_file = {'2022-03-18_Kessler.csv'};
 
 %realtime = "11:19:15"
 %videotime = 728
@@ -46,23 +46,17 @@ Data.Affect.Raw{1} = {};
 
 Data = pshr_load_data(Data, hr_path, hr_file, "HR");
 Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
-Data = load_affect(Data, aff_path, aff_file);
+%Data = load_affect(Data, aff_path, aff_file);
 
 %% RR-Interval Preprocessing
 
 
 %% Simple Plot of raw RR data
-
-% if raw_hr_plot
-%     fig1 = figure(1);
-%     plot(Data.HR.Raw(:,3))
-%     title("Raw RR-interval Data");
-% end
-
 % if poincare
 %     fig2 = figure(2);
 %     [SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
 % end
+
 %% RR-Interval Exports
 % This is where files are exported and saved
 Data = group_analysis(Data, "HR", false,false);
