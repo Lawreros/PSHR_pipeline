@@ -1,4 +1,4 @@
-function [aligned_values]=ecg_rr_alignment(rr, ecg)
+function [aligned_values, aligned_times, aligned_metrics]=ecg_rr_alignment(rr, ecg, peak, dist, freq, subcost, verbose)
 % Function which attempts to align the ecg data with the RR-interval data
 % Inputs:
 %   rr: [n-by-2 matrix] matrix which contains the timestamps and
@@ -6,6 +6,23 @@ function [aligned_values]=ecg_rr_alignment(rr, ecg)
 %   comparison of timestamps between RR and ECG
 %   ecg: [n-by-2 matrix] matrix which contains the timestamps and
 %   ECG values in the format [timestamp, RR].
+%   peak: [int], minimum peak prominence for peak
+%   dist: [int], minimum distance in index number for peaks
+%   freq: [int], sampling frequency for ECG data in Hz
+%   subcost: [int] substitution cost coefficient for use in Levenshtein
+%   calculation. The equation for cost is: abs(X - Y)/subcost. Increasing
+%   subcost will weight against substitution/deletion. Recomended value is
+%   10.
+%   verbose: [bool] Whether the function should plot the results of
+%   alignment
+
+% Returns:
+%   aligned_values: [m-by-2 matrix] of the aligned ECG and RR-interval
+%   data, organized as [RR, ECG]
+%   aligned_times: [m-by-2 matrix] timestamps corresponding to the entries
+%   in aligned_values for the purposes of comparing lag/alignment
+%   aligned_metrics: [struct] structure containing different comparison
+%   results from the alignment process
 
 
     % Get the rr-interval estimates from the ECG data
@@ -18,6 +35,16 @@ function [aligned_values]=ecg_rr_alignment(rr, ecg)
     
     % Create matrix for timestamp comparison
     rr_times = rr(:,1);
+    
+    % Replace NaN timestamp values with closest previous timestamp
+    for i=1:length(rr_times)
+        j = 0;
+        while isnan(rr_times(i-j,1))
+            j = j+1;
+        end
+        rr_times(i,1) = rr_times(i-j,1);
+    end
+    
     rr = rr(:,2);
 
     % Create matrix for alignment values for levenshtein distance
@@ -36,7 +63,7 @@ function [aligned_values]=ecg_rr_alignment(rr, ecg)
             if rr(i) == ecg_rr(j)
                 substitutionCost = 0;
             else
-                substitutionCost = abs(rr(i) - ecg_rr(j))/10;
+                substitutionCost = abs(rr(i) - ecg_rr(j))/subcost;
             end
             lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
         end
@@ -99,25 +126,53 @@ function [aligned_values]=ecg_rr_alignment(rr, ecg)
 
     for i = 1:length(move)
         if move(1,i) == 0
-            aligned_values(end+1) = ecg_rr(j);
-            aligned_times(end+1) = ecg_times(j);
+            aligned_values(end+1,2) = ecg_rr(j);
+            aligned_times(end+1,2) = ecg_times(j);
             j = j+1;
         elseif move(1,i) == 1
             j = j+1;
         elseif move(1,i) == 2
-            aligned_values(end+1) = NaN;
-            aligned_times(end+1) = ecg_times(j);
+            aligned_values(end+1,2) = NaN;
+            aligned_times(end+1,2) = NaN;
         end
 
     end
 
     
     %Append RR-values to bottom
-    aligned_values(2,:) = flip(rr_times,2);
+    aligned_values(:,1) = rr;
+    aligned_times(:,1) = rr_times;
     
     % TODO: Provide some analysis metrics for the alignment steps, i.e.
     % metrics for variable `move`
-    
+    aligned_metrics = {};
+    if verbose % print/plot alignment metrics
+        
+        %Calculate difference in time metrics
+        aligned_metrics.time = {};
+        aligned_metrics.time.diff = aligned_times(:,1)-aligned_times(:,2);
+        aligned_metrics.time.std = nanstd(aligned_metrics.time.diff);
+        aligned_metrics.time.mean = nanmean(aligned_metrics.time.diff);
+        
+        figure(1);
+        plot(aligned_metrics.time.diff/1000);
+        title("(RR-interval timestamp) - (ECG R-peak timestamp)");
+        xlabel("RR-interval index");
+        ylabel("Difference (sec)");
+        
+        %Calculate difference in RR-interval metrics
+        aligned_metrics.val = {};
+        aligned_metrics.val.diff = aligned_values(:,1)-aligned_values(:,2);
+        aligned_metrics.val.std = nanstd(aligned_metrics.time.diff);
+        aligned_metrics.val.mean = nanmean(aligned_metrics.val.diff);
+        
+        figure(2);
+        plot(aligned_metrics.val.diff);
+        title("(RR-interval) - (ECG RR estimate)");
+        xlabel("RR-interval index");
+        ylabel("Difference (millisecond)");
+        
+    end
     
     
 %editDistance calculates the maximum number of insertions/deletions in
