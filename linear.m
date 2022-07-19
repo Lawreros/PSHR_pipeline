@@ -20,11 +20,11 @@ addpath('./Import');
 
 %HR file
 hr_path = './group_HR_analysis/';
-hr_file = {'HR_03-18-2022.txt'};%{'HR_05-27-2022.txt','HR_06-03-2022.txt','HR_06-17-2022.txt','HR_06-23-2022.txt','HR_06-24-2022.txt'};
+hr_file = {'HR_03-18-2022_cropped.txt'};%{'HR_05-27-2022.txt','HR_06-03-2022.txt','HR_06-17-2022.txt','HR_06-23-2022.txt','HR_06-24-2022.txt'};
 
 %ECG file
 ecg_path = './group_HR_analysis/';
-ecg_file = {'ECG_03-18-2022.txt'};%{'ECG_05-27-2022.txt','ECG_06-03-2022.txt','ECG_06-17-2022.txt','ECG_06-23-2022.txt','ECG_06-24-2022.txt'};
+ecg_file = {'ECG_03-18-2022_cropped.txt'};%{'ECG_05-27-2022.txt','ECG_06-03-2022.txt','ECG_06-17-2022.txt','ECG_06-23-2022.txt','ECG_06-24-2022.txt'};
 
 %Affect file
 aff_path = "./ignore_samples/";
@@ -56,6 +56,29 @@ Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
 %     fig2 = figure(2);
 %     [SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
 % end
+
+
+%% Go through combinations of parameters for best RR/ECG alignment
+
+[a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),700,50,130,10,true);
+
+
+
+val_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
+time_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
+%peak
+for i=600:50:900
+    % dist
+    for j=40:10:70
+    % subcost
+        for k= 5:5:20
+            [a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),i,j,130,k,false);
+            val_iter_results(end+1,:) = [sum(~isnan(c.val.diff))/length(c.val.diff), c.val.mean, c.val.std, i,j,k];
+            time_iter_results(end+1,:) = [sum(~isnan(c.time.diff))/length(c.time.diff), c.time.mean, c.time.std, i,j,k];
+        end
+    end
+end
+
 
 %% RR-Interval Exports
 % This is where files are exported and saved

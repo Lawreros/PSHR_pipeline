@@ -26,9 +26,9 @@ function [aligned_values, aligned_times, aligned_metrics]=ecg_rr_alignment(rr, e
 
 
     % Get the rr-interval estimates from the ECG data
-    peak = 800;
-    dist = 40;
-    freq = 130;
+%     peak = 800;
+%     dist = 40;
+%     freq = 130;
     ecg_rr = ecg_rr_conversion(ecg, peak, dist, freq);
     ecg_times = ecg_rr(:,1);
     ecg_rr = ecg_rr(:,3);
@@ -146,32 +146,32 @@ function [aligned_values, aligned_times, aligned_metrics]=ecg_rr_alignment(rr, e
     % TODO: Provide some analysis metrics for the alignment steps, i.e.
     % metrics for variable `move`
     aligned_metrics = {};
+    
+    %Calculate difference in time metrics
+    aligned_metrics.time = {};
+    aligned_metrics.time.diff = aligned_times(:,1)-aligned_times(:,2);
+    aligned_metrics.time.std = nanstd(aligned_metrics.time.diff);
+    aligned_metrics.time.mean = nanmean(abs(aligned_metrics.time.diff));
+                
+    %Calculate difference in RR-interval metrics
+    aligned_metrics.val = {};
+    aligned_metrics.val.diff = aligned_values(:,1)-aligned_values(:,2);
+    aligned_metrics.val.std = nanstd(aligned_metrics.time.diff);
+    aligned_metrics.val.mean = nanmean(aligned_metrics.val.diff);
+    
+        
     if verbose % print/plot alignment metrics
-        
-        %Calculate difference in time metrics
-        aligned_metrics.time = {};
-        aligned_metrics.time.diff = aligned_times(:,1)-aligned_times(:,2);
-        aligned_metrics.time.std = nanstd(aligned_metrics.time.diff);
-        aligned_metrics.time.mean = nanmean(aligned_metrics.time.diff);
-        
         figure(1);
         plot(aligned_metrics.time.diff/1000);
         title("(RR-interval timestamp) - (ECG R-peak timestamp)");
         xlabel("RR-interval index");
         ylabel("Difference (sec)");
-        
-        %Calculate difference in RR-interval metrics
-        aligned_metrics.val = {};
-        aligned_metrics.val.diff = aligned_values(:,1)-aligned_values(:,2);
-        aligned_metrics.val.std = nanstd(aligned_metrics.time.diff);
-        aligned_metrics.val.mean = nanmean(aligned_metrics.val.diff);
-        
+
         figure(2);
         plot(aligned_metrics.val.diff);
         title("(RR-interval) - (ECG RR estimate)");
         xlabel("RR-interval index");
         ylabel("Difference (millisecond)");
-        
     end
     
     
