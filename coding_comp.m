@@ -5,10 +5,10 @@ clear all;
 
 inp_dir = 'Reliability_Training/';
 
-aff_1 = 'Chat&Chew_2022-04-01_1255_V01_ANSWER_KEY.csv';
-aff_2 = {'Chat&Chew_2022-04-01_1255_V01_Liu.csv',...
-    'Chat&Chew_2022-04-01_1255_V01_Baldie.csv',...
-    'Chat&Chew_2022-04-01_1255_V01_Zhao.csv'};
+aff_1 = 'Chat&Chew_2022-03-18_1255_V01_ANSWER_KEY.csv';
+aff_2 = {'Chat&Chew_2022-03-18_1255_V01_Liu.csv',...
+    'Chat&Chew_2022-03-18_1255_V01_Baldie.csv',...
+    'Chat&Chew_2022_03-18_1255_V01_Zhao.csv'};
 out_file = 'test_comp.xlsx';
 
 

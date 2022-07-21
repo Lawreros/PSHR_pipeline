@@ -16,77 +16,52 @@ addpath('./Export');
 addpath('./Import');
 
 
-%% Test files:
+%% FILENAME INPUT SECTION
+% Input the files you wish to analyze
 
 %HR file
-hr_path = './group_HR_analysis/';
-hr_file = {'HR_03-18-2022_cropped.txt'};%{'HR_05-27-2022.txt','HR_06-03-2022.txt','HR_06-17-2022.txt','HR_06-23-2022.txt','HR_06-24-2022.txt'};
+hr_path = './sample/'; %The location of the directory containing the HR file you want to analyze
+hr_file = {'HR_A.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
 
 %ECG file
-ecg_path = './group_HR_analysis/';
-ecg_file = {'ECG_03-18-2022_cropped.txt'};%{'ECG_05-27-2022.txt','ECG_06-03-2022.txt','ECG_06-17-2022.txt','ECG_06-23-2022.txt','ECG_06-24-2022.txt'};
+ecg_path = './sample/'; %The location of the directory containing the ECG file you want to analyze
+ecg_file = {'ECG_A.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
 
 %Affect file
-aff_path = "./ignore_samples/";
-aff_file = {'2022-03-18_Kessler.csv'};
-
-%realtime = "11:19:15"
-%videotime = 728
-
-%% Analysis flags
-% As the GUI will most likely chain together preprocessing modules through
-% the use of binary triggers, it's good to simulate that with a group of
-% True/False statements.
+aff_path = "./sample/";
+aff_file = {'A_coding.csv'};
 
 
-%% Pipeline
+%% Load and organize data from iPhone files
 Data.HR.Raw{1} = {};
 Data.ECG.Raw{1} = {};
 Data.Affect.Raw{1} = {};
 
 Data = pshr_load_data(Data, hr_path, hr_file, "HR");
 Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
-%Data = load_affect(Data, aff_path, aff_file);
-
-%% RR-Interval Preprocessing
+Data = load_affect(Data, aff_path, aff_file);
 
 
-%% Simple Plot of raw RR data
-% if poincare
-%     fig2 = figure(2);
-%     [SD1, SD2] = poincare_plot(Data.HR.Raw(:,3), fig2);
-% end
+%% Plot RR-Interval and ECG data
+
+figure(1);
+plot(Data.HR.Raw{1}(:,3));
+title("RR-interval Data");
+xlabel("Index");
+ylabel("Duration (millisecond)");
 
 
-%% Go through combinations of parameters for best RR/ECG alignment
-
-[a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),700,50,130,10,true);
-
-
-
-val_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
-time_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
-%peak
-for i=600:50:900
-    % dist
-    for j=40:10:70
-    % subcost
-        for k= 5:5:20
-            [a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),i,j,130,k,false);
-            val_iter_results(end+1,:) = [sum(~isnan(c.val.diff))/length(c.val.diff), c.val.mean, c.val.std, i,j,k];
-            time_iter_results(end+1,:) = [sum(~isnan(c.time.diff))/length(c.time.diff), c.time.mean, c.time.std, i,j,k];
-        end
-    end
-end
+figure(2);
+plot(Data.ECG.Raw{1}(:,3));
+title("ECG Data");
+xlabel("Index");
+ylabel("Voltage");
 
 
-%% RR-Interval Exports
+
+%% RR-Interval Analysis
 % This is where files are exported and saved
-Data = group_analysis(Data, "HR", false,false);
-
-% cuts = {[1,1462],[1,1920],false,[1,1060],false,false,false,false,[1,3180],[1,4900],false};
-% Data = group_analysis(Data, 'HR', false, cuts);
-% Data = group_analysis(Data, 'HR', {5, 'second'},cuts);
+Data = group_analysis(Data, "HR", {5,"second"},false);
 
 
 
