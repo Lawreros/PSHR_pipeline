@@ -42,6 +42,28 @@ Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
 Data = load_affect(Data, aff_path, aff_file);
 
 
+%% Go through combinations of parameters for best RR/ECG alignment
+
+[a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),700,50,130,10,true);
+
+
+
+val_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
+time_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
+%peak
+for i=600:50:900
+    % dist
+    for j=40:10:70
+    % subcost
+        for k= 5:5:20
+            [a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),i,j,130,k,false);
+            val_iter_results(end+1,:) = [sum(~isnan(c.val.diff))/length(c.val.diff), c.val.mean, c.val.std, i,j,k];
+            time_iter_results(end+1,:) = [sum(~isnan(c.time.diff))/length(c.time.diff), c.time.mean, c.time.std, i,j,k];
+        end
+    end
+end
+
+
 %% Plot RR-Interval and ECG data
 
 figure(1);
