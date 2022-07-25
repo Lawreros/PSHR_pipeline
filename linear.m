@@ -20,12 +20,12 @@ addpath('./Import');
 % Input the files you wish to analyze
 
 %HR file
-hr_path = './sample/'; %The location of the directory containing the HR file you want to analyze
-hr_file = {'HR_A.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+hr_path = './group_HR_analysis/'; %The location of the directory containing the HR file you want to analyze
+hr_file = {'HR_05-13-2022.txt','HR_05-09-2022.txt','HR_05-16-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
 
 %ECG file
-ecg_path = './sample/'; %The location of the directory containing the ECG file you want to analyze
-ecg_file = {'ECG_A.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
+ecg_path = './group_HR_analysis/'; %The location of the directory containing the ECG file you want to analyze
+ecg_file = {'ECG_05-09-2022.txt','ECG_03-21-2022.txt','ECG_05-16-2022.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
 
 %Affect file
 aff_path = "./sample/";
@@ -39,14 +39,34 @@ Data.Affect.Raw{1} = {};
 
 Data = pshr_load_data(Data, hr_path, hr_file, "HR");
 Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
-Data = load_affect(Data, aff_path, aff_file);
+%Data = load_affect(Data, aff_path, aff_file);
 
+
+%% ECG preprocessing
+
+%known issues with ecg data:
+%   1. Inverted ECG measurements (lead placement results in upside-down
+%   QRS)
+%       Solution: The mean uV is not always positive or negative based off
+%       of inverted data
+
+
+
+
+
+%   2. Maxing out of signal/discrete shift
+%       Solution: Index where the measured value falls outside of -5000 to 5000
+%       then take x indicies before and after it and remove those. This
+%       will still work with findpeaks and takes care of the issue with
+%       adjustment noise.
+mat = Data.ECG.Raw{1}(:,3);
+amp = 5000; %Maximum amplitude
+cut_bin = 20;
+[ret, locs] = ecg_preprocess(mat, amp, cut_bin);
 
 %% Go through combinations of parameters for best RR/ECG alignment
 
 [a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),700,50,130,10,true);
-
-
 
 val_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
 time_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
@@ -244,3 +264,33 @@ function [Data] = group_analysis(Data, type, bin, band)
 
     disp('done');
 end
+
+function [ret,locs] = ecg_preprocess(mat, amp, cut_bin)
+% Function to take the ECG data preprocesses it by removing ECG values
+% which fall outside of the accepted amplitude
+    %inputs:
+    %   mat: [n-by-1] vector containing ecg data
+    %   amp: [int], minimum amplitude of accepted ECG values. If a value
+    %   falls outside of this bound, all values [cut_bin] before and after
+    %   it are replaced with NaNs.
+    %   cut_bin: [int], the amount of indexes before and after entries
+    %   which fail [amp] that are replaced with NaNs.
+    
+    %Returns:
+    %   ret: [n-by-1] matrix containing the ecg data with all removed
+    %   values replaced by NaNs
+    %   locs: [m-by-1] index of all values which fall outside of the bounds
+    %   described by [amp]
+
+    locs = find(abs(mat)>amp);
+    ret = mat;
+    for i = 1:length(locs)
+    
+        if locs(i) <= cut_bin
+            ret(1:locs(i)+cut_bin) = NaN;
+        else
+            ret(locs(i)-cut_bin:locs(i)+cut_bin) = NaN;
+        end
+    end
+end
+
