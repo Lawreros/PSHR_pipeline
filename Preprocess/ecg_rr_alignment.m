@@ -31,7 +31,7 @@ function [aligned_values, aligned_times, aligned_metrics]=ecg_rr_alignment(rr, e
 %     freq = 130;
     ecg_rr = ecg_rr_conversion(ecg, peak, dist, freq);
     ecg_times = ecg_rr(:,1);
-    ecg_rr = ecg_rr(:,3);
+    ecg_rr = ecg_rr(:,4);
     
     % Create matrix for timestamp comparison
     rr_times = rr(:,1);
