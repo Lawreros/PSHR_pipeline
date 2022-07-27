@@ -70,81 +70,9 @@ Data.ECG.PP = {};
 Data.ECG.PP{1} = Data.ECG.Raw{1};
 Data.ECG.PP{1}(:,3) = ret;
 
-% First find the location of the R-wave
-locs = ecg_rr_conversion(Data.ECG.PP{1}(:,[1,3]),800,40,130);
 
 
-% From there find the location of the Q and S waves (which should be very
-% close to the R-wave peak), this is done by multiplying section by -1 and
-% then finding the peaks on that, since it will ignore the RR-intervals
-%
-% https://www.mathworks.com/matlabcentral/answers/267303-how-to-find-q-and-s-point-in-qrs-complex-of-ecg-signal
-
-
-%This finds Q and S fairly well, but picks up part of T and other noise,
-%add a step to this to only take the immediate surrounding 2 points to the
-%R-wave
-locs_QS = ecg_rr_conversion(-Data.ECG.PP{1}(:,[1,3]),100,5,130);
-
-% Attmpt to find P and T waves, which are their own peaks which occur
-% before and after the Q and S waves, respectively
-
-[pks_T, locs_T] = findpeaks(Data.ECG.PP{1}(:,3),'MinPeakWidth',10, 'MinPeakProminence',50,'MinPeakDistance',80);
-
-
-[pks_P, locs_P] = findpeaks(Data.ECG.PP{1}(:,3),'MinPeakWidth',20,'MinPeakProminence',8,'MinPeakDistance',20);
-
-
-plot([1:length(Data.ECG.PP{1}(:,3))],Data.ECG.PP{1}(:,3),locs(:,2),locs(:,3),'^b',locs_QS(:,2),-locs_QS(:,3),'vg', locs_T, pks_T,'^r',locs_P, pks_P, 'vr');
-legend('EKG', 'R', 'Q/S', 'T','P');
-
-
-%% Organize collections of PQRST, using the R-wave as a base:
-
-align_matrix = zeros(length(Data.ECG.PP{1}(:,3)),4);
-
-align_matrix(locs_P, 1) = 1; % Column of binary indicators for the P-wave locations
-align_matrix(locs_QS(:,2), 2) = 1; % Q and S wave locations, due to them being picked up by the same findpeaks pass
-align_matrix(locs(:,2),3) =1; % R-wave
-align_matrix(locs_T,4) = 1; % T-wave
-
-locations_matrix = NaN(length(locs(:,2)), 5);
-locations_matrix(:,3) = locs(:,2); % Already know the answer for the R-waves
-
-bin_width = 50;
-
-for i = 1:length(locs(:,2)) % cycle through all of the R-waves and find the other waves
-    
-    % Go backward from the R-wave to find the P and Q wave locations
-    p_check = 0;
-    q_check = 0;
-    for j = locations_matrix(i,3)-1 : -1 : locations_matrix(i,3) - bin_width
-        if align_matrix(j,1)==1 && p_check==0
-            locations_matrix(i,1) = j;
-            p_check=1;
-        elseif align_matrix(j,2)==1 && q_check==0
-            locations_matrix(i,2) = j;
-            q_check=1;
-        elseif p_check==1 && q_check==1 %no need to keep checking if you've already filled the spots
-            break
-        end
-    end
-    
-    % Go forward from the R-wave to find the S and T wave locations
-    s_check = 0;
-    t_check = 0;
-    for j = locations_matrix(i,3)+1: locations_matrix(i,3) + bin_width
-        if align_matrix(j,2)==1 && s_check==0
-            locations_matrix(i,4) = j;
-            s_check = 1;
-        elseif align_matrix(j,4)==1 && t_check==0
-            locations_matrix(i,5) = j;
-            t_check = 1;
-        elseif s_check==1 && t_check==1
-            break
-        end
-    end
-end
+samp = ecg_PQRST(Data.ECG.PP{1}(:,3));
 
 
 
