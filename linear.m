@@ -70,11 +70,9 @@ Data.ECG.PP = {};
 Data.ECG.PP{1} = Data.ECG.Raw{1};
 Data.ECG.PP{1}(:,3) = ret;
 
-
-
+%TODO: Go though default settings to find what has the minimum amount of
+%NaNs
 samp = ecg_PQRST(Data.ECG.PP{1}(:,3));
-
-
 
 %% Go through combinations of parameters for best RR/ECG alignment
 

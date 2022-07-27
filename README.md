@@ -2,13 +2,46 @@
 A small repository for analysis of the RR-interval and ECG data collected by the PSHR app found here:
 https://github.com/Lawreros/PSHR_v2
 
-The purpose of this pipeline is to provide a easy to use GUI for analysis and visualization of RR-interval and ECG data. It also serves to output analysis data into formats that allow for easy analysis by other software.
+The purpose of this pipeline is to provide a easy-to-use framework and function library for RR-interval and ECG data organization and analysis.
+Future development for the repository will include a GUI for analysis and visualization of RR-interval and ECG data by non-coders.
 
 ## Repository Contents:
-Relevant files for casual users:
-- `sample` : folder containing sample HR, ECG, and Affect coded data
-- `linear.m` : a linear version of the MATLAB script found in `main.m`, used for new function development and debugging
-- `main.m` : the MATLAB script which calls the main GUI
+Summary of Repository contents:
+```
+/linear.m : a linear version of the MATLAB script for testing new functions/development (debugging GUI's in MATLAB is a pain)
+/gui.m : 
+/coding_comp.m :
+
+/sample
+    directory containing sample HR, ECG, and Affect coded data
+    /A_coding.csv
+    /ECG_A.txt
+    /HR_A.txt
+
+/Analysis
+    /pnnx_calc.m
+    /rmssd_calc.m
+    /sdnn_calc.m
+    /sdsd_calc.m
+/Export
+    /poincare_plot.m
+/Import
+    /load_affect.m
+    /pshr_load_data.m
+/Pipeline
+    /RR_pipeline.m
+/Preprocess
+    /acar.m
+    /affect_mark.m
+    /bandpass.m
+    /ecg_PQRST.m
+    /ecg_rr_alignment.m
+    /ecg_rr_conversion.m
+    /kamath.m
+    /karlsson.m
+    /malik.m
+
+```
 
 ## Tutorial (subject to change as pipeline is developed)
 1) Download the repository and open the `linear.m` file in your MATLAB editor
