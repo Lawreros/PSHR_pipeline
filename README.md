@@ -40,8 +40,8 @@ Summary of Repository contents:
 /Import
     The directory where all functions related to loading data from files into usable formats for analysis
     are located. See documentation inside of function for more detailed information.
-    /load_affect.m : 
-    /pshr_load_data.m : 
+    /load_affect.m : function which loads data from the video coding file
+    /pshr_load_data.m : function which loads the HR and ECG data from their respective files
 
 /Pipeline
     The directory where all "approved" pipelines are contained. Each function here should be a self-contained
@@ -51,27 +51,45 @@ Summary of Repository contents:
 /Preprocess
     The direcotry where all functions related to the preprocessing of data before being analyzed are contained.
     See documentaiton inside of function for more detailed information.
-    /acar.m : 
-    /affect_mark.m : 
-    /bandpass.m : 
+    /acar.m : function which preprocesses a given vector using the Acar method
+    /affect_mark.m : function which aligns the occurance of particular affects with RR or ECG data. Appends an
+        additional column which contains either 1 or 0 for each row depending on if one or more designated affects
+        occured at that time
+    /bandpass.m : function which applies a simple bandpass to a given input vector of RR or ECG values
     /ecg_PQRST.m : takes an ECG signal and locates the P, Q, R, S, and T-waves in the signal
     /ecg_rr_alignment.m : attempts to align an RR-interval vector with the RR-intervals estimated from the ECG
         data. This serves to align the RR and ECG data.
     /ecg_rr_conversion.m : takes an ECG signal and returns the location of the R-waves and the duration of the
         RR-intervals.
-    /kamath.m : 
-    /karlsson.m : 
-    /malik.m : 
+    /kamath.m : function which preprocces a given vector using the Kamath method
+    /karlsson.m : function which preprocesses a given vector using the Karlsson method
+    /malik.m : function which preprocesses a given vector using the malik method
 
 ```
 
-## Tutorial (subject to change as pipeline is developed)
-1) Download the repository and open the `linear.m` file in your MATLAB editor
+## Tutorial (subject to change during developed)
+1) Download the repository and open the `linear.m` file in your MATLAB editor. Determine which files you wish to
+    analyze and input the relevant directory location and file names. Multiple files can be specified for loading
+    as long as they are seperated by commas.
+```
+%HR file
+hr_path = './sample/';
+hr_file = {'HR_A.txt','HR_B.txt'};
+
+%ECG file
+ecg_path = './sample/';
+ecg_file = {'ECG_A.txt'};
+
+%Affect file
+aff_path = "./sample/";
+aff_file = {'A_coding.csv'};
+
+```
 2) You should be able to run the program as long as you are running it from the directory `linear.m` is in
 3) The resulting variable `Data` is a `struct` which contains the relevant RR-interval, ECG, and Affect information
+    organized in a way condusive to analysis. See below for the format of the `Data` structure.
 
-
-## Data structure organization:
+### Data structure organization:
 ```
 Data.HR
         .Raw : cell array containing the raw HR data collected from the provided file and vectorized
@@ -90,5 +108,4 @@ Data.HR
         .path : path to the directory containing the ECG file(s) used
         .files : name(s) of the ECG files used
         .Times : cell array containing the start and stop times (in seconds) for each affect noted in .Raw
-
 ```
