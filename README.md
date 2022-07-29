@@ -88,6 +88,14 @@ aff_file = {'A_coding.csv'};
 2) You should be able to run the program as long as you are running it from the directory `linear.m` is in
 3) The resulting variable `Data` is a `struct` which contains the relevant RR-interval, ECG, and Affect information
     organized in a way condusive to analysis. See below for the format of the `Data` structure.
+4) The program will create two figures, one from the first file specified in `hr_file` and another from the first
+    file specified in 'ecg_file'. This allows for the quick visual inspection that the loading process ran as
+    intended.
+5) From here you can utilize the various functions described above to further analyze the data.
+
+[IN DEVELOPMENT] Pipelines, stored in the `./Pipeline` directory which will contain scripts for particular complete
+analyses of data.
+
 
 ### Data structure organization:
 ```
