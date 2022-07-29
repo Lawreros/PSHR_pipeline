@@ -1,4 +1,4 @@
-# PSHR_pipeline
+# The PSHR_pipeline
 A repository for analysis of the RR-interval and ECG data collected by the PSHR app found here:
 https://github.com/Lawreros/PSHR_v2
 
