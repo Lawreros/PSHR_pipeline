@@ -6,8 +6,7 @@ function [ret] = rmssd_calc(mat,bin,band)
     %       calculate RMSSD for
     %
     %       bin: [1-by-2 cell array] Used for creating a vector of the
-    %       RMSSD
-    %       results from a sliding bin of Y seconds or entries. This takes the
+    %       RMSSD results from a sliding bin of Y seconds or entries. This takes the
     %       format of {index, 'units'}, so if you want to have a bin of the
     %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
     %       If you don't want this, set bin to false.

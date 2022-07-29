@@ -3,6 +3,7 @@ function [ret] = sdnn_calc(mat,bin,band)
     %   Inputs:
     %       mat: A [n-by-1] vector which contains the data you want to
     %       calculate standard deviation for
+    %       
     %       bin: [1-by-2 cell array] Used for creating a vector of the
     %       standard deviations
     %       results from a sliding bin of Y seconds or entries. This takes the

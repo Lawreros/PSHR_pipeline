@@ -4,6 +4,7 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
     %   Inputs:
     %       mat: A [n-by-1] vector which contains the data you want to
     %       calculate pNNX for
+    %
     %       diff: [int] The minimum difference in milliseconds between
     %       successive NN-intervalse that you want to count
     %

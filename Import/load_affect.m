@@ -6,8 +6,10 @@ function [Data] = load_affect(Data, path, file)
     %       structure that is output. If HR or ECG data is already
     %       contained in the Data structure, then affect start and stop
     %       times are calculated using the time_adjust function
+    %
     %       path: [string] the path to the folder containing the file you
     %       want to load in
+    %
     %       file: [string] name of the file that you want to load
     
     %   Returns:
