@@ -1,5 +1,5 @@
 # PSHR_pipeline
-A small repository for analysis of the RR-interval and ECG data collected by the PSHR app found here:
+A repository for analysis of the RR-interval and ECG data collected by the PSHR app found here:
 https://github.com/Lawreros/PSHR_v2
 
 The purpose of this pipeline is to provide a easy-to-use framework and function library for RR-interval and ECG data organization and analysis.
