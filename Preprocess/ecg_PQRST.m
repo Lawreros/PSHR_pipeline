@@ -28,6 +28,18 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
 %           bin_width: [int] The maximum amount of indices before and after
 %           the R-wave to look for the other waves in the PQRST complex.
 %           Default is 50.
+%
+%           min_waves: [int or 1-by-5 vector] Whether to cut all R-wave
+%           locations and their associated P, Q, S, and T-wave rows from
+%           the returned locations_matrix. Can either specify how many of
+%           the wave components must be present to keep the R-wave
+%           (inputing '3' will mean that rows containing R-waves with 3 or 
+%           more wave components, including the R-wave, will be kept) or
+%           the specific waves that need to be present (inputing a binary
+%           vector for which waves have to be present with the template of:
+%           [P,Q,R,S,T]. Thus requiring Q and T-waves be present is
+%           [0,1,1,0,1]. Default value is false, which does not activate
+%           this filtration process.
 %           
 
 %   Returns:
@@ -59,7 +71,7 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
     % the ones that you need.
     p = inputParser;
     validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0); %specify type of input that is a positive scalar
-    addRequired(p,'mat',@ismatrix);
+    %addRequired(p,'mat',@ismatrix);
     %addRequired(p,'width',validScalarPosNum);
     addParameter(p,'R_MinPeakProminence',R_peakp,validScalarPosNum);
     addParameter(p,'R_MinPeakDistance',R_peakd,validScalarPosNum);
@@ -78,8 +90,10 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
     %addOptional(p,'height',defaultHeight,validScalarPosNum);
     addParameter(p,'bin_width',bin_width,validScalarPosNum);
     addParameter(p,'disp_plot',false,@islogical);
+    addParameter(p,'min_waves', false, @isvector);
     %addParameter(p,'shape',defaultShape, @(x) any(validatestring(x,expectedShapes)));
-    parse(p,mat,varargin{:});
+    %parse(p,mat,varargin{:});
+    parse(p,varargin{:});
     
     
     %% Start of analysis code
@@ -157,4 +171,40 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
         end
     end
 
+    %% Return only a list of RR-intervals which meet a specific specification
+
+    %min_waves = [0,1,1,1,0];
+    %min_waves = 3;
+    min_waves = p.Results.min_waves;
+
+    if islogical(min_waves)==0 % If they want to do the wave filtration
+        cut = [];
+        
+        if isscalar(min_waves) %If they have specified a minimum amount of waves
+            for i = 1:length(locations_matrix)
+                % Find how many rows contain too many NaNs
+                if sum(isnan(locations_matrix(i,:))) > (5 - min_waves) %if there are more NaNs than (max - scalar)
+                    cut = [cut,i];
+                end
+            end
+        else %If they have input the vector of which waves MUST be present
+            
+            % First just cut all of the columns not included in analysis
+            mat = locations_matrix;
+            mat(:,find(min_waves==0))=[];
+
+            % Go through each row and catalog which RR-intervals fail
+            for i = 1:length(mat)
+                if sum(isnan(mat(i,:))) > 0
+                    % A NaN has been found
+                    cut = [cut,i];
+                end
+            end
+
+        end
+
+        % Cut the rows from locations_matrix which fail
+        locations_matrix(cut,:) = [];
+    end
+    
 end

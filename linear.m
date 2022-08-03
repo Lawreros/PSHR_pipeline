@@ -20,12 +20,12 @@ addpath('./Import');
 % Input the files you wish to analyze
 
 %HR file
-hr_path = './group_HR_analysis/'; %The location of the directory containing the HR file you want to analyze
-hr_file = {'HR_05-13-2022.txt','HR_05-09-2022.txt','HR_05-16-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+hr_path = './group_HR_analysis/S02/'; %The location of the directory containing the HR file you want to analyze
+hr_file = {'HR_08-01-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
 
 %ECG file
-ecg_path = './group_HR_analysis/'; %The location of the directory containing the ECG file you want to analyze
-ecg_file = {'ECG_05-09-2022.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
+ecg_path = './group_HR_analysis/S02/'; %The location of the directory containing the ECG file you want to analyze
+ecg_file = {'ECG_08-01-2022.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
 
 %Affect file
 aff_path = "./sample/";
@@ -72,7 +72,8 @@ Data.ECG.PP{1}(:,3) = ret;
 
 %TODO: Go though default settings to find what has the minimum amount of
 %NaNs
-samp = ecg_PQRST(Data.ECG.PP{1}(:,3));
+samp = ecg_PQRST(Data.ECG.PP{1}(:,3), 'min_waves', false);
+
 
 %% Go through combinations of parameters for best RR/ECG alignment
 
