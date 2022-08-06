@@ -1,0 +1,234 @@
+function [Data] = pshr_load(varargin)
+% This function serves to load all HR, ECG, and Affect files that are
+% required for analysis and organizes them into a structure that can be
+% used for future analysis. This function assumes that the indexes for the
+% HR/ECG/Affect files is the same for a given recording session, with NaN's
+% input for missing files.
+%
+% EXAMPLE: 
+% output = pshr_load('HR', {H_1, H_2, NaN}, 'ECG', {E_1, NaN, E_3}, 'Affect', {A_1, A_2, A_3})
+
+%   Inputs:
+%       HR: [cell list of strings] List containing the location of the HR
+%       files you wish to load and analyze. Default is an empty cell,
+%       representing no files.
+%       ECG: [cell list of strings] List containing the location of the ECG
+%       files that you wish to load and analyze. Default is an empty cell,
+%       representing no files.
+%       Affect: [cell list of strings] List containing the location of the
+%       coded Affect files that you wish to load and analyze. Default is an
+%       empty cell, representing no files.
+%       align: [bool] whether to align the affects from the affect files
+%       with the present HR/ECG files. Default is true.
+
+
+%   Returns:
+%       Data: [struct] structure containing relevant information laoded
+%       from the files you specfy
+%
+
+
+
+
+    % Define input parser for the 
+    p = inputParser;
+    addParameter(p, 'HR', {}, @iscell);
+    addParameter(p, 'ECG', {}, @iscell);
+    addParameter(p, 'Affect', {}, @iscell);
+    addParameter(p, 'align', true, @islogical);
+
+    parse(p,varargin{:});
+    
+    % Check the length of the different file lists, if their lengths are
+    % greater than 1 but not equal to each other, raise an message to the
+    % user
+    
+    
+    
+    % Create structure that will hold everything (going with Data for easy
+    % implementation of old code)
+    
+    Data = {};
+    
+    %% Load the files
+    
+    % Load the HR data and vectorize it
+    if isempty(p.Results.HR)
+        for i = 1:length(p.Results.HR)
+            dump = data_load(p.Results.HR{i});
+            Data.HR.Raw{i} = vectorize(dump);
+            disp(strcat('Loading file: ', p.Results.HR{i}));
+            clear dump; %just save some memory
+        end
+        Data.HR.files = p.Results.HR;
+    end
+    
+    
+    % Load the ECG data and vectorize it
+    if isempty(p.Results.ECG)
+        for i = 1:length(p.Results.ECG)
+            dump = data_load(p.Results.ECG{i});
+            Data.ECG.Raw{i} = vectorize(dump);
+            disp(strcat('Loading file: ', p.Results.ECG{i}));
+            clear dump; %save memory
+        end
+        Data.ECG.files = p.Results.ECG;
+    end
+    
+    % Load the Affect data
+    
+    
+    % Align Affect data with 
+    
+    disp('teststop')
+    
+    
+    
+end
+
+
+function [raw_array] = data_load(fpath)
+    %Load in file
+    fid = fopen(fpath);
+    line = fgetl(fid);
+    
+    % Count number of entries in line to determine HR or ECG data
+    num = length(strfind(line,'	'));
+
+    if num < 5
+        disp('HR file detected:');
+        format = '%f:%f:%f %f %f %f %f';
+    elseif num < 70
+        disp('ECG file detected:');
+        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 57));
+    else
+        disp('ECG file detected:');
+        format = strcat('%f:%f:%f %f', repmat(' %f', 1, 73)); %generate 73 ecg entries
+    end
+
+    % Read in information, converting app time into milliseconds
+    i = 1;
+    while line ~= -1
+        nline = textscan(line, format, 'Delimiter', '\t');
+        
+        if isempty(nline{5}) %Add check for ERROR entry/issue and add skip entry
+            disp(strcat("ERROR found in row: ", int2str(i)));
+            disp("Skipping data packet");
+            line = fgetl(fid);
+        else
+            ntime = ((((nline{1}*60)+nline{2})*60)+nline{3})*1000; %convert time into milliseconds
+            raw_array(i,:) = [ntime, nline(1,4:end)];
+            line = fgetl(fid);
+            i=i+1;
+        end
+    end
+    disp(strcat(fpath, ': LOADED'));
+    raw_array = cell2mat(raw_array);
+end
+
+
+function [new_array] = vectorize(matrix_array)
+    %Take the raw array and concatonate all of the data entries into a
+    %vector for easy manipulation later
+    
+
+    [r, c] = size(matrix_array);
+    if c < 10 %might not matter, but keeping in case app format changes
+        disp('HR cell array detected:');
+        skip = 3;
+    else
+        disp('ECG cell array detected:');
+        skip = 3;
+    end
+
+    % Convert array into one were the ecg values/RR intervals are all in
+    % one column
+    %Lines with no RR intervals are automatically removed during this
+    %process, as they contain no valuable information.
+    entry = 1;
+    new_array=[];
+    
+    for i = 1:r
+        new_array(entry,1:2) = matrix_array(i,1:2);
+        for j = skip:c
+            if matrix_array(i,j) ~= 0
+                new_array(entry,3) = matrix_array(i,j);
+                entry=entry+1;
+            end
+        end
+    end
+    %Add in NaNs for new rows instead of 0's to make time alignment easier
+    
+    for i = 1:length(new_array)
+        if new_array(i,1)==0
+            new_array(i,1) = NaN;
+        end
+    end
+    
+end
+
+
+
+function [Data] = time_adjust(Data, algn, type)
+%Changes the generates indexes for Data.*.Raw that correspond with
+%timestamps found in Data.Affect.Times
+
+%inputs:
+% Data: main Data structure
+% algn: [vector of ints] alignment time found with (polar_timestamp - video_time) = corr
+% type: What type of Data you are adjusting the time of
+
+for q=1:length(Data.Affect.Times)
+
+    % Iterate through start and stop times
+    [r,c] = size(Data.Affect.Times{q});
+    
+    % Create place to store new times
+    Data.(type).Affect{q} = {};
+
+    
+    %Iterate through each affect
+    for i = 1:r
+        starts = [];
+        ends = [];
+        
+        %Iterate through each start/stop pair
+        for j = 1:length(Data.Affect.Times{q}{i,2})
+            
+            a = find(Data.(type).Raw{q}(:,1) >= (Data.Affect.Times{q}{i,2}(j)*1000+algn));
+            %disp(Data.Affect.Times{i,2}(j)*1000+algn);
+            
+            b = find(Data.(type).Raw{q}(:,1) > (Data.Affect.Times{q}{i,3}(j)*1000+algn));
+            %disp(Data.Affect.Times{i,3}(j)*1000+algn);
+            
+            if isempty(a)==0 && isempty(b)==0
+                if a(1) == b(1)
+                        %nothing is there
+                else
+                        starts = [starts, a(1)];
+                        ends = [ends, b(1)-1];
+                end
+            elseif isempty(a)==0 && isempty(b)==1
+                fprintf("Affect %s ends after the recording and starts at time %d\n",...
+                    Data.Affect.Times{q}{i,1}, Data.Affect.Times{q}{i,2}(j));
+                    starts = [starts, a(1)];
+                    ends = [ends, length(Data.(type).Raw{q})];
+            else
+                %Issue due to the affects occuring outside of collected
+                %HR/ECG data
+                fprintf('WARNING: Affect %s from video time %d to %d could not be found in data\n',...
+                    Data.Affect.Times{q}{i,1}, Data.Affect.Times{q}{i,2}(j), Data.Affect.Times{q}{i,3}(j));
+                
+            end
+        end
+            % Store indexes for each affect with their respective data
+            % types, instead of keeping everything in the Affect structure.
+            % This way, every thing you need for each analysis will be
+            % grouped
+            Data.(type).Affect{q}{i,1} = Data.Affect.Times{q}{i,1};
+            Data.(type).Affect{q}{i,2} = starts;
+            Data.(type).Affect{q}{i,3} = ends;
+    end
+
+end
+end
