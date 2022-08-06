@@ -55,10 +55,14 @@ function [Data] = pshr_load(varargin)
     % Load the HR data and vectorize it
     if isempty(p.Results.HR)
         for i = 1:length(p.Results.HR)
-            dump = data_load(p.Results.HR{i});
-            Data.HR.Raw{i} = vectorize(dump);
-            disp(strcat('Loading file: ', p.Results.HR{i}));
-            clear dump; %just save some memory
+            if isnan(p.Results.HR{i}) % Skip NaN files
+                disp('Empty HR file');
+            else
+                dump = data_load(p.Results.HR{i});
+                Data.HR.Raw{i} = vectorize(dump);
+                disp(strcat('Loading file: ', p.Results.HR{i}));
+                clear dump; %just save some memory
+            end
         end
         Data.HR.files = p.Results.HR;
     end
@@ -67,15 +71,78 @@ function [Data] = pshr_load(varargin)
     % Load the ECG data and vectorize it
     if isempty(p.Results.ECG)
         for i = 1:length(p.Results.ECG)
-            dump = data_load(p.Results.ECG{i});
-            Data.ECG.Raw{i} = vectorize(dump);
-            disp(strcat('Loading file: ', p.Results.ECG{i}));
-            clear dump; %save memory
+            if isnan(p.Results.ECG{i}) % Skip NaN files
+                disp('Empty ECG file');
+            else
+                dump = data_load(p.Results.ECG{i});
+                Data.ECG.Raw{i} = vectorize(dump);
+                disp(strcat('Loading file: ', p.Results.ECG{i}));
+                clear dump; %save memory
+            end
         end
         Data.ECG.files = p.Results.ECG;
     end
     
     % Load the Affect data
+    if isempty(p.Results.Affect)
+        for i = 1:length(p.Results.Affect)
+            if isnan(p.Results.Affect{i})
+                disp('Empty Affect file');
+            else
+                Data.Affect.Raw{i} = readtable(p.Results.Affect{i}, 'Format', 'auto');
+        
+                % Get list of all unique affects used in the coding
+                aff_list = unique(Data.Affect.Raw{i}.Affect1);
+                Data.Affect.Raw{i}.Affect1{1} = "start";
+                Data.Affect.Raw{i}.Affect1{end+1} = "end";
+                
+                if iscell(unique(Data.Affect.Raw{i}.Affect2(1:end-1)))
+                    ext = unique(Data.Affect.Raw{i}.Affect2(~cellfun(@isempty, Data.Affect.Raw{i}.Affect2)));
+                    aff_list = [aff_list; ext];
+                    Data.Affect.Raw{i}.Affect2{1} = "start";
+                    Data.Affect.Raw{i}.Affect2{end} = "end";
+                else
+                    disp('No entries in column Affect2');
+                end
+
+                if iscell(unique(Data.Affect.Raw{i}.Affect3(1:end-1)))
+                    ext = unique(Data.Affect.Raw{i}.Affect3(~cellfun(@isempty, Data.Affect.Raw{i}.Affect3)));
+                    Data.Affect.Raw{i}.Affect3{1} = "start";
+                    Data.Affect.Raw{i}.Affect3{end} = "end";
+                else
+                    disp('No entries in column Affect3');
+                end
+
+                aff_list = unique(aff_list); %cell array of all affects used
+
+
+                %Generate Start and End times for the Affects using video time
+                Data.Affect.Times{i} = {};
+                for i = 1:length(aff_list)
+                    starts = [];
+                    ends = [];
+                    for d = 1:3
+                        col = strcat("Affect",string(d));
+
+                        buffer = [false, transpose(diff(strcmp(Data.Affect.Raw{i}.(col), aff_list{i}))~=0)];
+                        buffer = find(buffer);
+
+
+                        for j = 1:2:length(buffer)
+                            starts = [starts, Data.Affect.Raw{i}.Time_sec(buffer(j))];%buffer(j)];
+                            ends = [ends, Data.Affect.Raw{i}.Time_sec(buffer(j+1)-1)];%buffer(j+1)-1];
+                        end
+                    end
+                    Data.Affect.Times{i}{i,1} = aff_list{i};
+                    Data.Affect.Times{i}{i,2} = starts;
+                    Data.Affect.Times{i}{i,3} = ends;
+                end
+
+            end
+                
+        end
+        Data.Affect.files = p.Results.files;
+    end
     
     
     % Align Affect data with 
