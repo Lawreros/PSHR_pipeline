@@ -53,7 +53,7 @@ function [Data] = pshr_load(varargin)
     %% Load the files
     
     % Load the HR data and vectorize it
-    if isempty(p.Results.HR)
+    if isempty(p.Results.HR)==0
         for i = 1:length(p.Results.HR)
             if isnan(p.Results.HR{i}) % Skip NaN files
                 disp('Empty HR file');
@@ -69,7 +69,7 @@ function [Data] = pshr_load(varargin)
     
     
     % Load the ECG data and vectorize it
-    if isempty(p.Results.ECG)
+    if isempty(p.Results.ECG)==0
         for i = 1:length(p.Results.ECG)
             if isnan(p.Results.ECG{i}) % Skip NaN files
                 disp('Empty ECG file');
@@ -84,7 +84,7 @@ function [Data] = pshr_load(varargin)
     end
     
     % Load the Affect data
-    if isempty(p.Results.Affect)
+    if isempty(p.Results.Affect)==0
         for i = 1:length(p.Results.Affect)
             if isnan(p.Results.Affect{i})
                 disp('Empty Affect file');
@@ -118,13 +118,13 @@ function [Data] = pshr_load(varargin)
 
                 %Generate Start and End times for the Affects using video time
                 Data.Affect.Times{i} = {};
-                for i = 1:length(aff_list)
+                for k = 1:length(aff_list)
                     starts = [];
                     ends = [];
                     for d = 1:3
                         col = strcat("Affect",string(d));
 
-                        buffer = [false, transpose(diff(strcmp(Data.Affect.Raw{i}.(col), aff_list{i}))~=0)];
+                        buffer = [false, transpose(diff(strcmp(Data.Affect.Raw{i}.(col), aff_list{k}))~=0)];
                         buffer = find(buffer);
 
 
@@ -133,15 +133,15 @@ function [Data] = pshr_load(varargin)
                             ends = [ends, Data.Affect.Raw{i}.Time_sec(buffer(j+1)-1)];%buffer(j+1)-1];
                         end
                     end
-                    Data.Affect.Times{i}{i,1} = aff_list{i};
-                    Data.Affect.Times{i}{i,2} = starts;
-                    Data.Affect.Times{i}{i,3} = ends;
+                    Data.Affect.Times{i}{k,1} = aff_list{k};
+                    Data.Affect.Times{i}{k,2} = starts;
+                    Data.Affect.Times{i}{k,3} = ends;
                 end
 
             end
                 
         end
-        Data.Affect.files = p.Results.files;
+        Data.Affect.files = p.Results.Affect;
     end
     
     
