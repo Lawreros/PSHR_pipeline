@@ -57,6 +57,7 @@ function [Data] = pshr_load(varargin)
         for i = 1:length(p.Results.HR)
             if isnan(p.Results.HR{i}) % Skip NaN files
                 disp('Empty HR file');
+                Data.HR.Raw{i} = []; % Put empty matrix for consistency
             else
                 dump = data_load(p.Results.HR{i});
                 Data.HR.Raw{i} = vectorize(dump);
@@ -73,6 +74,7 @@ function [Data] = pshr_load(varargin)
         for i = 1:length(p.Results.ECG)
             if isnan(p.Results.ECG{i}) % Skip NaN files
                 disp('Empty ECG file');
+                Data.ECG.Raw{i} = []; % Put empty matrix for consistency
             else
                 dump = data_load(p.Results.ECG{i});
                 Data.ECG.Raw{i} = vectorize(dump);
@@ -88,6 +90,7 @@ function [Data] = pshr_load(varargin)
         for i = 1:length(p.Results.Affect)
             if isnan(p.Results.Affect{i})
                 disp('Empty Affect file');
+                Data.Affect.Raw{i} = {};
             else
                 Data.Affect.Raw{i} = readtable(p.Results.Affect{i}, 'Format', 'auto');
         
@@ -145,12 +148,38 @@ function [Data] = pshr_load(varargin)
     end
     
     
-    % Align Affect data with 
+    % Load and store alignment time (Automate this for when format is
+    % standardized)
     
-    disp('teststop')
+    if p.Results.align
     
-    
-    
+        % realtime = "11:19:15"
+        % videotime = 728 - 1 for lag
+
+        pol_time = (((((11*60)+19)*60)+15)*1000);
+        vid_time = 727*1000;
+        algn = pol_time - vid_time;
+
+        %Check if there is any HR or ECG data loaded. If so, then generate the
+        %index numbers for the start and stop.
+
+        for q = 1:length(Data.Affect.Times)
+            if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0
+                disp("HR data found, generating start and stop indexes");
+                Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn);
+            else
+                Data.HR.Affect{q} = {};
+            end
+            
+            if isempty(Data.Affect.Times{q})==0 && isempty(Data.ECG.Raw{q})==0
+                disp("ECG data found, generating start and stop indexes");
+                Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn);
+            else
+                Data.ECG.Affect{q} = {};
+            end
+        end
+
+    end
 end
 
 
@@ -236,22 +265,24 @@ end
 
 
 
-function [Data] = time_adjust(Data, algn, type)
+function [results] = time_adjust(mat,times,algn)
 %Changes the generates indexes for Data.*.Raw that correspond with
 %timestamps found in Data.Affect.Times
 
 %inputs:
-% Data: main Data structure
+% mat: [n-by-m matrix] either the Raw HR or ECG data found in the Data
+% structure (either Data.HR.Raw or Data.ECG.Raw)
+% times: [x-by-3 array] the cell array containing the relevant start and stop times for
+% the coded data. This is found in the Data structure as Data.Affect.Times
 % algn: [vector of ints] alignment time found with (polar_timestamp - video_time) = corr
-% type: What type of Data you are adjusting the time of
 
-for q=1:length(Data.Affect.Times)
+
 
     % Iterate through start and stop times
-    [r,c] = size(Data.Affect.Times{q});
+    [r,c] = size(times);
     
     % Create place to store new times
-    Data.(type).Affect{q} = {};
+    results = {};
 
     
     %Iterate through each affect
@@ -260,12 +291,12 @@ for q=1:length(Data.Affect.Times)
         ends = [];
         
         %Iterate through each start/stop pair
-        for j = 1:length(Data.Affect.Times{q}{i,2})
+        for j = 1:length(times{i,2})
             
-            a = find(Data.(type).Raw{q}(:,1) >= (Data.Affect.Times{q}{i,2}(j)*1000+algn));
+            a = find(mat(:,1) >= (times{i,2}(j)*1000+algn));
             %disp(Data.Affect.Times{i,2}(j)*1000+algn);
             
-            b = find(Data.(type).Raw{q}(:,1) > (Data.Affect.Times{q}{i,3}(j)*1000+algn));
+            b = find(mat(:,1) > (times{i,3}(j)*1000+algn));
             %disp(Data.Affect.Times{i,3}(j)*1000+algn);
             
             if isempty(a)==0 && isempty(b)==0
@@ -277,14 +308,14 @@ for q=1:length(Data.Affect.Times)
                 end
             elseif isempty(a)==0 && isempty(b)==1
                 fprintf("Affect %s ends after the recording and starts at time %d\n",...
-                    Data.Affect.Times{q}{i,1}, Data.Affect.Times{q}{i,2}(j));
+                    times{i,1}, times{i,2}(j));
                     starts = [starts, a(1)];
-                    ends = [ends, length(Data.(type).Raw{q})];
+                    ends = [ends, length(mat)];
             else
                 %Issue due to the affects occuring outside of collected
                 %HR/ECG data
                 fprintf('WARNING: Affect %s from video time %d to %d could not be found in data\n',...
-                    Data.Affect.Times{q}{i,1}, Data.Affect.Times{q}{i,2}(j), Data.Affect.Times{q}{i,3}(j));
+                    times{i,1}, times{i,2}(j), times{i,3}(j));
                 
             end
         end
@@ -292,10 +323,10 @@ for q=1:length(Data.Affect.Times)
             % types, instead of keeping everything in the Affect structure.
             % This way, every thing you need for each analysis will be
             % grouped
-            Data.(type).Affect{q}{i,1} = Data.Affect.Times{q}{i,1};
-            Data.(type).Affect{q}{i,2} = starts;
-            Data.(type).Affect{q}{i,3} = ends;
+            results{i,1} = times{i,1};
+            results{i,2} = starts;
+            results{i,3} = ends;
     end
 
 end
-end
+
