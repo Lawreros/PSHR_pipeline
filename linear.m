@@ -30,72 +30,7 @@ aff_files = {'./sample/A_coding.csv'};
 
 
 %% Load and organize data from iPhone files
-% Data.HR.Raw{1} = {};
-% Data.ECG.Raw{1} = {};
-% Data.Affect.Raw{1} = {};
-
-%Data = pshr_load_data(Data, hr_path, hr_files, "HR");
-%Data = pshr_load_data(Data, ecg_path, ecg_files, "ECG");
-%Data = load_affect(Data, aff_path, aff_file);
-
 Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files);
-
-
-
-%% ECG preprocessing
-
-%known issues with ecg data:
-%   1. Inverted ECG measurements (lead placement results in upside-down
-%   QRS)
-%       Solution: The mean uV is not always positive or negative based off
-%       of inverted data
-
-
-
-
-
-%   2. Maxing out of signal/discrete shift
-%       Solution: Index where the measured value falls outside of -5000 to 5000
-%       then take x indicies before and after it and remove those. This
-%       will still work with findpeaks and takes care of the issue with
-%       adjustment noise.
-mat = Data.ECG.Raw{1}(:,3);
-amp = 5000; %Maximum amplitude
-cut_bin = 100;
-[ret, locs] = ecg_preprocess(mat, amp, cut_bin);
-
-%% Find P,Q,R,S,T
-
-Data.ECG.PP = {};
-Data.ECG.PP{1} = Data.ECG.Raw{1};
-Data.ECG.PP{1}(:,3) = ret;
-
-%TODO: Go though default settings to find what has the minimum amount of
-%NaNs
-samp = ecg_PQRST(Data.ECG.PP{1}(:,3), 'min_waves', false, 'disp_plot', false);
-
-
-%% Go through combinations of parameters for best RR/ECG alignment
-
-[a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),700,50,130,10,true);
-
-val_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
-time_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
-%peak
-for i=600:50:900
-    % dist
-    for j=40:10:70
-    % subcost
-        for k= 5:5:20
-            [a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),i,j,130,k,false);
-            val_iter_results(end+1,:) = [sum(~isnan(c.val.diff))/length(c.val.diff), c.val.mean, c.val.std, i,j,k];
-            time_iter_results(end+1,:) = [sum(~isnan(c.time.diff))/length(c.time.diff), c.time.mean, c.time.std, i,j,k];
-        end
-    end
-end
-
-
-
 
 %% Plot RR-Interval and ECG data
 
@@ -117,7 +52,6 @@ ylabel("Voltage");
 %% RR-Interval Analysis
 % This is where files are exported and saved
 Data = group_analysis(Data, "HR", {5,"second"},false);
-
 
 
 %% Export Functions
