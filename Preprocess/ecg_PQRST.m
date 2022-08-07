@@ -207,4 +207,9 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
         locations_matrix(cut,:) = [];
     end
     
+    
+    %% Return timestamps for the RR-interval locations
+    
+    
+    
 end
