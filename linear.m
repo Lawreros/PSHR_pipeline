@@ -20,27 +20,17 @@ addpath('./Import');
 % Input the files you wish to analyze
 
 %HR file
-hr_path = './sample/'; %The location of the directory containing the HR file you want to analyze
-hr_file = {'HR_A.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+hr_files = {'./sample/HR_A.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
 
 %ECG file
-ecg_path = './sample/'; %The location of the directory containing the ECG file you want to analyze
-ecg_file = {'ECG_A.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
+ecg_files = {'./sample/ECG_A.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
 
 %Affect file
-aff_path = "./sample/";
-aff_file = {'A_coding.csv'};
+aff_files = {'./sample/A_coding.csv'};
 
 
 %% Load and organize data from iPhone files
-Data.HR.Raw{1} = {};
-Data.ECG.Raw{1} = {};
-Data.Affect.Raw{1} = {};
-
-Data = pshr_load_data(Data, hr_path, hr_file, "HR");
-Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
-Data = load_affect(Data, aff_path, aff_file);
-
+Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files);
 
 %% Plot RR-Interval and ECG data
 
@@ -62,7 +52,6 @@ ylabel("Voltage");
 %% RR-Interval Analysis
 % This is where files are exported and saved
 Data = group_analysis(Data, "HR", {5,"second"},false);
-
 
 
 %% Export Functions
@@ -222,3 +211,37 @@ function [Data] = group_analysis(Data, type, bin, band)
 
     disp('done');
 end
+
+function [ret,locs] = ecg_preprocess(mat, amp, cut_bin)
+% Function to take the ECG data preprocesses it by removing ECG values
+% which fall outside of the accepted amplitude
+    %inputs:
+    %   mat: [n-by-1] vector containing ecg data
+    %   amp: [int], minimum amplitude of accepted ECG values. If a value
+    %   falls outside of this bound, all values [cut_bin] before and after
+    %   it are replaced with NaNs.
+    %   cut_bin: [int], the amount of indexes before and after entries
+    %   which fail [amp] that are replaced with NaNs.
+    
+    %Returns:
+    %   ret: [n-by-1] matrix containing the ecg data with all removed
+    %   values replaced by NaNs
+    %   locs: [m-by-1] index of all values which fall outside of the bounds
+    %   described by [amp]
+
+    locs = find(abs(mat)>amp);
+    ret = mat;
+    max_len = length(ret);
+    
+    for i = 1:length(locs)
+    
+        if locs(i) <= cut_bin
+            ret(1:locs(i)+cut_bin) = NaN;
+        elseif locs(i)+cut_bin >= max_len
+            ret(locs(i)-cut_bin:end) = NaN;
+        else
+            ret(locs(i)-cut_bin:locs(i)+cut_bin) = NaN;
+        end
+    end
+end
+

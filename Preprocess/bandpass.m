@@ -1,9 +1,10 @@
 function [ret] = bandpass(mat, l_band, u_band, rang)
-    % Applies a bandpass filtering to vector provided. Any RR-interval
+    % Applies a bandpass filtering to vector provided. Any vector
     % value outside of the range specified by the lower and upper bounds is
     % replaced with a NaN
     %   Inputs:
-    %       Data: The Data structure
+    %       mat: [n-by-1 vector] vector of values which are being bandpass
+    %       filtered
     %       source: [string], Which matrix from the structure you want to
     %       use
     %       l_band: [int], the lower bounding value for the bandpass filter
@@ -11,6 +12,10 @@ function [ret] = bandpass(mat, l_band, u_band, rang)
     %       rang: [2 int vector] The range [start, end] of values you want
     %       to use the bandpass on. If false, then analyze the whole
     %       range
+    
+    %   Returns:
+    %       ret: [m-by-1 vector] vector of values that have been bandpass
+    %       filtered. This should be the length defined by rang
 
     if rang
         r_1 = rang(1);
@@ -21,11 +26,11 @@ function [ret] = bandpass(mat, l_band, u_band, rang)
     end
 
     %Create copy of matrix to edit
-    ret = mat;
+    ret = mat(r_1:r_2,1);
     
-    for i = r_1:r_2
+    for i = 1:length(ret)
         if (ret(i,1)>= u_band) || (ret(i,1) <= l_band)
-            ret(i,3) = NaN;
+            ret(i,1) = NaN;
         end
     end 
 end

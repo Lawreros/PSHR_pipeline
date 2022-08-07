@@ -8,7 +8,7 @@ function [locs] = ecg_rr_conversion(mat, peak, dist, freq)
     %   freq: [int], sampling frequency for ECG data in Hz
     
     %Returns:
-    %   locs: [m-by-3] matrix containing the [timestamp, index, RR-calc]
+    %   locs: [m-by-4] matrix containing the [timestamp, index, voltage, RR-calc]
     %   for the peaks
 
 
@@ -16,10 +16,11 @@ function [locs] = ecg_rr_conversion(mat, peak, dist, freq)
     
     locs(:,2) = locs(:,1);
     locs(:,1) = NaN;
+    locs(:,3) = pks;
     
     for i = 2:length(locs)
         %convert to milliseconds assuming a <freq>Hz sampling frequency
-        locs(i,3) = (locs(i,2)-locs(i-1,2))*(1000/freq);
+        locs(i,4) = (locs(i,2)-locs(i-1,2))*(1000/freq);
         
         %record timestamp for each peak
         j = 0;
