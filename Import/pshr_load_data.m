@@ -1,4 +1,5 @@
 function [Data] = pshr_load_data(Data, path, file, type)
+    % DEPRICATED: PLEASE USE pshr_load instead
     % Loads the data from the provided HR or ECG file and organizes 
     % it into a structure that can be used for future analysis
     %   Inputs:

@@ -73,16 +73,13 @@ Summary of Repository contents:
     as long as they are seperated by commas.
 ```
 %HR file
-hr_path = './sample/';
-hr_file = {'HR_A.txt','HR_B.txt'};
+hr_files = {'./sample/HR_A.txt','./saple/HR_B.txt'};
 
 %ECG file
-ecg_path = './sample/';
-ecg_file = {'ECG_A.txt'};
+ecg_files = {'./sample/ECG_A.txt'};
 
 %Affect file
-aff_path = "./sample/";
-aff_file = {'A_coding.csv'};
+aff_files = {'./sample/A_coding.csv'};
 
 ```
 2) You should be able to run the program as long as you are running it from the directory `linear.m` is in

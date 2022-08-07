@@ -20,26 +20,26 @@ addpath('./Import');
 % Input the files you wish to analyze
 
 %HR file
-hr_path = './group_HR_analysis/S02/'; %The location of the directory containing the HR file you want to analyze
-hr_file = {'HR_08-01-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+hr_files = {'./sample/HR_A.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
 
 %ECG file
-ecg_path = './group_HR_analysis/S02/'; %The location of the directory containing the ECG file you want to analyze
-ecg_file = {'ECG_08-01-2022.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
+ecg_files = {'./sample/ECG_A.txt'}; %The name of the ECG file(s) you want to analyze (seperated by commas)
 
 %Affect file
-aff_path = "./sample/";
-aff_file = {'A_coding.csv'};
+aff_files = {'./sample/A_coding.csv'};
 
 
 %% Load and organize data from iPhone files
-Data.HR.Raw{1} = {};
-Data.ECG.Raw{1} = {};
-Data.Affect.Raw{1} = {};
+% Data.HR.Raw{1} = {};
+% Data.ECG.Raw{1} = {};
+% Data.Affect.Raw{1} = {};
 
-Data = pshr_load_data(Data, hr_path, hr_file, "HR");
-Data = pshr_load_data(Data, ecg_path, ecg_file, "ECG");
+%Data = pshr_load_data(Data, hr_path, hr_files, "HR");
+%Data = pshr_load_data(Data, ecg_path, ecg_files, "ECG");
 %Data = load_affect(Data, aff_path, aff_file);
+
+Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files);
+
 
 
 %% ECG preprocessing
@@ -72,7 +72,7 @@ Data.ECG.PP{1}(:,3) = ret;
 
 %TODO: Go though default settings to find what has the minimum amount of
 %NaNs
-samp = ecg_PQRST(Data.ECG.PP{1}(:,3), 'min_waves', false);
+samp = ecg_PQRST(Data.ECG.PP{1}(:,3), 'min_waves', false, 'disp_plot', false);
 
 
 %% Go through combinations of parameters for best RR/ECG alignment

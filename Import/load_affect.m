@@ -1,4 +1,5 @@
 function [Data] = load_affect(Data, path, file)
+% DEPRICATED: PLEASE USE pshr_load instead
 % Loads the data from the provided affect file and organizes 
     % it into a structure that can be used for future analysis
     %   Inputs:
