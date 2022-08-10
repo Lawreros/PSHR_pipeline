@@ -26,9 +26,9 @@ function [Data] = pshr_load(varargin)
 %       Data: [struct] structure containing relevant information laoded
 %       from the files you specfy
 %
-
-
-
+    %https://www.mathworks.com/help/matlab/matlab_prog/suppress-warnings.html
+    warning('off','MATLAB:table:RowsAddedExistingVars'); %turn off useless warnings
+    warning('off','MATLAB:table:ModifiedAndSavedVarnames');
 
     % Define input parser for the 
     p = inputParser;
@@ -87,12 +87,42 @@ function [Data] = pshr_load(varargin)
     
     % Load the Affect data
     if isempty(p.Results.Affect)==0
+        Data.Affect.files = p.Results.Affect;
         for i = 1:length(p.Results.Affect)
             if isnan(p.Results.Affect{i})
                 disp('Empty Affect file');
                 Data.Affect.Raw{i} = {};
             else
                 Data.Affect.Raw{i} = readtable(p.Results.Affect{i}, 'Format', 'auto');
+                
+                
+                % Get the alignment time
+                % Get all unique entries in the Notes column and their
+                % locations
+                [strings, indx] = unique(Data.Affect.Raw{i}.Notes);
+                % Get the location of the cell containing "iPhone reads"
+                % for analysis
+                loc = indx(contains(strings, 'iPhone reads'));
+                
+                if isempty(loc)
+                    disp(strcat("No alignment time found for Affect file: ", Data.Affect.files{i}));
+                    disp("If this is not true, make sure the alignment time is formatted as 'iPhone reads: #:#:#'");
+                    disp("Currently, a [] will be input for Data.Affect.align_time\n");
+                    Data.Affect.align_time{i} = [];
+                else
+                % Find the first location of the string containing the word
+                % "iPhone reads" and its index
+                % Save both as part of the Data.Affect structure
+                    line = Data.Affect.Raw{i}.Notes{loc};
+                    format = '%s%s%d:%d:%d';
+                    nline = textscan(line, format);
+                    
+                    pol_time = ((((nline{3}*60)+nline{4})*60)+nline{5})*1000;
+                    vid_time = Data.Affect.Raw{i}.Time_sec(loc);
+                    Data.Affect.align_time{i} = [pol_time, vid_time];
+                end
+                
+                
         
                 % Get list of all unique affects used in the coding
                 aff_list = unique(Data.Affect.Raw{i}.Affect1);
@@ -144,7 +174,6 @@ function [Data] = pshr_load(varargin)
             end
                 
         end
-        Data.Affect.files = p.Results.Affect;
     end
     
     
@@ -156,26 +185,38 @@ function [Data] = pshr_load(varargin)
         % realtime = "11:19:15"
         % videotime = 728 - 1 for lag
 
-        pol_time = (((((11*60)+19)*60)+15)*1000);
-        vid_time = 727*1000;
-        algn = pol_time - vid_time;
+        %pol_time = (((((11*60)+19)*60)+15)*1000);
+        %vid_time = 727*1000;
+        %algn = pol_time - vid_time;
 
         %Check if there is any HR or ECG data loaded. If so, then generate the
         %index numbers for the start and stop.
 
         for q = 1:length(Data.Affect.Times)
-            if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0
-                disp("HR data found, generating start and stop indexes");
-                Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn);
-            else
-                Data.HR.Affect{q} = {};
-            end
             
-            if isempty(Data.Affect.Times{q})==0 && isempty(Data.ECG.Raw{q})==0
-                disp("ECG data found, generating start and stop indexes");
-                Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn);
+            % Get the alignment time
+            if isempty(Data.Affect.align_time{q})
+                disp(strcat('No alignment time found for Affect: ', Data.Affect.files{q}));
             else
-                Data.ECG.Affect{q} = {};
+                algn = Data.Affect.align_time{q}(1) - Data.Affect.align_time{q}(2);
+            
+                if isfield(Data, 'HR') %Added to see if any HR data was loaded/the HR struct field exists
+                    if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0
+                        fprintf(strcat("\n\nHR data found, generating start and stop indexes for ", Data.HR.files{q},'\n\n'));
+                        Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn);
+                    else
+                        Data.HR.Affect{q} = {};
+                    end
+                end
+
+                if isfield(Data, 'ECG') %Added to see if any ECG data was loaded/the ECG struct field exists
+                    if isempty(Data.Affect.Times{q})==0 && isempty(Data.ECG.Raw{q})==0
+                        fprintf(strcat("\n\nECG data found, generating start and stop indexes for ", Data.ECG.files{q},'\n\n'));
+                        Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn);
+                    else
+                        Data.ECG.Affect{q} = {};
+                    end
+                end
             end
         end
 
