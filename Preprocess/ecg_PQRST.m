@@ -138,12 +138,19 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
     locations_matrix = NaN(length(locs_R), 5);
     locations_matrix(:,3) = locs_R; % Already know the answer for the R-waves
 
+    max_dat = length(align_matrix(:,1));
+    
     for i = 1:length(locs_R) % cycle through all of the R-waves and find the other waves
 
         % Go backward from the R-wave to find the P and Q wave locations
         p_check = 0;
         q_check = 0;
         for j = locations_matrix(i,3)-1 : -1 : locations_matrix(i,3) - p.Results.bin_width
+            
+            if j == 0
+                break; %prevent from looking outside of bounds
+            end
+            
             if align_matrix(j,1)==1 && p_check==0
                 locations_matrix(i,1) = j;
                 p_check=1;
@@ -159,6 +166,12 @@ function [locations_matrix] = ecg_PQRST(mat, varargin)
         s_check = 0;
         t_check = 0;
         for j = locations_matrix(i,3)+1: locations_matrix(i,3) + p.Results.bin_width
+            
+            if j > max_dat
+                break;
+            end
+            
+            
             if align_matrix(j,2)==1 && s_check==0
                 locations_matrix(i,4) = j;
                 s_check = 1;
