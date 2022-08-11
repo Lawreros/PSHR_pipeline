@@ -105,9 +105,9 @@ function [Data] = pshr_load(varargin)
                 loc = indx(contains(strings, 'iPhone reads'));
                 
                 if isempty(loc)
-                    disp(strcat("No alignment time found for Affect file: ", Data.Affect.files{i}));
+                    fprintf(strcat("\n\n WARNING: No alignment time found for Affect file: ", Data.Affect.files{i},'\n'));
                     disp("If this is not true, make sure the alignment time is formatted as 'iPhone reads: #:#:#'");
-                    disp("Currently, a [] will be input for Data.Affect.align_time\n");
+                    fprintf("Currently, a [] will be input for Data.Affect.align_time\n\n");
                     Data.Affect.align_time{i} = [];
                 else
                 % Find the first location of the string containing the word
@@ -117,9 +117,16 @@ function [Data] = pshr_load(varargin)
                     format = '%s%s%d:%d:%d';
                     nline = textscan(line, format);
                     
-                    pol_time = ((((nline{3}*60)+nline{4})*60)+nline{5})*1000;
-                    vid_time = Data.Affect.Raw{i}.Time_sec(loc);
-                    Data.Affect.align_time{i} = [pol_time, vid_time];
+                    if isempty(nline{3}) || isempty(nline{4}) %Hacky way to check for "iPhone reads " with no actual time
+                        fprintf(strcat("\n\n WARNING: No alignment time found for Affect file: ", Data.Affect.files{i},'\n'));
+                        disp("If this is not true, make sure the alignment time is formatted as 'iPhone reads: #:#:#'");
+                        fprintf("Currently, a [] will be input for Data.Affect.align_time\n\n");
+                        Data.Affect.align_time{i} = [];
+                    else
+                        pol_time = ((((nline{3}*60)+nline{4})*60)+nline{5})*1000;
+                        vid_time = Data.Affect.Raw{i}.Time_sec(loc);
+                        Data.Affect.align_time{i} = [pol_time, vid_time];
+                    end
                 end
                 
                 
