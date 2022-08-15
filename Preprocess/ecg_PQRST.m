@@ -70,46 +70,29 @@ function [locations_matrix, time_matrix] = ecg_PQRST(mat, varargin)
 %       the last R-wave.
 
 
-
-    %% Add input parser due to the quantity of values that can be adjusted
-    R_peakp = 800;
-    R_peakd = 40;
-    
-    QS_peakp = 100;
-    QS_peakd = 5;
-
-    T_peakp = 50;
-    T_peakw = 10;
-    T_peakd = 80;
-
-    P_peakp = 8;
-    P_peakw = 20;
-    P_peakd = 20;
-    
-    bin_width = 50;
-
     % Input parser so you don't have to define a bunch of parameters, only
     % the ones that you need.
     p = inputParser;
+    p.KeepUnmatched=true;
     validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0); %specify type of input that is a positive scalar
     %addRequired(p,'mat',@ismatrix);
     %addRequired(p,'width',validScalarPosNum);
-    addParameter(p,'R_MinPeakProminence',R_peakp,validScalarPosNum);
-    addParameter(p,'R_MinPeakDistance',R_peakd,validScalarPosNum);
+    addParameter(p,'R_MinPeakProminence',800,validScalarPosNum);
+    addParameter(p,'R_MinPeakDistance',40,validScalarPosNum);
 
-    addParameter(p,'QS_MinPeakProminence',QS_peakp,validScalarPosNum);
-    addParameter(p,'QS_MinPeakDistance',QS_peakd,validScalarPosNum);
+    addParameter(p,'QS_MinPeakProminence',100,validScalarPosNum);
+    addParameter(p,'QS_MinPeakDistance',5,validScalarPosNum);
 
-    addParameter(p,'T_MinPeakProminence',T_peakp,validScalarPosNum);
-    addParameter(p,'T_MinPeakWidth',T_peakw,validScalarPosNum);
-    addParameter(p,'T_MinPeakDistance',T_peakd,validScalarPosNum);
+    addParameter(p,'T_MinPeakProminence',50,validScalarPosNum);
+    addParameter(p,'T_MinPeakWidth',10,validScalarPosNum);
+    addParameter(p,'T_MinPeakDistance',80,validScalarPosNum);
 
-    addParameter(p,'P_MinPeakProminence',P_peakp,validScalarPosNum);
-    addParameter(p,'P_MinPeakWidth',P_peakw,validScalarPosNum);
-    addParameter(p,'P_MinPeakDistance',P_peakd,validScalarPosNum);
+    addParameter(p,'P_MinPeakProminence',8,validScalarPosNum);
+    addParameter(p,'P_MinPeakWidth',20,validScalarPosNum);
+    addParameter(p,'P_MinPeakDistance',20,validScalarPosNum);
 
     %addOptional(p,'height',defaultHeight,validScalarPosNum);
-    addParameter(p,'bin_width',bin_width,validScalarPosNum);
+    addParameter(p,'bin_width',50,validScalarPosNum);
     addParameter(p,'sample_rate',false,@isnumeric);
     addParameter(p,'disp_plot',false,@islogical);
     addParameter(p,'min_waves', false, @isvector);

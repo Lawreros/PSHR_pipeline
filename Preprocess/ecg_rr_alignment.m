@@ -1,11 +1,15 @@
 function [aligned_values, aligned_times, aligned_metrics]=ecg_rr_alignment(rr, ecg, peak, dist, freq, subcost, verbose)
+% DEPRICATED: PLEASE USE ecg_rr_align INSTEAD
+
+
+
 % Function which attempts to align the ecg data with the RR-interval data
 % Inputs:
 %   rr: [n-by-2 matrix] matrix which contains the timestamps and
 %   RR-interval values in the format [timestamp, RR]. This allows for the
 %   comparison of timestamps between RR and ECG
 %   ecg: [n-by-2 matrix] matrix which contains the timestamps and
-%   ECG values in the format [timestamp, RR].
+%   ECG values in the format [timestamp, ECG].
 %   peak: [int], minimum peak prominence for peak
 %   dist: [int], minimum distance in index number for peaks
 %   freq: [int], sampling frequency for ECG data in Hz
@@ -156,7 +160,7 @@ function [aligned_values, aligned_times, aligned_metrics]=ecg_rr_alignment(rr, e
     %Calculate difference in RR-interval metrics
     aligned_metrics.val = {};
     aligned_metrics.val.diff = aligned_values(:,1)-aligned_values(:,2);
-    aligned_metrics.val.std = nanstd(aligned_metrics.time.diff);
+    aligned_metrics.val.std = nanstd(aligned_metrics.val.diff);
     aligned_metrics.val.mean = nanmean(aligned_metrics.val.diff);
     
         
