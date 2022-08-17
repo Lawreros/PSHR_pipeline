@@ -40,8 +40,10 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
     [ecg_locs, ecg_times] = ecg_PQRST(p.Results.ecg,'sample_rate',p.Results.sample_rate,varargin{:});
     
     % With the calculated RR data from ECG, align the two matrices
-    ecg_aligned = levenshtein_align(rr, 2, ecg_times, 4, p.Results.subcost);
+    [ecg_aligned, lev_transform] = levenshtein_align(rr, 2, ecg_times, 4, p.Results.subcost);
     
+    
+    aligned_metrics.lev = lev_transform;
     % Calculate difference in time metrics
     aligned_metrics.time={};
     aligned_metrics.time.diff = rr(:,1)-ecg_aligned(:,1);
