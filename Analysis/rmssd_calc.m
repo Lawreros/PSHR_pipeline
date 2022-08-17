@@ -48,7 +48,7 @@ function [ret] = rmssd_calc(mat,bin,band)
                     end
                 end
                 
-                if j > 1 && j < i % If there is more than one entry
+                if j > 2 && j < i % If there is more than one entry
                     for  k = (i-j+2):i
                         summation = summation+(mat(k,1)-mat(k-1,1))^2;
                     end

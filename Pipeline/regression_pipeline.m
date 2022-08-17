@@ -8,7 +8,7 @@ function [] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 %   aff_files: [1-by-n cell array]
 
     aff_list = {'SIB','innappropriate face related behavior','polar strap adjustment/removal'...
-        'repetitive behaviors','inappropriate movement'};
+        'repetitive behaviors','inappropriate movement','crying'};
 
     Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files, 'align', true, 'verbose', false);
 
@@ -66,7 +66,6 @@ function [] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     % Check that no datapoint with NaNs is being included
     for i=1:length(Data.HR.PP)
         Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, {'5', 'second'}, false);
-        
     end
     
 
@@ -78,9 +77,12 @@ function [] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
             disp(strcat('Aligned time for :',Data.ECG.files{i},' = ', string(Data.ECG.Aligned_metrics{i}.time.mean),' + ', string(Data.ECG.Aligned_metrics{i}.time.std)));
         end
     end
-
-    results = gen_regression(Data.HR.PP{1}(:,[3:end-1]), Data.HR.PP{1}(:,end),...
-        'linear');
+    
+    for i=1:length(Data.HR.PP)
+        disp(Data.HR.files{i});
+        results = gen_regression(Data.HR.PP{i}(:,[3:end-1]), Data.HR.PP{i}(:,end),...
+        'log');
+    end
     
     
     disp('done regression');

@@ -1,4 +1,4 @@
-function [aligned] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost)
+function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost)
 % Functions which attempts to align to matrices by the specified column
 % using the Levenshtein distance metric:
 % Inputs:
@@ -24,6 +24,8 @@ function [aligned] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost)
 % Returns:
 %   aligned: [n-by-b matrix] the resulting contents of mat_2 after being 
 %   aligned to mat_1
+%   move: [n-by-1 matrix] a vector of the decided additions/deletions for
+%   mat_2 in order for it to be aligned with mat_1
 
 
     % Isolate columns of interest so I don't have to keep typing out
