@@ -12,6 +12,8 @@ can operate on and store their results in.
 ### Data Guidelines:
 Here are some general rules that should be applied to 
 
+- If timestamps are included in a given matrix, they should be prioritized to the earliest column possible
+
 
 ### `Data` example:
 An example of this would be loading in the Data 

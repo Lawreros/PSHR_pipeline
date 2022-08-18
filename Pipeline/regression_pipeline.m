@@ -17,47 +17,28 @@ function [] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
         Data.HR.PP{i} = Data.HR.Raw{i};
         Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list); %mark the affect locations
         % We'll just work with bandpassing for now...
-        Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1200, false);
+        %Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1200, false);
     end
     
     
     %% ECG preprocessing
-    amp = 5000;
-    cut_bins = 100;
-    for i = 1:length(ecg_files)
-        Data.ECG.PP{i} = Data.ECG.Raw{i}; %PP stands for PreProcessed
-        Data.ECG.PP{i} = affect_mark(Data.ECG.PP{i}, Data.ECG.Affect{i}, aff_list);
-        [ret, locs] = ecg_preprocess(Data.ECG.PP{i}(:,3),amp,cut_bins);
-        Data.ECG.PP{i}(:,3) = ret;
-    end
+%     amp = 5000;
+%     cut_bins = 100;
+%     for i = 1:length(ecg_files)
+%         Data.ECG.PP{i} = Data.ECG.Raw{i}; %PP stands for PreProcessed
+%         Data.ECG.PP{i} = affect_mark(Data.ECG.PP{i}, Data.ECG.Affect{i}, aff_list);
+%         [ret, locs] = ecg_preprocess(Data.ECG.PP{i}(:,3),amp,cut_bins);
+%         Data.ECG.PP{i}(:,3) = ret;
+%     end
     
     %TODO: Test how PQRST handles NaN values
     
     %% Go through combinations of parameters for best RR/ECG alignment
 
-    for i = 1:length(aff_files)
-        %[a,b,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),700,50,130,10,true);
-        [Data.ECG.Aligned{i},Data.ECG.Aligned_metrics{i}] = ecg_rr_align(Data.HR.PP{i}(:,[1,3]), Data.ECG.PP{i}(:,[1,3]),...
-            130,'subcost',10,'verbose',false);
-    end
-
-%     val_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
-%     time_iter_results = [NaN, NaN, NaN, NaN, NaN, NaN];
-    %peak
-%     for i=600:50:900
-%         % dist
-%         for j=40:10:70
-%         % subcost
-%             for k= 5:5:20
-%                 [a,c] = ecg_rr_alignment(Data.HR.Raw{1}(:,[1,3]), Data.ECG.Raw{1}(:,[1,3]),i,j,130,k,false);
-%                 val_iter_results(end+1,:) = [sum(~isnan(c.val.diff))/length(c.val.diff), c.val.mean, c.val.std, i,j,k];
-%                 time_iter_results(end+1,:) = [sum(~isnan(c.time.diff))/length(c.time.diff), c.time.mean, c.time.std, i,j,k];
-%             end
-%         end
+%     for i = 1:length(aff_files)
+%         [Data.ECG.Aligned{i},Data.ECG.Aligned_metrics{i}] = ecg_rr_align(Data.HR.PP{i}(:,[1,3]), Data.ECG.PP{i}(:,[1,3]),...
+%             130,'subcost',10,'verbose',false);
 %     end
-
-
-    %% Cobble together what features you want to use for analysis
 
 
     %% Function to make sure that the quantity of problematic and nonproblematic behavior
@@ -71,12 +52,12 @@ function [] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 
     %% Finally get the actual regression portion of the analysis
 
-    if verbose
-        for i=1:length(Data.ECG.Aligned_metrics)
-            disp(strcat('Aligned val for :',Data.ECG.files{i},' = ', string(Data.ECG.Aligned_metrics{i}.val.mean),' + ', string(Data.ECG.Aligned_metrics{i}.val.std)));
-            disp(strcat('Aligned time for :',Data.ECG.files{i},' = ', string(Data.ECG.Aligned_metrics{i}.time.mean),' + ', string(Data.ECG.Aligned_metrics{i}.time.std)));
-        end
-    end
+%     if verbose
+%         for i=1:length(Data.ECG.Aligned_metrics)
+%             disp(strcat('Aligned val for :',Data.ECG.files{i},' = ', string(Data.ECG.Aligned_metrics{i}.val.mean),' + ', string(Data.ECG.Aligned_metrics{i}.val.std)));
+%             disp(strcat('Aligned time for :',Data.ECG.files{i},' = ', string(Data.ECG.Aligned_metrics{i}.time.mean),' + ', string(Data.ECG.Aligned_metrics{i}.time.std)));
+%         end
+%     end
     
     for i=1:length(Data.HR.PP)
         disp(Data.HR.files{i});
@@ -133,9 +114,9 @@ function [mat] = feature_generation(mat, bin, band)
 %   band: [1-by-2 matrix]
 
     mat(:,5) = rmssd_calc(mat(:,3), bin, band);
-    mat(:,6) = pnnx_calc(mat(:,3),50, bin, band);
-    mat(:,7) = sdnn_calc(mat(:,3),bin,band);
-    mat(:,8) = sdsd_calc(mat(:,3),bin,band);
+    %mat(:,6) = pnnx_calc(mat(:,3),50, bin, band);
+    %mat(:,7) = sdnn_calc(mat(:,3),bin,band);
+    %mat(:,8) = sdsd_calc(mat(:,3),bin,band);
     
     %move coding into last column
     mat(:,end+1) = mat(:,4);
