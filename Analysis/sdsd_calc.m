@@ -47,7 +47,7 @@ function [ret] = sdsd_calc(mat,bin,band)
                     end
                 end
                 
-                if isnan(mat(i-j,1)) % Simple catch to prevent premature binning due to NaNs
+                if j < i && isnan(mat(i-j,1)) % Simple catch to prevent premature binning due to NaNs
                    j = 0;            % The while loop will return false if the sum is NaN,
                 end                  % making the binning inconsistent
                 

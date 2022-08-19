@@ -1,4 +1,4 @@
-function [mdl] = gen_regression(mat, target, regression_type, varargin)
+function [mdl, pihat] = gen_regression(mat, target, regression_type, varargin)
 % Function which taken in input matrix of features and returns the results
 % of a variety of regressions. MATLAB's regression functions exclude any
 % datapoints which contain NaN values in their regression.
@@ -53,7 +53,7 @@ function [mdl] = gen_regression(mat, target, regression_type, varargin)
         p_mat = mat(target==1,:);
         
         % Calculate based off of smallest group (problematic)
-        samp = randsample(length(np_mat), round(length(p_mat)*1.2));
+        samp = randsample(length(np_mat), round(length(p_mat)*1));
         not_samp = [1:length(np_mat)];
         not_samp(samp) = [];
         
