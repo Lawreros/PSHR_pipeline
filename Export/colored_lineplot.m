@@ -47,7 +47,7 @@ function [] = colored_lineplot(mat, label,varargin)
     % Convert label vector into usable values
     lab_idx = grp2idx(categorical(label)); % Converts label into categories
     start_idx = find([0;lab_idx]-[lab_idx;0]); % Finds points where the label changes
-    start_idx(end) = length(start_idx);
+    start_idx(end) = length(lab_idx);
     
     % Convert the unique value locations into coordinates
     patch_x = [mat(start_idx(1:end-1),1),mat(start_idx(1:end-1),1),...
@@ -89,6 +89,7 @@ function [] = colored_lineplot(mat, label,varargin)
     % Somewhat hacky way of getting a custom legend into the figure, but I
     % really didn't have much of a choice because of how much MATLAB's
     % legend function sucks :(
+    % https://www.delftstack.com/howto/matlab/matlab-custom-legend/#:~:text=Add%20Custom%20Legends%20Using%20the%20text()%20Function%20in%20MATLAB,-We%20can%20also&text=Simply%20plot%20the%20variable%20and,able%20to%20see%20the%20text.
     
     if p.Results.legend
         q = string(unique(categorical(label)));
