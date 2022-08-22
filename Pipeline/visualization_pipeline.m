@@ -84,7 +84,7 @@ function [] = visualization_pipeline(varargin)
     % Flag what data is present for plotting
     if isfield(Data, 'ECG')
         figure;
-        % Plot HR data
+        % Plot ECG data
         for i = 1:length(Data.ECG.Raw)
             if p.Results.individual_plots == 0
                 subplot(row, col, i);
@@ -96,10 +96,10 @@ function [] = visualization_pipeline(varargin)
 
             if align
                 Data.ECG.Raw{i} = affect_mark(Data.ECG.Raw{i}, Data.ECG.Affect{i}, aff_list);
-                colored_lineplot(Data.ECG.Raw{i}(:,[1,3]), Data.ECG.Raw{i}(:,4),...
+                colored_lineplot(Data.ECG.Raw{i}(:,3), Data.ECG.Raw{i}(:,4),...
                     'title', f_nam, 'legend', false,'fig_gen', false);
             else
-                plot(Data.ECG.Raw{i}(:,1), Data.ECG.Raw{i}(:,3));
+                plot(Data.ECG.Raw{i}(:,3));
                 title(f_nam);
             end
         end
