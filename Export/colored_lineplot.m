@@ -11,12 +11,18 @@ function [] = colored_lineplot(mat, label,varargin)
 %   values and convert them into categories, where it then asigns each
 %   category a color
 
-%   title: [string]
-%   xlabel: [string]
-%   ylabel: [string]
+%   title: [string] Title of the figure you wish to create. Default is
+%   'Shaded Plot'.
+%   xlabel: [string] Label put on the x-axis of the figure you wish to
+%   create. Default is 'x-axis'.
+%   ylabel: [string] Label put on the y-axis of the figure you wish to
+%   create. Default is 'y-axis'.
 %
 %   legend: [bool] Super hacky, but writes text onto the figure to label
-%   what each of the shaded regions represents.
+%   what each of the shaded regions represents. Default is true.
+%
+%   fig_gen: [bool] Whether to plot the results as a new figure. If false,
+%   then this function can work with subplot. Default is true.
 
     %Input parser
     p = inputParser;
@@ -24,6 +30,7 @@ function [] = colored_lineplot(mat, label,varargin)
     addParameter(p,'xlabel','x-axis', @ischar);
     addParameter(p,'ylabel','y-axis', @ischar);
     addParameter(p,'legend',true,@islogical);
+    addParameter(p,'fig_gen',true,@islogical);
     
     parse(p,varargin{:});
 
@@ -36,7 +43,9 @@ function [] = colored_lineplot(mat, label,varargin)
     end
     
     % Plot the data in mat
-    figure;
+    if p.Results.fig_gen
+        figure;
+    end
     plot(mat(:,1),mat(:,2));
     title(p.Results.title);
     xlabel(p.Results.xlabel);
