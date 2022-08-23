@@ -51,6 +51,11 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
                     end
                 end
                 
+                if j < i && isnan(mat(i-j,1)) % Simple catch to prevent premature binning due to NaNs
+                   j = 0;            % The while loop will return false if the sum is NaN,
+                end                  % making the binning inconsistent
+                
+                
                 if j > 1 && j < i % If there is more than one entry
                     for k = (i-j+2):i
                         if abs(mat(k,1) - mat(k-1,1))>= diff

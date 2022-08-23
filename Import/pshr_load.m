@@ -12,14 +12,27 @@ function [Data] = pshr_load(varargin)
 %       HR: [cell list of strings] List containing the location of the HR
 %       files you wish to load and analyze. Default is an empty cell,
 %       representing no files.
+
 %       ECG: [cell list of strings] List containing the location of the ECG
 %       files that you wish to load and analyze. Default is an empty cell,
 %       representing no files.
+
 %       Affect: [cell list of strings] List containing the location of the
 %       coded Affect files that you wish to load and analyze. Default is an
 %       empty cell, representing no files.
+
 %       align: [bool] whether to align the affects from the affect files
 %       with the present HR/ECG files. Default is true.
+
+%       lag: [int or float] additional amount of time (in seconds) that you
+%       wish to lag the video data for when running alignment. For
+%       example, inputing 1 will result in the affect at second 274 of the
+%       video to be attributed to second 273, attempting to correct for the
+%       delay between the polar strap collecting data and transmitting it.
+%       Default is 0 and negative values are accepted.
+
+%       verbose: [bool] whether to display additional information/disp
+%       statements during running of the function. Default is true.
 
 
 %   Returns:
@@ -36,6 +49,8 @@ function [Data] = pshr_load(varargin)
     addParameter(p, 'ECG', {}, @iscell);
     addParameter(p, 'Affect', {}, @iscell);
     addParameter(p, 'align', true, @islogical);
+    addParameter(p, 'lag', 0, @isscalar);
+    addParameter(p, 'verbose', true, @islogical);
 
     parse(p,varargin{:});
     
@@ -105,9 +120,9 @@ function [Data] = pshr_load(varargin)
                 loc = indx(contains(strings, 'iPhone reads'));
                 
                 if isempty(loc)
-                    disp(strcat("No alignment time found for Affect file: ", Data.Affect.files{i}));
+                    fprintf(strcat("\n\n WARNING: No alignment time found for Affect file: ", Data.Affect.files{i},'\n'));
                     disp("If this is not true, make sure the alignment time is formatted as 'iPhone reads: #:#:#'");
-                    disp("Currently, a [] will be input for Data.Affect.align_time\n");
+                    fprintf("Currently, a [] will be input for Data.Affect.align_time\n\n");
                     Data.Affect.align_time{i} = [];
                 else
                 % Find the first location of the string containing the word
@@ -117,9 +132,16 @@ function [Data] = pshr_load(varargin)
                     format = '%s%s%d:%d:%d';
                     nline = textscan(line, format);
                     
-                    pol_time = ((((nline{3}*60)+nline{4})*60)+nline{5})*1000;
-                    vid_time = Data.Affect.Raw{i}.Time_sec(loc);
-                    Data.Affect.align_time{i} = [pol_time, vid_time];
+                    if isempty(nline{3}) || isempty(nline{4}) %Hacky way to check for "iPhone reads " with no actual time
+                        fprintf(strcat("\n\n WARNING: No alignment time found for Affect file: ", Data.Affect.files{i},'\n'));
+                        disp("If this is not true, make sure the alignment time is formatted as 'iPhone reads: #:#:#'");
+                        fprintf("Currently, a [] will be input for Data.Affect.align_time\n\n");
+                        Data.Affect.align_time{i} = [];
+                    else
+                        pol_time = ((((nline{3}*60)+nline{4})*60)+nline{5})*1000;
+                        vid_time = Data.Affect.Raw{i}.Time_sec(loc);
+                        Data.Affect.align_time{i} = [pol_time, vid_time];
+                    end
                 end
                 
                 
@@ -197,13 +219,15 @@ function [Data] = pshr_load(varargin)
             % Get the alignment time
             if isempty(Data.Affect.align_time{q})
                 disp(strcat('No alignment time found for Affect: ', Data.Affect.files{q}));
+                Data.HR.Affect{q} = {};
+                Data.ECG.Affect{q} = {};
             else
-                algn = Data.Affect.align_time{q}(1) - Data.Affect.align_time{q}(2);
+                algn = Data.Affect.align_time{q}(1) - (Data.Affect.align_time{q}(2)-p.Results.lag); %include lag value
             
                 if isfield(Data, 'HR') %Added to see if any HR data was loaded/the HR struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0
                         fprintf(strcat("\n\nHR data found, generating start and stop indexes for ", Data.HR.files{q},'\n\n'));
-                        Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn);
+                        Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn, p.Results.verbose);
                     else
                         Data.HR.Affect{q} = {};
                     end
@@ -212,7 +236,7 @@ function [Data] = pshr_load(varargin)
                 if isfield(Data, 'ECG') %Added to see if any ECG data was loaded/the ECG struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.ECG.Raw{q})==0
                         fprintf(strcat("\n\nECG data found, generating start and stop indexes for ", Data.ECG.files{q},'\n\n'));
-                        Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn);
+                        Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn, p.Results.verbose);
                     else
                         Data.ECG.Affect{q} = {};
                     end
@@ -306,7 +330,7 @@ end
 
 
 
-function [results] = time_adjust(mat,times,algn)
+function [results] = time_adjust(mat,times,algn, verbose)
 %Changes the generates indexes for Data.*.Raw that correspond with
 %timestamps found in Data.Affect.Times
 
@@ -316,7 +340,6 @@ function [results] = time_adjust(mat,times,algn)
 % times: [x-by-3 array] the cell array containing the relevant start and stop times for
 % the coded data. This is found in the Data structure as Data.Affect.Times
 % algn: [vector of ints] alignment time found with (polar_timestamp - video_time) = corr
-
 
 
     % Iterate through start and stop times
@@ -348,16 +371,19 @@ function [results] = time_adjust(mat,times,algn)
                         ends = [ends, b(1)-1];
                 end
             elseif isempty(a)==0 && isempty(b)==1
-                fprintf("Affect %s ends after the recording and starts at time %d\n",...
+                if verbose
+                    fprintf("Affect %s ends after the recording and starts at time %d\n",...
                     times{i,1}, times{i,2}(j));
+                end
                     starts = [starts, a(1)];
                     ends = [ends, length(mat)];
             else
                 %Issue due to the affects occuring outside of collected
                 %HR/ECG data
-                fprintf('WARNING: Affect %s from video time %d to %d could not be found in data\n',...
+                if verbose
+                    fprintf('WARNING: Affect %s from video time %d to %d could not be found in data\n',...
                     times{i,1}, times{i,2}(j), times{i,3}(j));
-                
+                end
             end
         end
             % Store indexes for each affect with their respective data
