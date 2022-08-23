@@ -52,10 +52,33 @@ function [mdl, pihat] = gen_regression(mat, target, regression_type, varargin)
         np_mat = mat(target==0,:);
         p_mat = mat(target==1,:);
         
+        % Run t-test on data
+        [r, f] = size(np_mat);
+        for q = 1:f
+            [h,p_] = ttest2(np_mat(:,q), p_mat(:,q));
+            disp(strcat('two-sample t-test result for feature: ',string(q),' =', string(p_)));
+        end
+        
+        
         % Calculate based off of smallest group (problematic)
         samp = randsample(length(np_mat), round(length(p_mat)*1));
         not_samp = [1:length(np_mat)];
         not_samp(samp) = [];
+        
+        for q = 1:f
+            [h,p_] = ttest(np_mat(samp,q), p_mat(:,q));
+            disp(strcat('paired t-test result for feature: ',string(q),' =', string(p_)));
+        end
+        
+        % Check covariance
+        disp('covariance for problematic:');
+        disp(cov(p_mat,1));
+        disp('correlation for problematic:');
+        disp(corrcoef(p_mat));
+        disp('covariance for non-problematic:');
+        disp(cov(np_mat,1));
+        disp('correlation for non-problematic:');
+        disp(corrcoef(np_mat));
         
         new_mat = [p_mat; np_mat(samp,:)];
         % Create testing data
