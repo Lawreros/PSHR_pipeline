@@ -1,14 +1,16 @@
 function [locations_matrix, time_matrix] = ecg_PQRST(mat, varargin)
 % Function which takes an ECG signal and returns a table containing the
 % index location of each of the 
-%   Inputs:
-%       mat: [n-by-2 matrix] vector containing the ECG data you wish to
+% Required Inputs:
+%   mat: [n-by-2 matrix] vector containing the ECG data you wish to
 %       process, along with corresponding timestamps. This has ideally has 
 %       already been preprocessed and can contain NaN values. 
 %       Rows of the input matrix are in the form of [timestamp, ECG_value].
 %       If you do not have/care about timestamps, have the first column be
 %       all 1's (or any number).
 %       
+
+% Optional Parameters:
 %       varargin: [cell array] Contains the various input arguments
 %       (excluding mat) for parsing. Due to the large quantity of
 %       parameters, this allows for default values to be used for every
@@ -24,42 +26,43 @@ function [locations_matrix, time_matrix] = ecg_PQRST(mat, varargin)
 %
 %       where * represents either the P, QS, R, or T waves. For the default
 %       values of these, see the code before "%% Start of analysis code".
-%       There are also the input parameters:
-%           disp_plot: [bool] Whether to plot the data in mat with the
-%           different waves indicated in the figure. Default is false.
+%       
+
+%   disp_plot: [bool] Whether to plot the data in mat with the
+%       different waves indicated in the figure. Default is false.
 %
-%           bin_width: [int] The maximum amount of indices before and after
-%           the R-wave to look for the other waves in the PQRST complex.
-%           Default is 50.
+%   bin_width: [int] The maximum amount of indices before and after
+%       the R-wave to look for the other waves in the PQRST complex.
+%       Default is 50.
 %
-%           sample_rate: [int] The sampling rate (Hz) for the ECG data being
-%           analyzed. If provided, a matrix converting the information in 
-%           locations_matrix will be made in terms of milliseconds. 
-%           With the R-wave column converted into the RR-interval duration 
-%           and the other waves converted into milliseconds before/after the R-wave. 
-%           Default value is false, which does not run the process and sets
-%           time_matrix to false.
+%   sample_rate: [int] The sampling rate (Hz) for the ECG data being
+%       analyzed. If provided, a matrix converting the information in 
+%       locations_matrix will be made in terms of milliseconds. 
+%       With the R-wave column converted into the RR-interval duration 
+%       and the other waves converted into milliseconds before/after the R-wave. 
+%       Default value is false, which does not run the process and sets
+%       time_matrix to false.
 %
-%           min_waves: [int or 1-by-5 vector] Whether to cut all R-wave
-%           locations and their associated P, Q, S, and T-wave rows from
-%           the returned locations_matrix. Can either specify how many of
-%           the wave components must be present to keep the R-wave
-%           (inputing '3' will mean that rows containing R-waves with 3 or 
-%           more wave components, including the R-wave, will be kept) or
-%           the specific waves that need to be present (inputing a binary
-%           vector for which waves have to be present with the template of:
-%           [P,Q,R,S,T]. Thus requiring Q and T-waves be present is
-%           [0,1,1,0,1]. Default value is false, which does not activate
-%           this filtration process.
+%   min_waves: [int or 1-by-5 vector] Whether to cut all R-wave
+%       locations and their associated P, Q, S, and T-wave rows from
+%       the returned locations_matrix. Can either specify how many of
+%       the wave components must be present to keep the R-wave
+%       (inputing '3' will mean that rows containing R-waves with 3 or 
+%       more wave components, including the R-wave, will be kept) or
+%       the specific waves that need to be present (inputing a binary
+%       vector for which waves have to be present with the template of:
+%       [P,Q,R,S,T]. Thus requiring Q and T-waves be present is
+%       [0,1,1,0,1]. Default value is false, which does not activate
+%       this filtration process.
 %           
 
-%   Returns:
-%       locations_matrix: [m-by-6 matrix] matrix containing the indices of
+% Returns:
+%   locations_matrix: [m-by-6 matrix] matrix containing the indices of
 %       the P, Q, S, and T-waves associated with each of the R-waves. Will
 %       contain NaN values if no wave is found. The output format has the
 %       columns: [time_stamp, P, Q, R, S, T]
 
-%       time_matrix: [m-by-6 matrix] matrix contining the relative times
+%   time_matrix: [m-by-6 matrix] matrix contining the relative times
 %       for the P, Q, S, and T-waves associated with each of the R-waves
 %       (converted into RR-intervals). This is created if sample_rate is
 %       provided a non-false integer, resulting in units of milliseconds.

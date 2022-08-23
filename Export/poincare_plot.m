@@ -1,13 +1,12 @@
 function [SD1, SD2] = poincare_plot(mat, fig)
-    % Generates a poincare plot from the data
-    % Inputs:
-    %       RR: [n-by-1 array], vector containing all RR values
-    %       plot_num: [int], plot position on the subplot figure
-    %       max_plot_number: [int], maximum intended entries into subplot figure
-    
-    %   Returns:
-    %       SD1: [int] The standard deviation along the y=x axis.
-    %       SD2: [int] The standard deviation perpindicular to the y=x axis
+% Generates a poincare plot from the data
+% Inputs:
+%   mat: [n-by-1 array], vector containing all RR values
+%   fig: [figure] the figure object that you want to plot to
+
+% Returns:
+%   SD1: [int] The standard deviation along the y=x axis.
+%   SD2: [int] The standard deviation perpindicular to the y=x axis
 
 
     cut = [];

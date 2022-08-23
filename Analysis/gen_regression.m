@@ -3,34 +3,44 @@ function [mdl, pihat] = gen_regression(mat, target, regression_type, varargin)
 % of a variety of regressions. MATLAB's regression functions exclude any
 % datapoints which contain NaN values in their regression.
 
-% Inputs:
+% Required Inputs:
 %   mat: [n-by-m matrix] the matrix you wish to use for regression. Each
-%   row is assumed to be a different feature vector.
+%       row is assumed to be a different feature vector.
 %
 %   target: [n-by-1 matrix] vector containing the target classification/value
-%   for each datapoint
-%
+%       for each datapoint
+
+% Optional Parameters:
 %   ordinal: [bool] whether the data you are providing has ordinal target
-%   values (i.e. it is categorical with some order involved with the
-%   categories). Default is false, meaning 'nominal' will be used, denoting no
-%   inherent ordering to categories.
+%       values (i.e. it is categorical with some order involved with the
+%       categories). Default is false, meaning 'nominal' will be used, denoting no
+%       inherent ordering to categories.
 %
 %   test: [1-by-n vector] vector containing the ratio of each category
-%   you want to have in the regression you are preforming. This will remove
-%   any data points containing NaNs and create a subset of datapoints that
-%   have the ratio you described. For example [0.2, 0.3, 0.5] will result
-%   in the regression being performed on a subset of datapoints that are
-%   20% category 0, 30% category 1, and 50% category 2. All datapoints excluded
-%   for the sake of this ratio will be used for testing.
-%   Default is [0.5, 0.5], if [] then all datapoints will be used.
+%       you want to have in the regression you are preforming. This will remove
+%       any data points containing NaNs and create a subset of datapoints that
+%       have the ratio you described. For example [0.2, 0.3, 0.5] will result
+%       in the regression being performed on a subset of datapoints that are
+%       20% category 0, 30% category 1, and 50% category 2. All datapoints excluded
+%       for the sake of this ratio will be used for testing.
+%       Default is [0.5, 0.5], if [] then all datapoints will be used.
 %
 %   verbose: [bool] whether to have the results of the various tests
-%   printed to the Command Window.
+%       printed to the Command Window.
 %
 %   regression_type: [string] the type of regression you wish to perform.
-%   Current options are:
-%       'linear': a linear regression
-%       'log': a multinomial logistic regression
+%       Current options are:
+%           'linear': a linear regression
+%           'log': a multinomial logistic regression
+
+% Returns:
+%   mdl: [p-by-4 matrix] matrix containing regression coefficients along
+%       with the SE, tStats, and pValue for each coefficient
+
+%   pihat: [q-by-n matrix] vector containing the predictive results of
+%       running the regression model on the remaining datapoints not used for
+%       training. Each column represents the probability that the datapoint
+%       belongs to that category.
 
 
     % Parse any additional settings:

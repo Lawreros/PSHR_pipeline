@@ -3,29 +3,29 @@ function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost
 % using the Levenshtein distance metric:
 % Inputs:
 %   mat_1: [n-by-m matrix] The matrix to which you are aligning mat_2. This
-%   matrix will not be altered in any way during the alignment process, and
-%   thus is not returned by this function.
+%       matrix will not be altered in any way during the alignment process, and
+%       thus is not returned by this function.
 %
 %   col_1: [int] What column to use in mat_1 for the alignment process,
-%   this will be aligned to mat_2(:,col_2).
+%       this will be aligned to mat_2(:,col_2).
 %
 %   mat_2: [a-by-b matrix] The matrix which you are aligning to mat_1. This
-%   matrix will have rows deleted or new rows of NaN values created as a
-%   result of this alignment process.
+%       matrix will have rows deleted or new rows of NaN values created as a
+%       result of this alignment process.
 %
 %   col_2: [int] What column to use in mat_2 for the alignment process,
-%   this will be aligned to mat_1(:,col_1).
+%       this will be aligned to mat_1(:,col_1).
 %
 %   subcost: [int] substitution cost coefficient for the use in Levenshtein
-%   calculation. The equation of cost is: abs(X-Y)/subcost. Increasing
-%   subcost will weight against substitution/deletion. Recommended value is
-%   10.
+%       calculation. The equation of cost is: abs(X-Y)/subcost. Increasing
+%       subcost will weight against substitution/deletion. Recommended value is
+%       10.
 
 % Returns:
 %   aligned: [n-by-b matrix] the resulting contents of mat_2 after being 
-%   aligned to mat_1
+%       aligned to mat_1
 %   move: [n-by-1 matrix] a vector of the decided additions/deletions for
-%   mat_2 in order for it to be aligned with mat_1
+%       mat_2 in order for it to be aligned with mat_1
 
 
     % Isolate columns of interest so I don't have to keep typing out

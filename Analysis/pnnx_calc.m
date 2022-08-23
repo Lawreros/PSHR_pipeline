@@ -1,26 +1,26 @@
 function [ret] = pnnx_calc(mat,diff,bin,band)
 % Calculates the percentage of adjacent NN-intervals that differ from
-    % each other by more than "diff" milliseconds
-    %   Inputs:
-    %       mat: A [n-by-1] vector which contains the data you want to
-    %       calculate pNNX for
-    %
-    %       diff: [int] The minimum difference in milliseconds between
-    %       successive NN-intervalse that you want to count
-    %
-    %       bin: [1-by-2 cell array] Used for creating a vector of the pNNX
-    %       results from a sliding bin of Y seconds or entries. This takes the
-    %       format of {index, 'units'}, so if you want to have a bin of the
-    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
-    %       If you don't want this, set bin to false.
-    %
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the pnnX of. If false, then analyze the whole
-    %       range of mat
-    %
-    %   Returns:
-    %       ret: Either a [n-by-1] vector containing the results (if bin is
-    %       not false) or an [int] if bin is false.
+% each other by more than "diff" milliseconds
+% Inputs:
+%   mat: A [n-by-1] vector which contains the data you want to
+%       calculate pNNX for
+%
+%   diff: [int] The minimum difference in milliseconds between
+%       successive NN-intervalse that you want to count
+%
+%   bin: [1-by-2 cell array] Used for creating a vector of the pNNX
+%       results from a sliding bin of Y seconds or entries. This takes the
+%       format of {index, 'units'}, so if you want to have a bin of the
+%       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
+%       If you don't want this, set bin to false.
+%
+%   band: [2 int vector] The range [start, end] of values you want
+%       to calculate the pnnX of. If false, then analyze the whole
+%       range of mat
+%
+% Returns:
+%   ret: Either a [n-by-1] vector containing the results (if bin is
+%       not false) or an [int] if bin is false.
     
     if band
         r_1 = band(1);

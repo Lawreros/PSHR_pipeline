@@ -3,16 +3,17 @@ function [ret] = acar(mat, acar_range, band)
 % entry which is outside of the acceptable bounds will be
 % replaced with a NaN. The first acar_range number of indexes will also
 % be NaN, as you cannot extrapolate data that isn't there
-%   Inputs:
-%       mat: A [n-by-1] vector which contains the data you want to 
+% Inputs:
+%   mat: A [n-by-1] vector which contains the data you want to 
 %       process.
-%       acar_range: [int] the number of entries
-%       band: [2 int vector] The range [start, end] of values you wish
+%   acar_range: [int] the number of entries
+%
+%   band: [2 int vector] The range [start, end] of values you wish
 %       to use the Acar filter on. If false, then analyze the full
 %       range
 %
-%   Returns:
-%       ret: [band by 1] vector with filtered data
+% Returns:
+%   ret: [band by 1] vector with filtered data
     
     if band
         r_1 = band(1);
