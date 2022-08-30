@@ -18,16 +18,16 @@ function [ret] = acar(mat, acar_range, band)
     if band
         r_1 = band(1);
         r_2 = band(2);
+        
+        if r_1 < acar_range
+            disp("starting point less than acar range, changing starting point to (acar range)+1");
+            r_1 = acar_range+1;
+        end
     else
         [r_2, c] = size(mat);
-        r_1 = acar_range+1;
+        r_1 = 1;
     end
-    
-    if r_1 < acar_range
-        disp("starting point less than acar range, changing starting point to (acar range)+1");
-        r_1 = acar_range+1;
-    end
-    
+
     ret = mat(r_1:r_2,1);
     
     for i = (acar_range+1):length(ret)

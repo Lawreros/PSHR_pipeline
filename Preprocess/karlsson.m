@@ -17,11 +17,12 @@ function [ret] = karlsson(mat, band)
         r_2 = band(2);
     else
         [r_2, c] = size(mat);
-        r_1 = 2;
+        r_1 = 1;
     end
         
     %Create copy of matrix to edit
     ret = mat(r_1:r_2,1);
+    ret(1,1) = NaN;
     
     for i = 2:(length(r_2)-1)
         a = (ret(i-1,1)+ret(i+1,1))/2;
