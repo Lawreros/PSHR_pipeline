@@ -75,10 +75,15 @@ function [ret] = rmssd_calc(mat,bin,band)
     else
         % If they just want a single value for the input vector
         summation = 0;
+        rem_ent = 0;
         for  i = (r_1+1):r_2
-            summation = summation+(mat(i,1)-mat(i-1,1))^2;
+            if isnan(mat(i,1)-mat(i-1,1)) % Check if NaNs are present in the data and skip them
+                rem_ent = rem_ent + 1;
+            else
+                summation = summation+(mat(i,1)-mat(i-1,1))^2;
+            end
         end
-        ret = sqrt(1/(r_2-r_1)*summation);
+        ret = sqrt(1/((r_2-rem_ent)-r_1)*summation);
     end
 
 end
