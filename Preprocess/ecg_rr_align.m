@@ -3,17 +3,17 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
 % and return metrics to judge alignment
 % Inputs:
 %   rr: [n-by-2 matrix] matrix which contains the timestamps and RR-interval
-%   values in the format [timestamp, RR]. This allows for the comparison of
-%   timestamps between RR and ECG
+%       values in the format [timestamp, RR]. This allows for the comparison of
+%       timestamps between RR and ECG
 %   ecg: [m-by-2 matrix] matrix which contains the timestamps and ECG
-%   values in the format [timestamp,ECG].
-%   sample_rate: [int or float] the sampling rate used when collecting the
-%   ECG data, required for the estimation of RR-intervals from the ECG
-%   data.
+%       values in the format [timestamp,ECG].
+%       sample_rate: [int or float] the sampling rate used when collecting the
+%       ECG data, required for the estimation of RR-intervals from the ECG
+%       data.
 %   subcost: [int or float] substitution cost coefficient for use in
-%   Levenshtein calculation (see levenshtein_align). Default is 10.
+%       Levenshtein calculation (see levenshtein_align). Default is 10.
 %   verbose: [bool] Whether the function should plot the results of the
-%   alignment.
+%       alignment.
 %   
 % Additional Inputs:
 %   This function utilizes both functions ecg_PQRST and levenshtein_align
@@ -22,9 +22,9 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
 %
 % Returns:
 %   ecg_aligned: [n-by-6 matrix] results from feeding the output
-%   `time_matrix` through the function levenshtein_align
+%       `time_matrix` through the function levenshtein_align
 %   aligned_metrics: [struct] structure containing different comparison
-%   results from the alignment process
+%       results from the alignment process
 
     p = inputParser;
     p.KeepUnmatched=true;

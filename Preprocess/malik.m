@@ -27,5 +27,6 @@ function [ret] = malik(mat,band)
             ret(i,1) = NaN;
         end
     end
+    ret(end,1) = NaN;
 end
 

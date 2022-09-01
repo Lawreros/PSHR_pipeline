@@ -21,17 +21,19 @@ function [ret] = kamath(mat, band)
     
     %Create copy of matrix to edit
     ret = mat(r_1:r_2,1);
-    
+    k = r_1-1;
     for i = 1:(length(ret)-1)
-        a = 0.325 * ret(i,1);
-        b = 0.245 * ret(i,1);
+        a = 0.325 * mat(k+i,1);
+        b = 0.245 * mat(k+i,1);
         
-        c = ret(i+1,1) - ret(i,1);
-        d = ret(i,1) - ret(i+1,1);
+        c = mat(k+i+1,1) - mat(k+i,1);
+        d = mat(k+i,1) - mat(k+i+1,1);
         
         if (0 <= c) && (c <= a)
-            ret(i,1) = NaN;
+            %ret(i,1) = NaN;
         elseif (0 <= d) && (d <= b)
+            %ret(i,1) = NaN;
+        else
             ret(i,1) = NaN;
         end
     end

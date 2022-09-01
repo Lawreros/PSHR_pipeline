@@ -9,7 +9,7 @@ function [new_mat] = affect_mark(mat, aff_table, aff_list)
 %       as an output of load_affect.m, contains the index values of the 
 %       start and stop points for each affect
 %   aff_list: [1-by-x cell array] list of affects from aff_table to use. If
-%   false, then all affects present will be marked.
+%       false, then all affects present will be marked.
 
 % Output:
 %   new_mat: [n-by-m+1 matrix]

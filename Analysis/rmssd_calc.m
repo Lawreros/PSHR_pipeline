@@ -1,23 +1,23 @@
 function [ret] = rmssd_calc(mat,bin,band)
-    % Calculates the root mean square of successive differences (RMSSD) for
-    % the vector of mesasurements provided.
-    %   Inputs:
-    %       mat: A [n-by-1] vector which contains the data you want to
-    %       calculate RMSSD for
-    %
-    %       bin: [1-by-2 cell array] Used for creating a vector of the
-    %       RMSSD results from a sliding bin of Y seconds or entries. This takes the
-    %       format of {index, 'units'}, so if you want to have a bin of the
-    %       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
-    %       If you don't want this, set bin to false.
-    %
-    %       band: [2 int vector] The range [start, end] of values you want
-    %       to calculate the RMSSD of. If false, then analyze the whole
-    %       range
+% Calculates the root mean square of successive differences (RMSSD) for
+% the vector of mesasurements provided.
+% Inputs:
+%   mat: A [n-by-1] vector which contains the data you want to
+%       calculate RMSSD for
+%
+%   bin: [1-by-2 cell array] Used for creating a vector of the
+%       RMSSD results from a sliding bin of Y seconds or entries. This takes the
+%       format of {index, 'units'}, so if you want to have a bin of the
+%       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
+%       If you don't want this, set bin to false.
+%
+%   band: [2 int vector] The range [start, end] of values you want
+%       to calculate the RMSSD of. If false, then analyze the whole
+%       range
     
-    %   Returns:
-    %       ret: Either a [n-by-1] vector containing the results (if bin is
-    %       not false) or an [int] if bin is false.
+% Returns:
+%   ret: Either a [n-by-1] vector containing the results (if bin is
+%       not false) or an [int] if bin is false.
     
     if band
         r_1 = band(1);
@@ -75,10 +75,15 @@ function [ret] = rmssd_calc(mat,bin,band)
     else
         % If they just want a single value for the input vector
         summation = 0;
+        rem_ent = 0;
         for  i = (r_1+1):r_2
-            summation = summation+(mat(i,1)-mat(i-1,1))^2;
+            if isnan(mat(i,1)-mat(i-1,1)) % Check if NaNs are present in the data and skip them
+                rem_ent = rem_ent + 1;
+            else
+                summation = summation+(mat(i,1)-mat(i-1,1))^2;
+            end
         end
-        ret = sqrt(1/(r_2-r_1)*summation);
+        ret = sqrt(1/((r_2-rem_ent)-r_1)*summation);
     end
 
 end

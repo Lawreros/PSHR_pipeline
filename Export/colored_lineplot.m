@@ -3,26 +3,29 @@ function [] = colored_lineplot(mat, label,varargin)
 % category of label is given a different color and displayed as a shaded
 % region over a lineplot.
 
-% Inputs:
+% Required Inputs:
 %   mat: [n-by-1 or n-by-2 matrix] 
 
+% Optional Parameters:
 %   label: [n-by-1 vector] either a vector of numbers or a cell array of
-%   strings, labeling each datapoint. This function will take the input
-%   values and convert them into categories, where it then asigns each
-%   category a color
+%       strings, labeling each datapoint. This function will take the input
+%       values and convert them into categories, where it then asigns each
+%       category a color
 
 %   title: [string] Title of the figure you wish to create. Default is
-%   'Shaded Plot'.
+%       'Shaded Plot'.
+
 %   xlabel: [string] Label put on the x-axis of the figure you wish to
-%   create. Default is 'x-axis'.
+%       create. Default is 'x-axis'.
+
 %   ylabel: [string] Label put on the y-axis of the figure you wish to
-%   create. Default is 'y-axis'.
+%       create. Default is 'y-axis'.
 %
 %   legend: [bool] Super hacky, but writes text onto the figure to label
-%   what each of the shaded regions represents. Default is true.
+%       what each of the shaded regions represents. Default is true.
 %
 %   fig_gen: [bool] Whether to plot the results as a new figure. If false,
-%   then this function can work with subplot. Default is true.
+%       then this function can work with subplot. Default is true.
 
     %Input parser
     p = inputParser;

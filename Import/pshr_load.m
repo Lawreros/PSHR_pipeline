@@ -8,30 +8,30 @@ function [Data] = pshr_load(varargin)
 % EXAMPLE: 
 % output = pshr_load('HR', {H_1, H_2, NaN}, 'ECG', {E_1, NaN, E_3}, 'Affect', {A_1, A_2, A_3})
 
-%   Inputs:
-%       HR: [cell list of strings] List containing the location of the HR
-%       files you wish to load and analyze. Default is an empty cell,
-%       representing no files.
+% Optional Parameters:
+%   HR: [cell list of strings] List containing the location of the HR files
+%       you wish to load and analyze. Default is an empty cell, representing 
+%       no files.
 
-%       ECG: [cell list of strings] List containing the location of the ECG
+%   ECG: [cell list of strings] List containing the location of the ECG
 %       files that you wish to load and analyze. Default is an empty cell,
 %       representing no files.
 
-%       Affect: [cell list of strings] List containing the location of the
+%   Affect: [cell list of strings] List containing the location of the
 %       coded Affect files that you wish to load and analyze. Default is an
 %       empty cell, representing no files.
 
-%       align: [bool] whether to align the affects from the affect files
+%   align: [bool] whether to align the affects from the affect files
 %       with the present HR/ECG files. Default is true.
 
-%       lag: [int or float] additional amount of time (in seconds) that you
+%   lag: [int or float] additional amount of time (in seconds) that you
 %       wish to lag the video data for when running alignment. For
 %       example, inputing 1 will result in the affect at second 274 of the
 %       video to be attributed to second 273, attempting to correct for the
 %       delay between the polar strap collecting data and transmitting it.
 %       Default is 0 and negative values are accepted.
 
-%       verbose: [bool] whether to display additional information/disp
+%   verbose: [bool] whether to display additional information/disp
 %       statements during running of the function. Default is true.
 
 
