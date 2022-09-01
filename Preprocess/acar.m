@@ -28,16 +28,20 @@ function [ret] = acar(mat, acar_range, band)
         r_1 = 1;
     end
 
-    ret = mat(r_1:r_2,1);
-    
+    ret = nan(1+r_2-r_1,1);
+    k = r_1-1;
     for i = (acar_range+1):length(ret)
-        a = sum(ret(i-acar_range:i-1,1));
+        a = mean(mat(k+i-acar_range:k+i-1,1));
         
-        if abs(a-ret(i,1))> (0.2*a)
+        if abs(a-mat(k+i,1))> (0.2*a)
             ret(i,1) = NaN;
+        elseif isnan(a-mat(k+i,1))
+            ret(i,1) = NaN;
+        else
+            ret(i,1) = mat(k+i);
         end
     end
-    ret(1:acar_range,1) = NaN;
+    %ret(1:acar_range,1) = NaN;
     
 end
 

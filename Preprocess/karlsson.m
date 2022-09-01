@@ -21,14 +21,17 @@ function [ret] = karlsson(mat, band)
     end
         
     %Create copy of matrix to edit
-    ret = mat(r_1:r_2,1);
-    ret(1,1) = NaN;
-    
-    for i = 2:(length(r_2)-1)
-        a = (ret(i-1,1)+ret(i+1,1))/2;
+    ret = nan(1+r_2-r_1,1);
+    k = r_1-1;
+    for i = 2:(length(ret)-1)
+        a = (mat(k+i-1,1)+mat(k+i+1,1))/2;
         
-        if abs(a-ret(i,1)) > (0.2*a)
+        if abs(a-mat(k+i,1)) > (0.2*a)
             ret(i,1) = NaN;
+        elseif isnan(a-mat(k+i,1))
+            ret(i,1) = NaN;
+        else
+            ret(i,1) = mat(k+i,1);
         end
     end
 end
