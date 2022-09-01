@@ -83,12 +83,15 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
     else
         % If they just want a percentage for a matrix
         count = 0;
+        rem_ent = 0;
         for i = (r_1+1):r_2
-            if abs(mat(i,1)-mat(i-1,1))>= diff
+            if isnan(mat(i,1)-mat(i-1,1)) % Check if NaNs are present in the data and skip them
+                rem_ent = rem_ent + 1;
+            elseif abs(mat(i,1)-mat(i-1,1))>= diff
                 count = count+1;
             end
         end
-        ret = count/(r_2-r_1);
+        ret = count/((r_2-r_1)-rem_ent);
     end
 end
 

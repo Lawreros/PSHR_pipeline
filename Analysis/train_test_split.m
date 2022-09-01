@@ -16,7 +16,7 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
 %   split: [float] The train/test split percentage as a decimal. 0.8 will
 %   mean that 80% of the data points are 
 %   ignore_nan: [bool] Whether to ignore any rows of mat or label with NaNs
-%   in them. Defulat is true.
+%   in them. Default is true.
 
 % Retruns:
 %   train: [struct]
