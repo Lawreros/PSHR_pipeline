@@ -6,7 +6,7 @@ function [] = Barry_pipeline(hr_files, ecg_files)
     
     % Create structure of data under different preprocessing
     % methods
-    for i = length(hr_files)
+    for i = 1:length(hr_files)
         prep.raw{i} = Data.HR.Raw{i}(:,3);
         prep.acar{i} = acar(Data.HR.Raw{i}(:,3), 5, false);
         prep.bandpass{i} = bandpass(Data.HR.Raw{i}(:,3),300,1300,false);
@@ -20,6 +20,7 @@ function [] = Barry_pipeline(hr_files, ecg_files)
     % Iterate through all of the different preprocessing methods
     % to see how RMSSD and PNN50 are calculated
     for j = 1:length(hr_files)
+        disp('=======================');
         for i=1:length(typ)
             ret = rmssd_calc(prep.(typ{i}){j}, false, false);
             disp(strcat(typ{i},' filtered ',Data.HR.files{j}));
@@ -29,6 +30,7 @@ function [] = Barry_pipeline(hr_files, ecg_files)
             disp('PNN50:' + string(ret));
             disp('Percent Removed:' + string(sum(isnan(prep.(typ{i}){j}))/length(prep.(typ{i}){j})));
         end
+        disp('=======================');
     end
     
     % Visualize the collected data
@@ -38,7 +40,8 @@ function [] = Barry_pipeline(hr_files, ecg_files)
     
     % Test that PQRST works well on it
     if ~isempty(ecg_files)
-        ecg_PQRST(Data.ECG.Raw{1}(:,3), 'disp_plot', true)
+        figure;
+        ecg_PQRST(Data.ECG.Raw{1}(:,[1,3]), 'disp_plot', true);
     end
     
 end
