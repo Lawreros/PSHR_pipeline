@@ -1,8 +1,7 @@
-function [SD1, SD2] = poincare_plot(mat, fig)
+function [SD1, SD2] = poincare_plot(mat)
 % Generates a poincare plot from the data
 % Inputs:
 %   mat: [n-by-1 array], vector containing all RR values
-%   fig: [figure] the figure object that you want to plot to
 
 % Returns:
 %   SD1: [int] The standard deviation along the y=x axis.
@@ -44,7 +43,6 @@ function [SD1, SD2] = poincare_plot(mat, fig)
     max_RR = nanmax(mat(:,1));
 
 
-    figure(fig);
     scatter(mat(:,1), mat(:,2), 15)
     axis([min_RR-50 max_RR+50 min_RR-50 max_RR+50])
     xlabel('RR_n (ms)');

@@ -132,6 +132,7 @@ function [locations_matrix, time_matrix] = ecg_PQRST(mat, varargin)
         plot([1:length(mat(:,2))],mat(:,2),locs_R,pks_R,'^b',locs_QS,-pks_QS,'vg', locs_T, pks_T,'^r',locs_P, pks_P, 'vr');
         legend('EKG', 'R', 'Q/S', 'T','P');
         title("Results from ecg_PQRST analysis");
+        ylabel("Voltage (uV)");
     end
 
     %% Organize collections of PQRST, using the R-wave as a base:
