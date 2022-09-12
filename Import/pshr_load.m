@@ -222,7 +222,7 @@ function [Data] = pshr_load(varargin)
                 Data.HR.Affect{q} = {};
                 Data.ECG.Affect{q} = {};
             else
-                algn = Data.Affect.align_time{q}(1) - (Data.Affect.align_time{q}(2)-p.Results.lag); %include lag value
+                algn = Data.Affect.align_time{q}(1) - ((Data.Affect.align_time{q}(2)-p.Results.lag)*1000); %include lag value
             
                 if isfield(Data, 'HR') %Added to see if any HR data was loaded/the HR struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0

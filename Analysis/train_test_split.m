@@ -45,6 +45,8 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     
     [ii, jj, kk] = unique(label); % [categories, locations, sorted output]
     f = histc(kk,1:numel(jj)).'; % number of each category
+    disp('Category quantity: [Non-problematic   Problematic]');
+    disp(f);
     
     % Check that provided ratio matches number of categories
     if length(ratio) ~= length(f)
@@ -68,16 +70,16 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     new_f = NaN;
     
     while req_change >= 1
-    % find smallest category
-    [val, idx] = min(f);
-    
-    % find what all other values should be from ratio
-    for i =1:length(ratio)
-        new_f(i) = ratio(i)/ratio(idx) * val;
-    end
-    
-    [req_change, idz] = max(new_f - f);
-    f(idx) = f(idx) - (req_change * ratio(idx)/ratio(idz));
+        % find smallest category
+        [val, idx] = min(f);
+
+        % find what all other values should be from ratio
+        for i =1:length(ratio)
+            new_f(i) = (ratio(i)/ratio(idx)) * val;
+        end
+
+        [req_change, idz] = max(new_f - f);
+        f(idx) = f(idx) - (req_change * ratio(idx)/ratio(idz));
     end
     
     % floor new_f so you don't deal with float issues, there is no way
@@ -113,6 +115,6 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     % Return struct where it is train.(category) = sub_matrix
     % Also return test.(category) = sub_matrix or NaN if there is nothing
     % left
-    disp('done')
+%     disp('done')
 
 end
