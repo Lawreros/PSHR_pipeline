@@ -40,7 +40,7 @@ function [ret] = rmssd_calc(mat,bin,band)
                 
             if length(dump) > 1
                 for k = 2:length(dump)
-                    summation = summation+(mat(k,1)-mat(k-1,1))^2;
+                    summation = summation+(dump(k,1)-dump(k-1,1))^2;
                 end
                 ret(i) =  sqrt((1/(length(dump)-1))*summation);
             end
