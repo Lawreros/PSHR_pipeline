@@ -10,8 +10,10 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
 %
 %   bin: [1-by-2 cell array] Used for creating a vector of the pNNX
 %       results from a sliding bin of Y seconds or entries. This takes the
-%       format of {index, 'units'}, so if you want to have a bin of the
-%       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
+%       format of {[before, after], 'units'}, so if you want to have a bin 
+%       of 5 seconds before (including current RR-interval) and 3 seconds 
+%       after: {[5,3], 'second'} or if you want the 5 entries before and 
+%       3 entries after the index: {[5,3], 'measure'}
 %       If you don't want this, set bin to false.
 %
 %   band: [2 int vector] The range [start, end] of values you want
@@ -32,54 +34,23 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
     
     % If they've decided to use the bin values
     if iscell(bin)
-        a = bin{1}; % value
-        b = bin{2}; % units
+        ret = NaN(r_2-(r_1-1),1);
+        bin_gen = bin_get(mat(r_1:r_2), bin);
         
-        ret = NaN(r_2-r_1,1);
-        
-        if strcmp(b,'second')
-            for i = r_1:r_2
-                count = 0;
-                j = 0;
+        for i = 1:r_2-(r_1-1)
+            count = 0;
                 
-                % Check loop backward until you have reached the 'b'
-                % seconds in the past through summing
-                while (sum(mat(i-j:i,1))/1000) <= a
-                    j = j+1;
-                    if j == i
-                        break;
-                    end
-                end
+            dump = bin_gen.next;
                 
-                if j < i && isnan(mat(i-j,1)) % Simple catch to prevent premature binning due to NaNs
-                   j = 0;            % The while loop will return false if the sum is NaN,
-                end                  % making the binning inconsistent
-                
-                
-                if j > 1 && j < i % If there is more than one entry
-                    for k = (i-j+2):i
-                        if abs(mat(k,1) - mat(k-1,1))>= diff
-                            count = count+1;
-                        end
-                    end
-                    ret(i-r_1+1,1) = count/(j-1);
-                else
-                    ret(i-r_1+1,1) = NaN;
-                end
-        
-            end
-        else % Looking at the past 'b' entries for the calculation
-            for i = (a+1):(r_2-r_1+1)
-                count = 0;
-                for j = 0:(a-1)
-                    if abs(mat(i-j,1) - mat(i-j-1,1))>= diff
+            if length(dump) > 1
+                for k = 2:length(dump)
+                    if abs(dump(k) - dump(k-1)) >= diff
                         count = count+1;
                     end
                 end
-                ret(i,1) = count/a;
             end
+            ret(i) = count/(length(dump)-1);
         end
-        
     else
         % If they just want a percentage for a matrix
         count = 0;

@@ -75,41 +75,44 @@ classdef bin_get < handle
               
                 % Find how far back to go until the sum is greater than the bin
                 % number of seconds
-                while (sum(obj.mat(idx-i:idx))/1000) <= obj.before
-                    disp(strcat('backsum = ',string(sum(obj.mat(idx-i:idx))/1000)));
-                    i = i+1;
-                    if i == idx
+                if obj.before > 0
+                    while (sum(obj.mat(idx-i:idx))/1000) <= obj.before
+%                         disp(strcat('backsum = ',string(sum(obj.mat(idx-i:idx))/1000)));
                         i = i+1;
-                        break;
+                        if i == idx
+                            i = i+1;
+                            break;
+                        end
                     end
+                    i = i-1; % the while loop goes until i is one too many, so just subtract 1 for the bounds
+                else
+                    i = 0;
                 end
-                
-                i = i-1; % the while loop goes until i is one too many, so just subtract 1 for the bounds
+
                 
                 % Find how far forward to go until the sum is greater than the
                 % bin number of seconds
                 j = 1; %j starts at 1 so that it looks at the RR-intervals after idx without including it                
                 
-                try
-                    while (sum(obj.mat(idx+1:idx+j))/1000) <= obj.after
-                         disp(strcat('frontsum = ',string(sum(obj.mat(idx+1:idx+j))/1000)));
-                         j = j+1;
-                        if idx+j > cap
-                            j = j+1;
-                            disp(string(j));
-                            disp('break');
-                            break;
+                if obj.after > 0
+                    try
+                        while (sum(obj.mat(idx+1:idx+j))/1000) <= obj.after
+%                              disp(strcat('frontsum = ',string(sum(obj.mat(idx+1:idx+j))/1000)));
+                             j = j+1;
+                            if idx+j > cap
+                                j = j+1;
+                                disp(string(j));
+                                break;
+                            end
                         end
+                        j = j-1;
+                    catch
+                        j = cap;
                     end
-                    disp('subtracted');
-                    j = j-1;
-                catch
-                    disp('Catch activated');
-                    j = cap;
+                else
+                    j = 0;
                 end
                 
-                disp(strcat('i = ',string(i)));
-                disp(strcat('j = ',string(j)));
                 
                 % If there are NaNs in the bin, then just return NaNs
                 % TODO: Maybe add option to ignore the NaNs

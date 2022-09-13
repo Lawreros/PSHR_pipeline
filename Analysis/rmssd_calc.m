@@ -7,8 +7,10 @@ function [ret] = rmssd_calc(mat,bin,band)
 %
 %   bin: [1-by-2 cell array] Used for creating a vector of the
 %       RMSSD results from a sliding bin of Y seconds or entries. This takes the
-%       format of {index, 'units'}, so if you want to have a bin of the
-%       last 5 seconds: {5, 'second'} or if you want the last 5 measurements: {5, 'measure'}
+%       format of {[before, after], 'units'}, so if you want to have a bin 
+%       of 5 seconds before (including current RR-interval) and 3 seconds 
+%       after: {[5,3], 'second'} or if you want the 5 entries before and 
+%       3 entries after the index: {[5,3], 'measure'}
 %       If you don't want this, set bin to false.
 %
 %   band: [2 int vector] The range [start, end] of values you want
@@ -29,47 +31,20 @@ function [ret] = rmssd_calc(mat,bin,band)
     
     %If they've decided to use the bin values
     if iscell(bin)
-        a = bin{1}; % value
-        b = bin{2}; % units
-        
-        ret = NaN(r_2-r_1,1);
-        
-        if strcmp(b,'second')
-            for i = r_1:r_2
-                summation = 0;
-                j = 0;
+        ret = NaN(r_2-(r_1-1),1);
+        bin_gen = bin_get(mat(r_1:r_2), bin);
+            
+        for i = 1:r_2-(r_1-1)
+            summation = 0;
+            dump = bin_gen.next;
                 
-                % Check loop backward until you have reached the 'b'
-                % seconds in the past through summing
-                while (sum(mat(i-j:i,1))/1000) <= a
-                    j = j+1;
-                    if j == i
-                        break;
-                    end
+            if length(dump) > 1
+                for k = 2:length(dump)
+                    summation = summation+(mat(k,1)-mat(k-1,1))^2;
                 end
-                
-                if j < i && isnan(mat(i-j,1)) % Simple catch to prevent premature binning due to NaNs
-                   j = 0;            % The while loop will return false if the sum is NaN,
-                end                  % making the binning inconsistent
-                
-                
-                if j > 2 && j < i % If there is more than one entry
-                    for  k = (i-j+2):i
-                        summation = summation+(mat(k,1)-mat(k-1,1))^2;
-                    end
-                    ret(i-r_1+1,1) = sqrt((1/(j-2))*summation);
-                else
-                    ret(i-r_1+1,1) = NaN;
-                end
+                ret(i) =  sqrt((1/(length(dump)-1))*summation);
             end
-        else % Looking at the past 'a' entries for the calculation
-            for i = (a+1):(r_2-r_1+1)
-                summation = 0;
-                for j = 0:(a-1)
-                    summation = summation+(mat(i-j,1)-mat(i-j-1,1))^2;
-                end
-                ret(i,1) = sqrt((1/a)*summation);
-            end
+            
         end
         
     else
