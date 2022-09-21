@@ -12,7 +12,7 @@ function [on_mat, off_mat] = onset_sample(mat, aff_table, aff_list, varargin)
 %       false, then all affects present will be marked.
 
 % Optional Inputs:
-%   bound: [1-by-2 vector] The number of entries before and after the onset
+%   band: [1-by-2 vector] The number of entries before and after the onset
 %       to include in the returned matrix. Default is [0,0] for just the 
 %       onset value.
 %   offset: [bool] Whether to return a matrix of the ends of each affect.
@@ -23,20 +23,20 @@ function [on_mat, off_mat] = onset_sample(mat, aff_table, aff_list, varargin)
 
 % Output:
 %   on_mat: [o-by-m matrix] matrix of the onsets
-%   off_mat: [o-by-m matrix] matrix of the offsets. An empty matrix if the
+%   off_mat: [f-by-m matrix] matrix of the offsets. An empty matrix if the
 %       optional input 'offset' is false
 
     p = inputParser;
-    addParameter(p, 'bond', [0,0], @ismatrix);
+    addParameter(p, 'band', [0,0], @ismatrix);
     addParameter(p, 'offset', true, @islogical);
     addParameter(p, 'omit_nan', false, @islogical);
     parse(p,varargin{:});
     
     on_mat = [];
     off_mat = [];
-    a = sum(p.Results.bond);
-    b = p.Results.bond(1);
-    c = p.Results.bond(2);
+    a = sum(p.Results.band);
+    b = p.Results.band(1);
+    c = p.Results.band(2);
     
 
     if ~iscell(aff_list)

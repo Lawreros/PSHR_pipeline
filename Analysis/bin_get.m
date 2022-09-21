@@ -101,7 +101,6 @@ classdef bin_get < handle
                              j = j+1;
                             if idx+j > cap
                                 j = j+1;
-                                disp(string(j));
                                 break;
                             end
                         end

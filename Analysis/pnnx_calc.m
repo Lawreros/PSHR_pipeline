@@ -48,8 +48,10 @@ function [ret] = pnnx_calc(mat,diff,bin,band)
                         count = count+1;
                     end
                 end
+                ret(i) = count/(length(dump)-1);
+            else
+                % do nothing because NaN if dump = []
             end
-            ret(i) = count/(length(dump)-1);
         end
     else
         % If they just want a percentage for a matrix
