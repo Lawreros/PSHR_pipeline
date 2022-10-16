@@ -1,4 +1,4 @@
-function [new_mat] = affect_mark(mat, aff_table, aff_list, cat_num, varargin)
+function [new_mat] = affect_mark(mat, aff_table, aff_list, varargin)
 % This funciton takes a matrix of RR or ECG data along with the affect
 % start and end index table and returns a matrix with an additional column
 % marking a nonzero number (default 1) if any of the affects listed in aff_list 
@@ -10,7 +10,7 @@ function [new_mat] = affect_mark(mat, aff_table, aff_list, cat_num, varargin)
 %       start and stop points for each affect
 %   aff_list: [1-by-x cell array] list of affects from aff_table to use. If
 %       false, then all affects present will be marked.
-%   cat_num: [bool] whether to assign each of the affects a different
+%   NumberCategories: [bool] whether to assign each of the affects a different
 %       number, instead of the binary 0 or 1. The number assigned will be
 %       the index number for the affect in aff_list. DOES NOT WORK WITH
 %       OVERLAPPING AFFECTS WHICH OCCUR AT THE SAME TIME
@@ -20,6 +20,7 @@ function [new_mat] = affect_mark(mat, aff_table, aff_list, cat_num, varargin)
 
     p = inputParser;
     addParameter(p, 'verbose', false, @islogical);
+    addParameter(p, 'NumberCategories', false, @islogical);
     parse(p,varargin{:});
     
     new_mat = mat;
@@ -41,7 +42,7 @@ function [new_mat] = affect_mark(mat, aff_table, aff_list, cat_num, varargin)
         if any(strcmp(aff_list, aff_table(i,1)))
             for j = 1:length(aff_table{i,2})
                 % Mark anywhere where the affect occurs
-                if cat_num
+                if p.Results.NumberCategories
                     new_mat(aff_table{i,2}(j):aff_table{i,3}(j),end) = find(strcmp(aff_table(i,1),aff_list));
                 else
                     new_mat(aff_table{i,2}(j):aff_table{i,3}(j),end) = 1;

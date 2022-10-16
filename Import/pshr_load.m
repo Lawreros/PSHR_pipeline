@@ -207,7 +207,7 @@ function [Data] = pshr_load(varargin)
                     if p.Results.verbose
                         disp('generating meta_chunks');
                     end
-                    aff_vec = affect_mark([], Data.Affect.Times{i},false,false);
+                    aff_vec = affect_mark([], Data.Affect.Times{i},false);
 
                     inst = find(aff_vec==1);
                     vec = inst(2:end)-inst(1:end-1);
