@@ -1,4 +1,4 @@
-function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost)
+function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost, time_pen)
 % Functions which attempts to align to matrices by the specified column
 % using the Levenshtein distance metric:
 % Inputs:
@@ -30,30 +30,43 @@ function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost
 
     % Isolate columns of interest so I don't have to keep typing out
     % (:,col*)
-    va = mat_1(:,col_1);
-    vb = mat_2(:,col_2);
+    va = mat_1;%mat_1(:,col_1);
+    vb = mat_2(:,[1,4]);%mat_2(:,col_2);
     
     % Create matrix for alignment values for levenshtein distance
-    lev = zeros(length(va),length(vb));
+    lev = zeros(size(va,1),size(vb,1));
     lev(1,1) = 0;
 
-    for i = 2:length(va)
+    for i = 2:size(va,1)
         lev(i,1) = i-1;
     end
-    for j = 2:length(vb)
+    for j = 2:size(vb,1)
         lev(1,j) = j-1;
     end
 
     % Go through the combinations of values and calculate the
     % substitution costs between values
-    for j = 2:length(vb)
-        for i = 2:length(va)
-            if va(i) == vb(j)
+    if time_pen
+    for j = 2:size(vb,1)
+        for i = 2:size(va,1)
+            if va(i,2) == vb(j,2)
                 substitutionCost = 0;
             else
-                substitutionCost = abs(va(i) - vb(j))/subcost;
+                substitutionCost = (abs(va(i,2) - vb(j,2))/subcost)+(abs(va(i,1)-vb(j,1))/time_pen);
             end
             lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
+        end
+    end
+    else
+        for j = 2:size(vb,1)
+        for i = 2:size(va,1)
+            if va(i,2) == vb(j,2)
+                substitutionCost = 0;
+            else
+                substitutionCost = (abs(va(i,2) - vb(j,2))/subcost);
+            end
+            lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
+        end
         end
     end
 
