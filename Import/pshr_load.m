@@ -31,6 +31,13 @@ function [Data] = pshr_load(varargin)
 %       delay between the polar strap collecting data and transmitting it.
 %       Default is 0 and negative values are accepted.
 
+%   meta: [positive scalar] the maximum difference (in seconds) between the
+%       start of one affect and the end of the next in order to be
+%       considered a "meta chunk". Providing a value > 0 will result in the
+%       creation of a new affect called 'meta_chunk' which will have start
+%       and stop times bridging the gaps between the clustered affects.
+%       Default is 0.
+
 %   verbose: [bool] whether to display additional information/disp
 %       statements during running of the function. Default is true.
 
@@ -50,6 +57,7 @@ function [Data] = pshr_load(varargin)
     addParameter(p, 'Affect', {}, @iscell);
     addParameter(p, 'align', true, @islogical);
     addParameter(p, 'lag', 0, @isscalar);
+    addParameter(p, 'meta', 0, @isscalar);
     addParameter(p, 'verbose', true, @islogical);
 
     parse(p,varargin{:});
@@ -192,7 +200,29 @@ function [Data] = pshr_load(varargin)
                     Data.Affect.Times{i}{k,2} = starts;
                     Data.Affect.Times{i}{k,3} = ends;
                 end
+                
+                
+                % Create new affect for meta_chunks
+                if p.Results.meta
+                    if p.Results.verbose
+                        disp('generating meta_chunks');
+                    end
+                    aff_vec = affect_mark([], Data.Affect.Times{i},false);
 
+                    inst = find(aff_vec==1);
+                    vec = inst(2:end)-inst(1:end-1);
+                    idx = find(vec <= p.Results.meta & vec > 1);
+                    starts =[];
+                    ends =[];
+                    for k=1:length(idx)
+                        starts = [starts,inst(idx(k))];
+                        ends = [ends,inst(idx(k)+1)];
+                    end
+                    Data.Affect.Times{i}{end+1,1} = 'meta_chunk';
+                    Data.Affect.Times{i}{end,2} = starts;
+                    Data.Affect.Times{i}{end,3} = ends;
+                end
+                
             end
                 
         end

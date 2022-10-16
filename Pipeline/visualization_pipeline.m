@@ -22,6 +22,13 @@ function [] = visualization_pipeline(varargin)
 %       (excluding `off camera` and `not problem` will be colored. Default is
 %       false.
 %
+%   ignore_timestamps: [bool] Used when plotting data that isn't aligned,
+%       due to the use of NaNs as times for the flattened data. When true
+%       and aff_list = {}, then timestamps are replaced by index numbers.
+%       Only relevant for RR-interval plots, as ECG has 1 non-nan timestamp
+%       for every 50+ entries.
+%       Default is false.
+%
 %   individual_plots: [bool] Whether to generate individual plots for each
 %       file or to make figures containing multiple plots. Default is false.
 
@@ -38,6 +45,7 @@ function [] = visualization_pipeline(varargin)
     addParameter(p, 'ecg_files', {}, @iscell);
     addParameter(p, 'aff_files', {}, @iscell);
     addParameter(p, 'aff_list', false, @iscell);
+    addParameter(p, 'ignore_timestamps', false, @islogical);
     addParameter(p, 'individual_plots', false, @islogical);
     parse(p,varargin{:});
 
@@ -79,9 +87,31 @@ function [] = visualization_pipeline(varargin)
                 colored_lineplot(Data.HR.Raw{i}(:,[1,3]), Data.HR.Raw{i}(:,4),...
                     'title', f_nam,'legend',false, 'fig_gen', false);
             else
-                plot(Data.HR.Raw{i}(:,1), Data.HR.Raw{i}(:,3));
+                if p.Results.ignore_timestamps
+                    plot(Data.HR.Raw{i}(:,3));
+                    xlabel('Index number');
+                else
+                    plot(Data.HR.Raw{i}(:,1), Data.HR.Raw{i}(:,3));
+                    xlabel('Timepoint (ms)');
+                end
                 title(f_nam);
+                ylabel('RR-interval (ms)');
             end
+        end
+        
+        % Plot HR Poincare
+        figure;
+        for i = 1:length(Data.HR.Raw)
+            if p.Results.individual_plots == 0
+                subplot(row, col, i);
+            else
+                figure;
+            end
+            
+            [dump, f_nam] = fileparts(Data.HR.files{i});
+
+            [SD1, SD2] = poincare_plot(Data.HR.Raw{i}(:,3));
+            title([f_nam, strcat(' SD1: [',string(SD1),'] SD2: [',string(SD2),']')]);
         end
     end
     
