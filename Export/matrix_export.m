@@ -14,7 +14,6 @@ function [] = matrix_export(mat,fil_name, varargin)
 %   Either 'csv' for a csv file,'txt' for a tab delimited text file, or
 %   'mat' for a matlab file of the matrix. Default is 'csv'.
 %
-%
 %   var_names: [m-by-1 cell array] A cell array containing the title you
 %   wish to give to each column in the csv file (requires fil_type = 'csv').
 %   If false, then generic titles are generated. Default is false.
