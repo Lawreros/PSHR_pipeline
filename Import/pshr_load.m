@@ -339,23 +339,16 @@ function [new_array] = vectorize(matrix_array)
     entry = 1;
     new_array=[];
     
+    new_array(:,skip) = reshape(matrix_array(:,skip:end).',[],1);
     for i = 1:r
-        new_array(entry,1:2) = matrix_array(i,1:2);
-        for j = skip:c
-            if matrix_array(i,j) ~= 0
-                new_array(entry,3) = matrix_array(i,j);
-                entry=entry+1;
-            end
-        end
-    end
-    %Add in NaNs for new rows instead of 0's to make time alignment easier
-    
-    for i = 1:length(new_array)
-        if new_array(i,1)==0
-            new_array(i,1) = NaN;
-        end
+         new_array((i*(c-skip+1))-(c-skip),1:(skip-1)) = matrix_array(i,1:(skip-1));
     end
     
+    if c<10
+        new_array(new_array(:,skip)==0,:)=[];
+    end
+    new_array(new_array(:,1)==0,1)=NaN;
+
 end
 
 

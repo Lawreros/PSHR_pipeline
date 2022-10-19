@@ -14,14 +14,15 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
 
 % Optional Parameters:
 %   split: [float] The train/test split percentage as a decimal. 0.8 will
-%   mean that 80% of the data points are 
+%       mean that 80% of the data points are put into the training set
 %   ignore_nan: [bool] Whether to ignore any rows of mat or label with NaNs
-%   in them. Default is true.
+%       in them. Default is true.
 
 % Retruns:
-%   train: [struct]
-%   test: [struct]
-%   unused: [struct]
+%   train: [struct] training data, split up by numerical affect label
+%   test: [struct] testing data
+%   unused: [struct] extra data not put into either the training or testing
+%       sets due to the splitting process
 
 
     % Get the different catagories
