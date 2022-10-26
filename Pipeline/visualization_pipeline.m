@@ -82,7 +82,7 @@ function [] = visualization_pipeline(varargin)
             
             [dump, f_nam] = fileparts(Data.HR.files{i});
 
-            if align
+            if align && ~isempty(Data.HR.Affect{i})
                 Data.HR.Raw{i} = affect_mark(Data.HR.Raw{i}, Data.HR.Affect{i}, false);
                 colored_lineplot(Data.HR.Raw{i}(:,[1,3]), Data.HR.Raw{i}(:,4),...
                     'title', f_nam,'legend',false, 'fig_gen', false);
@@ -128,7 +128,7 @@ function [] = visualization_pipeline(varargin)
             
             [dump, f_nam] = fileparts(Data.ECG.files{i});
 
-            if align
+            if align && ~isempty(Data.ECG.Affect{i})
                 Data.ECG.Raw{i} = affect_mark(Data.ECG.Raw{i}, Data.ECG.Affect{i}, aff_list);
                 colored_lineplot(Data.ECG.Raw{i}(:,3), Data.ECG.Raw{i}(:,4),...
                     'title', f_nam, 'legend', false,'fig_gen', false);
