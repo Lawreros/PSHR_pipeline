@@ -114,7 +114,10 @@ function [Data] = pshr_load(varargin)
         for i = 1:length(p.Results.Affect)
             if isnan(p.Results.Affect{i})
                 disp('Empty Affect file');
+                % Create empty struct entries for missing affect files
                 Data.Affect.Raw{i} = {};
+                Data.Affect.Times{i} = {};
+                Data.Affect.align_time{i} = [];
             else
                 Data.Affect.Raw{i} = readtable(p.Results.Affect{i}, 'Format', 'auto');
                 
