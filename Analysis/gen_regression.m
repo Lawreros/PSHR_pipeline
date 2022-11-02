@@ -1,4 +1,4 @@
-function [mdl, pihat, t_stats] = gen_regression(mat, target, regression_type, varargin)
+function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_type, varargin)
 % Function which taken in input matrix of features and returns the results
 % of a variety of regressions. MATLAB's regression functions exclude any
 % datapoints which contain NaN values in their regression.
@@ -63,9 +63,18 @@ function [mdl, pihat, t_stats] = gen_regression(mat, target, regression_type, va
         [r,f] = size(train.cat_0);
         t_stats=[];
         for q = 1:f
-            [h, p_] = ttest2([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)],[train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]);
+            [h, p_, ci, stats] = ttest2([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)],[train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)], 'Vartype', 'unequal');
             t_stats(1,q) = p_;
             disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
+            disp(strcat('MEANS: NON-PROB : ', string(mean([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)])),' PROB : ', string(mean([train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]))));
+            disp('95% estimated difference:');
+            disp(ci);
+            disp('Esitmated standard deviation');
+            disp(stats.sd);
+            %a = length([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)]);
+            %b = length([train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]);
+            %boxchart([repmat(0,a,1);repmat(1,b,1)],[train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q);train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]);
+            
             [h,p_] = ttest([train.cat_0(:,q);test.cat_0(:,q)],[train.cat_1(:,q);test.cat_1(:,q)]);
             t_stats(1,f+q) = p_;
             disp(strcat('paired t-test result for feature: ',string(q),' =', string(p_)));
@@ -139,26 +148,55 @@ function [mdl, pihat, t_stats] = gen_regression(mat, target, regression_type, va
             else
 %                 [B, dev, stats] = mnrfit(mat, categorical(target), 'model','nominal');
                 [B,dev,stats] = mnrfit([train.cat_0;train.cat_1],categorical([zeros(length(train.cat_0(:,1)),1);ones(length(train.cat_1(:,1)),1)]), 'model', 'nominal');
-                mdl = [stats.beta, stats.se, stats.t, stats.p];
+                LL = stats.beta - 1.96.*stats.se;
+                UL = stats.beta + 1.96.*stats.se;
+                mdl = [stats.beta, stats.se, stats.t, stats.p, LL, UL];
                 if p.Results.verbose
                     fprintf('    Beta\t SE \t tStats\t  pValue\n');
                     disp(mdl);
+                    disp('Upper bounds');
+                    disp(LL);
+                    disp('Lower bounds');
+                    disp(UL);
                 end
                 
                 % Test the generated model:
 %                 pihat = mnrval(B, test_dat);
-                pihat = mnrval(B, [test.cat_0;test.cat_1]);
+                [pihat, dlow, dhi] = mnrval(B, [test.cat_0;test.cat_1],stats);
+                pihats = [];
                 
-                % Convert probabilities into binary values
-                pihat = round(pihat);
+                % Convert probabilities into binary values and account for
+                % both lower and higher bounds
+                for q = 1:3
+                    if q == 1
+                        pdump = round(pihat-dlow);
+                        % if both probs are > 50% then set both to 0
+                        pdump(sum(pdump,2)>1,:)=0;
+                    elseif q ==2
+                        pdump = round(pihat);
+                    else
+                        pdump = round(pihat+dhi);
+                        % if both probs are > 50% then set both to 0
+                        pdump(sum(pdump,2)>1,:)=0;
+                    end
+
+    %                 disp(strcat('Accuracy :', string(nansum(pihat(:,1))),'/',string(length(pihat)),...
+    %                     '=',string(nansum(pihat(:,1))/length(pihat
+                    acc = pdump - [2*ones(length(test.cat_0(:,1)),1);-2*ones(length(test.cat_1(:,1)),1)];
+
+                    disp('Accuracy for non-prob: '+string(length(find(acc(:,1)==-1))/length(test.cat_0(:,1))));
+                    disp('Accuracy for prob: '+string(length(find(acc(:,2)==3))/length(test.cat_1(:,1))));
+                    pdump = [length(find(acc(:,1)==-1))/length(test.cat_0(:,1)), length(find(acc(:,2)==3))/length(test.cat_1(:,1))];
                 
-%                 disp(strcat('Accuracy :', string(nansum(pihat(:,1))),'/',string(length(pihat)),...
-%                     '=',string(nansum(pihat(:,1))/length(pihat
-                acc = pihat - [2*ones(length(test.cat_0(:,1)),1);-2*ones(length(test.cat_1(:,1)),1)];
+                    [X,Y,T,AUC] = perfcurve([zeros(length(test.cat_0(:,1)),1);ones(length(test.cat_1(:,1)),1)],pihat(:,2),1);
+                    
+                    if AUC > 0.6
+                        disp("hey!");
+                    end
+                    
+                    pihats = [pihats; pdump];
+                end
                 
-                disp('Accuracy for non-prob: '+string(length(find(acc(:,1)==-1))/length(test.cat_0(:,1))));
-                disp('Accuracy for prob: '+string(length(find(acc(:,2)==3))/length(test.cat_1(:,1))));
-                pihat = [length(find(acc(:,1)==-1))/length(test.cat_0(:,1)), length(find(acc(:,2)==3))/length(test.cat_1(:,1))];
             end
         otherwise
             disp('Unknown regression type, terminating function')
