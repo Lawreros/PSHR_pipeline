@@ -94,6 +94,16 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
         xlabel("RR-interval index");
         ylabel("Difference (millisecond)");
         
+        %histogram for time and RR-interval differnces
+        figure;
+        subplot(1,2,1);
+        histogram(aligned_metrics.time.diff/1000,[-1,0,1,2,3,4],'Normalization','probability');
+        title("(RR-interval timestamp) - (ECG R-peak timestamp)");
+        
+        subplot(1,2,2);
+        histogram(aligned_metrics.val.diff,[-70:10:70],'Normalization','probability');
+        title("(RR-interval) - (ECG RR estimate)");
+        
         figure;
         subplot(2,1,1)
         plot(rr(:,1), rr(:,2));
