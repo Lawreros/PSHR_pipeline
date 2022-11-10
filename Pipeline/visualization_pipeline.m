@@ -37,7 +37,7 @@ function [] = visualization_pipeline(varargin)
 %       the screen at once. This prevents confusion about what plots belong together.
 %       Default is false.
 
-    aff_list = {'SIB','ISB','innappropriate face related behavior','polar strap adjustment/removal'...
+    aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
 
     p = inputParser;

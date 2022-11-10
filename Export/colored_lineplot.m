@@ -65,8 +65,16 @@ function [] = colored_lineplot(mat, label,varargin)
 
     % Convert label vector into usable values
     lab_idx = grp2idx(categorical(label)); % Converts label into categories
-    start_idx = find([0;lab_idx]-[lab_idx;0]); % Finds points where the label changes
+    start_idx = find([99;lab_idx]-[lab_idx;99]); % Finds points where the label changes
     start_idx(end) = length(lab_idx);
+    
+    % Check that, if the last affect goes unil the end, the last value is
+    % not NaN
+    q = 0;
+    while isnan(mat(start_idx(end)-q,1))
+        q = q + 1;
+    end
+    start_idx(end) = start_idx(end)-q;
     
     % Convert the unique value locations into coordinates
     patch_x = [mat(start_idx(1:end-1),1),mat(start_idx(1:end-1),1),...

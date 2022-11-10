@@ -2,7 +2,7 @@ function [] = affect_pipeline(aff_files)
 % Pipeline which analyzes the prevalence and clustering of different
 % affects
 
-    aff_list = {'SIB','ISB','innappropriate face related behavior','polar strap adjustment/removal'...
+    aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
 
     %aff_list = false;
