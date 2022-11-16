@@ -2,25 +2,38 @@
 % Set up example variables for processing
 clear all;
 
-aff_1 = {'crying';'SIB';'face_repeat'};
-start_1 = {[1,8,10];[8,10];[1,10]};
-end_1 = {[4,9,13];[9,13];[7,18]};
-%tab_1 = table(start_1, end_1, 'RowNames', aff_1);
+aff_1 = {'a';'b';'c'};
+start_1 = {[1,9];[2,7,14,24];[13,20]};
+end_1 = {[4,11];[2,8,17,26];[15,24]};
 tab_1 = [aff_1, start_1, end_1];
 
-aff_2 = {'crying';'SIB';'face_repeat'};
-start_2 = {[11,18,20];[18,20];[13,20]};
-end_2 = {[14,19,23];[19,23];[14,23]};
-%tab_2 = table(start_2, end_2, 'RowNames', aff_2);
+aff_2 = {'d';'e'};
+start_2 = {[1,6,13];[3,18]};
+end_2 = {[2,8,29];[4,19]};
 tab_2 = [aff_2, start_2, end_2];
 
-table_comb(tab_1, {'crying','SIB'}, 'intersect', tab_2, {'crying'}, 'omit', {'face_repeat'});
+aff_3 = {'f';'g'};
+start_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
+end_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
+tab_3 = [aff_3, start_3, end_3];
 
+% aff_1 = {'crying';'SIB';'face_repeat'};
+% start_1 = {[1,8,10];[8,10];[1,10]};
+% end_1 = {[4,9,13];[9,13];[7,18]};
+% tab_1 = [aff_1, start_1, end_1];
+% 
+% aff_2 = {'crying';'SIB';'face_repeat'};
+% start_2 = {[11,18,20];[18,20];[13,20]};
+% end_2 = {[14,19,23];[19,23];[14,23]};
+% tab_2 = [aff_2, start_2, end_2];
 
-function [] = table_comb(varargin)
+anser = table_comb(tab_1,{'a'},'omit',{}, tab_2, {'d'}, 'intersect', tab_3, {'f','g'});
+
+disp('wait');
+
+function [final_table] = table_comb(varargin)
 % Function which takes N matrices consisting of start and end timepoints
 % and combines them
-
 
 % Parameter:
 %   ex_end : whether to apply the exclusions at the end or during
@@ -35,11 +48,6 @@ function [] = table_comb(varargin)
 % placed into those categories.
 
 
-% First, test how best to read in the parameters and organize
-
-% Find the location of all tables in varargin
-
-    disp('starting');
     % Find the location of the table variables in varargin
     j = 0;
     k = 1;
@@ -77,7 +85,8 @@ function [] = table_comb(varargin)
             omit_flag = false;
             exclude_flag = false;
             
-            % Create placeholders for omit and exclude
+            % Create placeholders for unions, omits, and exclude
+            org_var.table(j,k).unions{1} = NaN;
             org_var.table(j,k).omits{1} = NaN;
             org_var.table(j,k).exclude{1} = NaN;
             
@@ -99,16 +108,15 @@ function [] = table_comb(varargin)
     % Create the 'master-times' for each table
     for j = 1:size(org_var.table,1)
         for k = 1:length(org_var.table(j,:))
-            org_var.table(j,k).new_tab = create_sub_table(org_var.table(j,k), ex_end);
+            if ~isempty(org_var.table(j,k).raw) % Because 2D variable table can have empty entries if more rows in one column than others
+                org_var.table(j,k).new_tab = create_sub_table(org_var.table(j,k), ex_end);
+            end
         end
     end
         
     % Combine each table into the final result
-    org_var.final_table = create_master_table(org_var.table);
+    final_table = create_master_table(org_var.table);
     
-    
-    master_table = table();
-
 end
 
 function [com_tab] = create_sub_table(tab, ex_end)
@@ -127,25 +135,36 @@ function [com_tab] = create_sub_table(tab, ex_end)
     %  omit, start, end;
     %  exclude (optional), start, end}
     
-    % Go through each union pair and also make unified omits
-    com_tab = {};
+    
+    % If unions is empty cell array, then unify all categories available in
+    % the table
+    if isempty(tab.unions{:})
+        tab.unions = {tab.raw(:,1).'};
+    end
+    
     usd = []; % Keep track of all categories used
-    for i = 1:length(tab.unions)
-        grb = [];
-        for j=1:length(tab.unions{i})
-%             find(strcmp(tab.raw(:,1), tab.unions{i}{j}))
-            grb = [grb, find(strcmp(tab.raw(:,1), tab.unions{i}{j}))];
+    com_tab = {};
+    if iscell(tab.unions{:})
+        % Go through each union pair and also make unified omits
+        for i = 1:length(tab.unions)
+            grb = [];
+            for j=1:length(tab.unions{i})
+                grb = [grb, find(strcmp(tab.raw(:,1), tab.unions{i}{j}))];
+            end
+            usd = [usd,grb];
+            com_tab(i,:) = gen_union(tab.raw(grb,:));
         end
-        usd = [usd,grb];
-        com_tab(i,:) = gen_union(tab.raw(grb,:));
+
+        % If more than one union, then they wanted to find the intersection
+        if length(com_tab(:,1)) > 1
+            com_tab(end+1,:) = gen_inter(com_tab);
+        end
+    
+    else % They have not specifed any categories, thus they just want to use a table
+        % for omission or exclusion purposes
+        
+        com_tab = {'',[],[]};
     end
-    
-    % If more than one union, then they wanted to find the intersection
-    if length(com_tab(:,1)) > 1
-        com_tab(end+1,:) = gen_inter(com_tab);
-    end
-    
-    
     
     % If omit is empty cell array, then omit all instances that have not been
     % mentioned in unions
@@ -163,7 +182,7 @@ function [com_tab] = create_sub_table(tab, ex_end)
         for i = 1:length(tab.omits)
             grb = [];
             for j=1:length(tab.omits{i})
-                grb = [grb, find(strcmp(tab.raw(:,1), tab.unions{i}{j}))];
+                grb = [grb, find(strcmp(tab.raw(:,1), tab.omits{i}{j}))];
             end
             om_tab(i,:) = gen_union(tab.raw(grb,:));
         end
@@ -203,7 +222,7 @@ function [com_tab] = create_sub_table(tab, ex_end)
 end
 
 
-function [mas_tab] = create_master_table(tab)
+function [final_tab] = create_master_table(tab)
 % Create the final table if multiple tables are being combined
 
     disp('starting');
@@ -212,32 +231,40 @@ function [mas_tab] = create_master_table(tab)
     % different z-axis find the intersect
     
     [r,c] = size(tab);
+    q = 0;
     
     for k = 1:c
         clear dump
-        for j = 1:r
+        j = 1;
+        while j <= r && ~isempty(tab(j,k).new_tab)
             % Generate a union across the same z-axis
             
             % Grab from end-2 which will either be the intersect of the single
             % union that was preposed.
             dump(j,:) = tab(j,k).new_tab(end-2,:);
-            om_dump(j,:) = tab(j,k).new_tab(end-1,:);
+            om_dump(q+j,:) = tab(j,k).new_tab(end-1,:);
+            j = j+1;
         end
+        q=q+j-1;
         
         % Apply omits to master_union_tab, as omits made to the unions between tables
         % will inherently carry over to the intersections 
         % ((A U B)*omit(C)) N (D U E) = ((A U B) N (D U E))*omit(C)
-        master_union_tab(k,:) = omit(gen_union(dump), gen_union(om_dump));
+        master_union_tab(k,:) = omit(gen_union(dump), gen_union(om_dump(q-(j-2):q,:)));
         
     end
     
     % Generate a list of intersections
-    final_tab = gen_inter(master_union_tab);   
+    final_tab(1,:) = gen_inter(master_union_tab);
     
-    % Apply the excludes to the master category if ex_end is selected
-
+    % get the collection of omissions so that with onset analysis it is
+    % possible to not select from this area
+    final_tab(2,:) = gen_union(om_dump);
+                                         
     
-
+    % TODO: Apply the excludes to the master category if ex_end is selected
+    
+    
 end
 
 
@@ -246,11 +273,17 @@ function [un] = gen_union(tab)
 % Takes a table of start and stop times and returns the union of said
 % combinations
 
+    %TODO: Can save computation time by subtracting the minimum start time
+    %from the creation of the zeros and then adding it to the end vector.
+    %(also would work in gen_inter)
+
     dump = zeros(1,max([tab{:,3}]));
 
     for i = 1:length(tab(:,1))
-        for j = 1:length(tab{i,2})
-            dump(tab{i,2}(j):tab{i,3}(j)) = 1;
+        if ~isempty(tab{i,2})
+            for j = 1:length(tab{i,2})
+                dump(tab{i,2}(j):tab{i,3}(j)) = 1;
+            end
         end
     end
     
