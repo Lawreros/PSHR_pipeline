@@ -11,10 +11,14 @@ hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_03-18-2022_cropped.t
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-03-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-12-2022_part1_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-12-2022_part2_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-12-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-23-2022_cropped.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
-
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-23-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-30-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-03-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-17-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-24-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+% 
 %Affect file
 aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-04-22_1255_V01_Baldie.csv',...
@@ -29,92 +33,235 @@ aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_
     '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-03_1255_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-12_1429_1255_V01_Montanez_Part1.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-12_1622_1255_V01_Montanez_Part2.csv',...
-    NaN,NaN,NaN};
+    '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-09-23_1255_V01_Montanez.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-09-30_1255_V01_Kessler.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-03_OGCP_V01_Kessler.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-17_OGCP_V01_Montanez.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-24_OGCP_V01_Kessler.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv'};
+
+hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR/HR_11-07-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+
+aff_files = {'~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
+    '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-26_OGCP_V01_Montanez.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv',...
+    '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
 
 
-Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
 
 
 % For each applicable affect, run table_combo to get just the face_related
 % behavior and omission start and ends for problematic behavior
-% aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
-%         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
-aff_list_2 = {'SIB','ISB','polar strap adjustment/removal'...
-        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
+ aff_list = {{'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
+         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'}};
+%aff_list_2 = {{'SIB','ISB','polar strap adjustment/removal',...
+%        'inappropriate movement','crying', 'pulling at pants','off camera'}};
 
-q=1;
-store_names = {};
-for i = 1:length(Data.HR.Affect)
+target = {{'inappropriate face related behavior'}};
+    
+t_test_pipelin(hr_files, aff_files, {{'Timer_Used'}}, aff_list, {[5,0], 'second'}, true, true);
+%t_test_pipelin(hr_files, aff_files, target, aff_list_2, {[5,0], 'second'}, true, true);
 
-    if ~isempty(Data.HR.Affect{i})
-        keep_table = table_combo(Data.HR.Affect{i}, {'inappropriate face related behavior'});
-        omit_table = table_combo(Data.HR.Affect{i}, aff_list_2);
-        new_tabs{q} = [keep_table(end-1,:); omit_table(end-1,:)];
-        
-        % Run the feature_generation function on the HR data
-        new_dat{q} = feature_generation(Data.HR.Raw{i}, {[5,0], 'second'}, false);
-        
-        store_names{q} = Data.HR.files{i};
-        q=q+1;
-    else
-        disp(strcat('No affect found for :', Data.HR.files{i}));
-        
+
+function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, onset)
+% Pipeline for running t-tests on different aspects of the PHYSMON
+% collected data. Effectively any combination of analyses you could want
+% will be referenced here.
+
+% Required Inputs:
+%   hr_files: [1-by-n cell array] cell array containing the HR files that
+%       you wish to run the t-test on
+%   aff_files: [1-by-n cell array] cell array containing the affect files
+%       which you wish to use with the hr_files you provided (in the same
+%       order).
+%   target: [1-by-n cell array] cell array containing the targets as {{'A','B'},{'C'}}
+%   omit: []
+%   duration: [bool] Whether to run duration analysis
+%   onset: [bool] Whether to run onset analysis
+
+% Optional Parameters:
+
+% Returns:
+%   
+
+    Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
+    
+     for i = 1:length(hr_files)
+        Data.HR.PP{i} = Data.HR.Raw{i};
+        % We'll just work with bandpassing for now...
+        Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
     end
-end
+    
+    
+    
 
-disp('break');
+    if duration
+        %% Duration sample
+        % Sample the HR data using the new affect tables, then run a t-test on the
+        % differences between the 
 
-%% Duration sample
-% Sample the HR data using the new affect tables, then run a t-test on the
-% differences between the 
+        q=1;
+        store_names = {};
+        for i = 1:length(Data.HR.Affect)
+
+            if ~isempty(Data.HR.Affect{i})
+                new_tabs{q} = table_combo(Data.HR.Affect{i}, target{:}, 'omit', omit{:});
+
+                % Run the feature_generation function on the HR data
+                new_dat{q} = feature_generation(Data.HR.PP{i}, bin, false);
+
+                store_names{q} = Data.HR.files{i};
+                q=q+1;
+            else
+                disp(strcat('No affect found for :', Data.HR.files{i}));
+
+            end
+        end
+
+
+        % Select data using starts and stops
+        dur_mat = [];
+        dur_dump = [];
+        cont_mat = [];
+        cont_dump = [];
+        a = 10;
+        for i = 1:length(new_tabs)
+
+            if ~isempty(new_tabs{i}{1,2})
+                disp(strcat('Running data from :',store_names{i}))
+
+                % Select data from outside both the omission and target datasets
+
+                aff_vec = affect_mark(zeros(size(new_dat{i},1),1), new_tabs{i}(1,:), false);
+                aff_vec(:,1)=[];
+                om_vec = affect_mark(zeros(size(new_dat{i},1),1), new_tabs{i}(2,:), false);
+                om_vec(:,1)=[];
+
+                inst = find((aff_vec + om_vec)==0);
+                vec = inst(2:end)-inst(1:end-1);
+                idx = find(vec > a);
+                starts =[inst(1)];
+                ends =[];
+
+                for k=1:length(idx)
+                    starts = [starts,inst(idx(k)+1)];
+                    ends = [ends,inst(idx(k))];
+                end
+                ends = [ends, inst(end)]; %grab the last ending
+
+                % Add buffer around all of the non-control starts/stops in order to
+                % select control timepoints more than X away from affects
+                [starts, ends] = dilate(starts, ends, -10, a);
+
+                 % Select all target data
+                for j = 1:length(new_tabs{i}{1,2})
+                    dur_dump = [dur_dump; new_dat{i}(new_tabs{i}{1,2}(j):new_tabs{i}{1,3}(j),:)];
+                end
+
+                % Select all control data
+                for j = 1:length(starts)
+                    cont_dump = [cont_dump;new_dat{i}(starts(j):ends(j),:)];
+                end
+
+                dur_mat = [dur_mat; dur_dump];
+                cont_mat = [cont_mat; cont_dump];
+            end
+
+        end
+
+        % Run a two sample t-test on the two groups for results, along with
+        % confidence interval
+        t_stats=zeros(1,size(dur_mat,2));
+
+        if isempty(dur_mat)
+            disp('No instances of target event(s) occuring. This may be due to misspelling of the target(s).');
+        else
+            for q = 1:size(dur_mat,2)
+                [h, p_, ci, stats] = ttest2(dur_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
+                t_stats(1,q) = p_;
+                disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
+                disp(strcat('MEANS: NON-PROB : ', string(nanmean(dur_mat(:,q))),' PROB : ', string(nanmean(cont_mat(:,q)))));
+                disp('95% estimated difference:');
+                disp(ci);
+                disp('Esitmated standard deviation');
+                disp(stats.sd);
+            end
+        end
+
+    end
+
+    if onset
+        %% Onset Sample
+        % Pass the HR data and new affect tables into onset_sample in order to get
+        % the samples of the onsets and controls
+
+        q=1;
+        store_names = {};
+        new_tabs = {};
+        for i = 1:length(Data.HR.Affect)
+
+            if ~isempty(Data.HR.Affect{i})
+                keep_table = table_combo(Data.HR.Affect{i}, target{:});
+                
+                if ~isempty(omit)
+                    omit_table = table_combo(Data.HR.Affect{i}, omit{:});
+                    new_tabs{q} = [keep_table(end-1,:); omit_table(end-1,:)];
+                else %If they aren't omitting anything, then just use keep_table
+                    new_tabs{q} = keep_table;
+                end
+
+                % Run the feature_generation function on the HR data
+                new_dat{q} = feature_generation(Data.HR.PP{i}, bin, false);
+
+                store_names{q} = Data.HR.files{i};
+                q=q+1;
+            else
+                disp(strcat('No affect found for :', Data.HR.files{i}));
+
+            end
+        end
 
 
 
+        onset_mat = [];
+        offset_mat = [];
+        cont_mat = [];
+
+        for i = 1:length(new_tabs)
+
+            % format is (data, union, omission, band, offset)
+            if ~isempty(new_tabs{i}{1,2})
+                disp(strcat('Running data from :',store_names{i}))
+                [on_dump, off_dump, cont_dump] = onset_sample_2(new_dat{i}, new_tabs{i}(1,:), new_tabs{i}(2,:), 'band', [5,0], 'dilate', 8);
+                onset_mat = [onset_mat; on_dump];
+                offset_mat = [offset_mat; off_dump];
+                cont_mat = [cont_mat; cont_dump];
+            end
+
+        end
 
 
+        % Run a two sample t-test on the two groups for results, along with
+        % confidence interval
+        t_stats=zeros(1,size(onset_mat,2));
 
-%% Onset Sample
-% Pass the HR data and new affect tables into onset_sample in order to get
-% the samples of the onsets and controls
-
-onset_mat = [];
-offset_mat = [];
-cont_mat = [];
-
-for i = 1:length(new_tabs)
-
-    % format is (data, union, omission, band, offset)
-    if ~isempty(new_tabs{i}{1,2})
-        disp(strcat('Running data from :',store_names{i}))
-        [on_dump, off_dump, cont_dump] = onset_sample_2(new_dat{i}, new_tabs{i}(1,:), new_tabs{i}(2,:), 'band', [5,0], 'offset', true);
-        onset_mat = [onset_mat; on_dump];
-        offset_mat = [offset_mat; off_dump];
-        cont_mat = [cont_mat; cont_dump];
+        for q = 1:size(onset_mat,2)
+            [h, p_, ci, stats] = ttest2(onset_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
+            t_stats(1,q) = p_;
+            disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
+            disp(strcat('MEANS: NON-PROB : ', string(mean(onset_mat(:,q))),' PROB : ', string(mean(cont_mat(:,q)))));
+            disp('95% estimated difference:');
+            disp(ci);
+            disp('Esitmated standard deviation');
+            disp(stats.sd);
+        end
     end
 
 end
-
-
-% Run a two sample t-test on the two groups for results, along with
-% confidence interval
-t_stats=zeros(1,size(onset_mat,2));
-
-for q = 1:size(onset_mat,2)
-    [h, p_, ci, stats] = ttest2(onset_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
-    t_stats(1,q) = p_;
-    disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-    disp(strcat('MEANS: NON-PROB : ', string(mean(onset_mat(:,q))),' PROB : ', string(mean(cont_mat(:,q)))));
-    disp('95% estimated difference:');
-    disp(ci);
-    disp('Esitmated standard deviation');
-    disp(stats.sd);
-end
-
-
-
-
-
-
 
 
 
@@ -151,7 +298,6 @@ function [on_mat, off_mat, un_mat] = onset_sample_2(mat, keep_table, omit_table,
 
     p = inputParser;
     addParameter(p, 'band', [0,0], @ismatrix);
-    addParameter(p, 'offset', true, @islogical);
     addParameter(p, 'omit_nan', false, @islogical);
     addParameter(p, 'dilate', 0, @isscalar);
     parse(p,varargin{:});
@@ -191,8 +337,6 @@ function [on_mat, off_mat, un_mat] = onset_sample_2(mat, keep_table, omit_table,
     if length(keep_table{1,2}) ~= length(starts)
         disp('DISPARITY');
     end
-    
-    
     
     
     % Combine both the target and omits together and dilate from there to
@@ -248,14 +392,14 @@ function [on_mat, off_mat] = samp_(mat, starts, ends, band)
     off_mat=[];
     
     for i = 1:length(starts)
-        if starts(i) >= b && starts(i)+c <= lim
+        if starts(i) > b && starts(i)+c <= lim
             on_mat(end+1:end+1+a,:) = mat(starts(i)-b:starts(i)+c,:);
         end
     end
     
     if ends
         for i = 1:length(ends)
-            if ends(i)+c <= lim
+            if ends(i)+c <= lim && ends(i)-b > 0
                 off_mat(end+1:end+1+a,:) = mat(ends(i)-b:ends(i)+c,:);
             end
         end
@@ -293,10 +437,6 @@ function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 end
 
 
-
-
-
-
 function [mat] = feature_generation(mat, bin, band)
 % Function for generating the different features for multiple recording
 % sessions
@@ -310,35 +450,5 @@ function [mat] = feature_generation(mat, bin, band)
     mat(:,5) = pnnx_calc(mat(:,3),50, bin, band);
 %     mat(:,6) = sdnn_calc(mat(:,3),bin,band);
 %     mat(:,7) = sdsd_calc(mat(:,3),bin,band);
-
-end
-
-
-function [] = t_test_pipelin()
-% Pipeline for running t-tests on different aspects of the PHYSMON
-% collected data. Effectively any combination of analyses you could want
-% will be referenced here.
-
-% Required Inputs:
-%   mat: [n-by-m matrix]
-
-% Optional Parameters:
-%   ordinal: [bool] whether the data you are providing has ordinal target
-%       values
-
-% Returns:
-%   mdl: [p-by-4 matrix] matrix containing regression coefficients along
-%       with the SE, tStats, and pValue for each coefficient
-
-
-% Things that this function should do:
-%   1. Given a list of files, load them and analyze whatever given affects
-%   are specified
-%       - Call a T-test function which takes any two matrices and runs a
-%       t-test on them and returns/plots the results in a significant
-%       manner
-%   2. Have the option to compare onsets against control time points
-
-
 
 end

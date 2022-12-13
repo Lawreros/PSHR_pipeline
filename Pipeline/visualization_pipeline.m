@@ -129,9 +129,9 @@ function [] = visualization_pipeline(varargin)
             [dump, f_nam] = fileparts(Data.ECG.files{i});
 
             if align && ~isempty(Data.ECG.Affect{i})
-                Data.ECG.Raw{i} = affect_mark(Data.ECG.Raw{i}, Data.ECG.Affect{i}, aff_list);
+                Data.ECG.Raw{i} = affect_mark(Data.ECG.Raw{i}, Data.ECG.Affect{i}, aff_list,'NumberCategories', true);
                 colored_lineplot(Data.ECG.Raw{i}(:,3), Data.ECG.Raw{i}(:,4),...
-                    'title', f_nam,'NumCategories', length(aff_list),'legend', false,'fig_gen', false);
+                    'title', f_nam,'NumCategories', length(aff_list),'legend', true,'fig_gen', false);
             else
                 plot(Data.ECG.Raw{i}(:,3));
                 title(f_nam);

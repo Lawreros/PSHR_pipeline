@@ -139,7 +139,7 @@ function [Data] = pshr_load(varargin)
                 % Find the first location of the string containing the word
                 % "iPhone reads" and its index
                 % Save both as part of the Data.Affect structure
-                    line = Data.Affect.Raw{i}.Notes{loc};
+                    line = Data.Affect.Raw{i}.Notes{loc(1)};
                     format = '%s%s%d:%d:%d';
                     nline = textscan(line, format);
                     
@@ -150,7 +150,7 @@ function [Data] = pshr_load(varargin)
                         Data.Affect.align_time{i} = [];
                     else
                         pol_time = ((((nline{3}*60)+nline{4})*60)+nline{5})*1000;
-                        vid_time = Data.Affect.Raw{i}.Time_sec(loc);
+                        vid_time = Data.Affect.Raw{i}.Time_sec(loc(1));
                         Data.Affect.align_time{i} = [pol_time, vid_time];
                     end
                 end
@@ -180,6 +180,9 @@ function [Data] = pshr_load(varargin)
                 end
 
                 aff_list = unique(aff_list); %cell array of all affects used
+                
+                % Remove any blank (or ' ' affects)
+                aff_list(find(strcmp(aff_list, ' ')))=[];
 
 
                 %Generate Start and End times for the Affects using video time
@@ -224,6 +227,27 @@ function [Data] = pshr_load(varargin)
                     Data.Affect.Times{i}{end+1,1} = 'meta_chunk';
                     Data.Affect.Times{i}{end,2} = starts;
                     Data.Affect.Times{i}{end,3} = ends;
+                end
+                
+                % Check for presence of Timer
+                
+                Data.Affect.TimerUsed{i} = {};
+                if sum(strcmp('TimerUsed', Data.Affect.Raw{i}.Properties.VariableNames)) %If there is a "TimerUsed" column found 
+                    buffer = [0, transpose(diff(Data.Affect.Raw{i}.TimerUsed))];       % in the Affect file
+                    
+                    buffer = find(buffer);
+                    starts = [];
+                    ends = [];
+                    
+                    for j = 1:2:length(buffer)
+                        starts = [starts, Data.Affect.Raw{i}.Time_sec(buffer(j))];
+                        ends = [ends, Data.Affect.Raw{i}.Time_sec(buffer(j+1)-1)];
+                    end
+                    
+                    Data.Affect.Times{i}{end+1,1} = 'Timer_Used';
+                    Data.Affect.Times{i}{end,2} = starts;
+                    Data.Affect.Times{i}{end,3} = ends;
+                    
                 end
                 
             end

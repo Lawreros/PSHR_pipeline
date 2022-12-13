@@ -1,37 +1,27 @@
-
-% Set up example variables for processing
-clear all;
-
-aff_1 = {'a';'b';'c'};
-start_1 = {[1,9];[2,7,14,24];[13,20]};
-end_1 = {[4,11];[2,8,17,26];[15,24]};
-tab_1 = [aff_1, start_1, end_1];
-
-aff_2 = {'d';'e'};
-start_2 = {[1,6,13];[3,18]};
-end_2 = {[2,8,29];[4,19]};
-tab_2 = [aff_2, start_2, end_2];
-
-aff_3 = {'f';'g'};
-start_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
-end_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
-tab_3 = [aff_3, start_3, end_3];
-
-% aff_1 = {'crying';'SIB';'face_repeat'};
-% start_1 = {[1,8,10];[8,10];[1,10]};
-% end_1 = {[4,9,13];[9,13];[7,18]};
+%
+% % Set up example variables for processing
+% clear all;
+% 
+% aff_1 = {'a';'b';'c'};
+% start_1 = {[1,9];[2,7,14,24];[13,20]};
+% end_1 = {[4,11];[2,8,17,26];[15,24]};
 % tab_1 = [aff_1, start_1, end_1];
 % 
-% aff_2 = {'crying';'SIB';'face_repeat'};
-% start_2 = {[11,18,20];[18,20];[13,20]};
-% end_2 = {[14,19,23];[19,23];[14,23]};
+% aff_2 = {'d';'e'};
+% start_2 = {[1,6,13];[3,18]};
+% end_2 = {[2,8,29];[4,19]};
 % tab_2 = [aff_2, start_2, end_2];
+% 
+% aff_3 = {'f';'g'};
+% start_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
+% end_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
+% tab_3 = [aff_3, start_3, end_3];
+%  
+% anser = table_comb(tab_1, {'a'},{'b'}, tab_2, {'d'});
+% 
+% disp('wait');
 
-anser = table_comb(tab_1,{'a'},'omit',{}, tab_2, {'d'}, 'intersect', tab_3, {'f','g'});
-
-disp('wait');
-
-function [final_table] = table_comb(varargin)
+function [final_table] = table_combo(varargin)
 % Function which takes N matrices consisting of start and end timepoints
 % and combines them
 
@@ -78,10 +68,11 @@ function [final_table] = table_comb(varargin)
         end
         
         
-        if length(varargin{i}) == 3 && isnumeric(varargin{i}{1,2})
+        if size(varargin{i},2) == 3 && isnumeric(varargin{i}{1,2})
             org_var.table(j+1,k).raw = varargin{i};
             j = j+1;
             un_count=1;
+            om_count=1;
             omit_flag = false;
             exclude_flag = false;
             
@@ -138,21 +129,25 @@ function [com_tab] = create_sub_table(tab, ex_end)
     
     % If unions is empty cell array, then unify all categories available in
     % the table
-    if isempty(tab.unions{:})
+    if isempty(tab.unions)
         tab.unions = {tab.raw(:,1).'};
     end
     
     usd = []; % Keep track of all categories used
     com_tab = {};
-    if iscell(tab.unions{:})
+    if iscell(tab.unions)
         % Go through each union pair and also make unified omits
-        for i = 1:length(tab.unions)
+        for i = 1:size(tab.unions,2)
             grb = [];
             for j=1:length(tab.unions{i})
-                grb = [grb, find(strcmp(tab.raw(:,1), tab.unions{i}{j}))];
+                grb = [grb, find(ismember(tab.raw(:,1), tab.unions{i}{j}))];
             end
             usd = [usd,grb];
             com_tab(i,:) = gen_union(tab.raw(grb,:));
+            
+            %Add proper union title, in case some of the categories are not
+            %found in tab.raw
+            com_tab{i,1} = strjoin(tab.unions{i},'_U_');
         end
 
         % If more than one union, then they wanted to find the intersection
@@ -168,7 +163,7 @@ function [com_tab] = create_sub_table(tab, ex_end)
     
     % If omit is empty cell array, then omit all instances that have not been
     % mentioned in unions
-    if isempty(tab.omits{:})
+    if isempty(tab.omits)
         n_grb = [1:1:length(tab.raw(:,1))];
         n_grb(usd) = [];
         com_tab(end+1,:) = gen_union(tab.raw(n_grb,:));
@@ -177,12 +172,12 @@ function [com_tab] = create_sub_table(tab, ex_end)
         
         skip_flg = false;
         
-    elseif iscell(tab.omits{:}) % They specify a union of things to omit
+    elseif iscell(tab.omits{1}) % They specify a union of things to omit
         
-        for i = 1:length(tab.omits)
+        for i = 1:size(tab.omits,2)
             grb = [];
             for j=1:length(tab.omits{i})
-                grb = [grb, find(strcmp(tab.raw(:,1), tab.omits{i}{j}))];
+                grb = [grb, find(ismember(tab.raw(:,1), tab.omits{i}{j}))];
             end
             om_tab(i,:) = gen_union(tab.raw(grb,:));
         end
@@ -200,7 +195,7 @@ function [com_tab] = create_sub_table(tab, ex_end)
     else %They have not mentioned omitting at all
         % Do nothing as they don't want to omit anything
         skip_flg = true;
-        com_tab(end+1,:) = {'omit', [], []};
+        com_tab(end+1,:) = {'omit_Blank', [], []};
     end
     
     
@@ -224,8 +219,6 @@ end
 
 function [final_tab] = create_master_table(tab)
 % Create the final table if multiple tables are being combined
-
-    disp('starting');
     
     % If the tables are on the same z-axis, then find union, if on
     % different z-axis find the intersect
