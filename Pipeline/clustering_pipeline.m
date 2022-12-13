@@ -18,7 +18,7 @@ function [idx] = clustering_pipeline(hr_files,aff_files,varargin)
     
     
     % Load in data
-     aff_list = {'SIB','ISB','innappropriate face related behavior','polar strap adjustment/removal'...
+     aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
     
     Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
