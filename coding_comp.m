@@ -5,10 +5,14 @@ clear all;
 
 inp_dir = 'Reliability_Training/';
 
-aff_1 = 'Chat&Chew_2022-03-18_1255_V01_ANSWER_KEY.csv';
-aff_2 = {'Chat&Chew_2022-03-18_1255_V01_Liu.csv',...
-    'Chat&Chew_2022-03-18_1255_V01_Baldie.csv',...
-    'Chat&Chew_2022_03-18_1255_V01_Zhao.csv'};
+% aff_1 = 'Chat&Chew_2022-03-18_1255_V01_ANSWER_KEY.csv';
+% aff_2 = {'Chat&Chew_2022-03-18_1255_V01_Liu.csv',...
+%     'Chat&Chew_2022-03-18_1255_V01_Baldie.csv',...
+%     'Chat&Chew_2022_03-18_1255_V01_Zhao.csv'};
+
+aff_1 = 'SalivaPlay_Chat & Chew_2022-06-03_1255_V01_Kessler.csv';
+aff_2 = {'SalivaPlay_Chat & Chew_2022-06-03_1255_V01_Montanez.csv'};
+
 out_file = 'test_comp.xlsx';
 
 
@@ -41,9 +45,9 @@ for z = 1:length(aff_2)
 
     for i = 1:r
         comp_1 = table2cell(comp_tab(i,2:4));
-        comp_1 = comp_1(~isempty(comp_1));
+        %comp_1 = comp_1(~isempty(comp_1));
         comp_2 = table2cell(comp_tab(i,7:9));
-        comp_2 = comp_2(~isempty(comp_2));
+        %comp_2 = comp_2(~isempty(comp_2));
 
         qq = comp_1(~ismember(comp_1, comp_2));
         zz = comp_2(~ismember(comp_2, comp_1));

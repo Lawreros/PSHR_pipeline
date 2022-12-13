@@ -38,7 +38,7 @@ function [new_mat] = affect_mark(mat, aff_table, aff_list, varargin)
     end
     
     
-    for i = 1:length(aff_table)
+    for i = 1:size(aff_table,1)
         if any(strcmp(aff_list, aff_table(i,1)))
             for j = 1:length(aff_table{i,2})
                 % Mark anywhere where the affect occurs
