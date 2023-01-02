@@ -11,13 +11,16 @@ hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_03-18-2022_cropped.t
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-03-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-12-2022_part1_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-12-2022_part2_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-12-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-23-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-30-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-03-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-17-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-24-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-31-2022_cropped.txt',...
+    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_11-07-2022_cropped.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
 % 
 %Affect file
 aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_V01_Kessler.csv',...
@@ -33,23 +36,26 @@ aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_
     '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-03_1255_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-12_1429_1255_V01_Montanez_Part1.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-12_1622_1255_V01_Montanez_Part2.csv',...
-    '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-09-12_OGCP_V01_Montanez.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-09-23_1255_V01_Montanez.csv',...
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-09-26_OGCP_V01_Montanez.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-09-30_1255_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-03_OGCP_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-17_OGCP_V01_Montanez.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-24_OGCP_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv'};
-
-hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR/HR_11-07-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
-
-aff_files = {'~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-26_OGCP_V01_Montanez.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
+    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
+
+% hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
+%     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
+%     '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt',...
+%     '~/Documents/MATLAB/Approved_Data/HR/HR_11-07-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
+% 
+% aff_files = {'~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
+%     '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-26_OGCP_V01_Montanez.csv',...
+%     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv',...
+%     '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
 
 
 
@@ -63,8 +69,10 @@ aff_files = {'~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_
 
 target = {{'inappropriate face related behavior'}};
     
-t_test_pipelin(hr_files, aff_files, {{'Timer_Used'}}, aff_list, {[5,0], 'second'}, true, true);
+%t_test_pipelin(hr_files, aff_files, {{'Timer_Used'}}, aff_list, {[5,0], 'second'}, true, true);
 %t_test_pipelin(hr_files, aff_files, target, aff_list_2, {[5,0], 'second'}, true, true);
+
+t_test_pipelin(hr_files, aff_files, aff_list, {}, {[5,0],'second'}, false, true);
 
 
 function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, onset)
@@ -184,13 +192,65 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                 [h, p_, ci, stats] = ttest2(dur_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
                 t_stats(1,q) = p_;
                 disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-                disp(strcat('MEANS: NON-PROB : ', string(nanmean(dur_mat(:,q))),' PROB : ', string(nanmean(cont_mat(:,q)))));
+                disp(strcat('MEANS: target : ', string(nanmean(dur_mat(:,q))),' control : ', string(nanmean(cont_mat(:,q)))));
                 disp('95% estimated difference:');
                 disp(ci);
                 disp('Esitmated standard deviation');
                 disp(stats.sd);
             end
         end
+        
+        i=1;
+        while i < 500
+    %         [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:)] = gen_regression(big(:,[3:end-1]),big(:,end), 'log');
+            [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([dur_mat(:,3:5);cont_mat(:,3:5)],[zeros(size(dur_mat,1),1); ones(size(cont_mat,1),1)], ...
+                'log', 'verbose',false);
+            i = i+1;
+        end
+
+        % Plot the histograms for the beta values and the confidence intervals
+        row = floor(sqrt(size(Data.HR.RegPP,2)));
+        col = ceil(size(Data.HR.RegPP,2)/row);
+        for i =1:size(Data.HR.RegPP,2)
+            subplot(row,col,i)
+            histogram(Data.HR.RegPP(:,i,5));
+            hold on;
+            histogram(Data.HR.RegPP(:,i,6));
+            histogram(Data.HR.RegPP(:,i,1));
+            legend('upper bound', 'lower bound', 'beta');
+            %boxchart([Data.HR.RegPP(:,i,5),Data.HR.RegPP(:,i,6)]);
+        end
+        title('Beta values and 95% confidence intervals');
+
+        % Plot p-values for the coefficents
+        figure;
+        for i = 1:size(Data.HR.RegPP,2)
+            subplot(row,col,i)
+            histogram(Data.HR.RegPP(:,i,4));
+        end
+        title('coefficient p-values');
+
+
+        % Plot the accuracy results
+        figure;
+        for i = 1:2
+            subplot(1,2,i)
+            histogram(Data.HR.PPhat(:,1,i));
+            hold on;
+            histogram(Data.HR.PPhat(:,2,i));
+            histogram(Data.HR.PPhat(:,3,i));
+            hold off;
+            legend('Lower Bound', 'Pred', 'Upper Bound');
+        end
+        title('Accuracy results');
+
+        % Plot spread of AUC
+        figure;
+        histogram(Data.HR.AUC);
+        title('AUC Results')
+        
+        
+        
 
     end
 
@@ -236,7 +296,7 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
             % format is (data, union, omission, band, offset)
             if ~isempty(new_tabs{i}{1,2})
                 disp(strcat('Running data from :',store_names{i}))
-                [on_dump, off_dump, cont_dump] = onset_sample_2(new_dat{i}, new_tabs{i}(1,:), new_tabs{i}(2,:), 'band', [5,0], 'dilate', 8);
+                [on_dump, off_dump, cont_dump] = onset_sample_2(new_dat{i}, new_tabs{i}(1,:), new_tabs{i}(2,:), 'band', [3,0], 'dilate', 6);
                 onset_mat = [onset_mat; on_dump];
                 offset_mat = [offset_mat; off_dump];
                 cont_mat = [cont_mat; cont_dump];
@@ -253,12 +313,62 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
             [h, p_, ci, stats] = ttest2(onset_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
             t_stats(1,q) = p_;
             disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-            disp(strcat('MEANS: NON-PROB : ', string(mean(onset_mat(:,q))),' PROB : ', string(mean(cont_mat(:,q)))));
+            disp(strcat('MEANS: TARGET : ', string(nanmean(onset_mat(:,q))),' CONTROL : ', string(nanmean(cont_mat(:,q)))));
             disp('95% estimated difference:');
             disp(ci);
             disp('Esitmated standard deviation');
             disp(stats.sd);
         end
+        
+        i=1;
+        while i < 500
+    %         [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:)] = gen_regression(big(:,[3:end-1]),big(:,end), 'log');
+            [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([onset_mat(:,3:5);cont_mat(:,3:5)],[zeros(size(onset_mat,1),1); ones(size(cont_mat,1),1)], ...
+                'log', 'verbose',false);
+            i = i+1;
+        end
+
+        % Plot the histograms for the beta values and the confidence intervals
+        row = floor(sqrt(size(Data.HR.RegPP,2)));
+        col = ceil(size(Data.HR.RegPP,2)/row);
+        for i =1:size(Data.HR.RegPP,2)
+            subplot(row,col,i)
+            histogram(Data.HR.RegPP(:,i,5));
+            hold on;
+            histogram(Data.HR.RegPP(:,i,6));
+            histogram(Data.HR.RegPP(:,i,1));
+            legend('upper bound', 'lower bound', 'beta');
+            %boxchart([Data.HR.RegPP(:,i,5),Data.HR.RegPP(:,i,6)]);
+        end
+        title('Beta values and 95% confidence intervals');
+
+        % Plot p-values for the coefficents
+        figure;
+        for i = 1:size(Data.HR.RegPP,2)
+            subplot(row,col,i)
+            histogram(Data.HR.RegPP(:,i,4));
+        end
+        title('coefficient p-values');
+
+
+        % Plot the accuracy results
+        figure;
+        for i = 1:2
+            subplot(1,2,i)
+            histogram(Data.HR.PPhat(:,1,i));
+            hold on;
+            histogram(Data.HR.PPhat(:,2,i));
+            histogram(Data.HR.PPhat(:,3,i));
+            hold off;
+            legend('Lower Bound', 'Pred', 'Upper Bound');
+        end
+        title('Accuracy results');
+
+        % Plot spread of AUC
+        figure;
+        histogram(Data.HR.AUC);
+        title('AUC Results')
+        
     end
 
 end

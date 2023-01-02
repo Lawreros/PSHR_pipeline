@@ -277,7 +277,9 @@ function [Data] = pshr_load(varargin)
             if isempty(Data.Affect.align_time{q})
                 disp(strcat('No alignment time found for Affect: ', Data.Affect.files{q}));
                 Data.HR.Affect{q} = {};
-                Data.ECG.Affect{q} = {};
+                if isfield(Data, 'ECG')
+                    Data.ECG.Affect{q} = {};
+                end
             else
                 algn = Data.Affect.align_time{q}(1) - ((Data.Affect.align_time{q}(2)-p.Results.lag)*1000); %include lag value
             
