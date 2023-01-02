@@ -7,10 +7,10 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 %   ecg_files: [1-by-n cell array]
 %   aff_files: [1-by-n cell array]
 
-    aff_list = {'SIB','ISB','innappropriate face related behavior','polar strap adjustment/removal'...
+    aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
     
-    Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files, 'align', true, 'verbose', false);
+    Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
 %   Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files, 'align', false, 'verbose', false);
 
 %     for i = 1:length(ecg_files)
@@ -23,14 +23,14 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     %% RR-interval preprocessing
     for i = 1:length(hr_files)
         Data.HR.PP{i} = Data.HR.Raw{i};
-        Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list); %mark the affect locations
+        Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list,'NumberCategories',false); %mark the affect locations
         % We'll just work with bandpassing for now...
-        Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
+        %Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
         %Data.HR.PP{i}(:,3) = acar(Data.HR.PP{i}(:,3), 5, false);
         %Data.HR.PP{i}(:,3) = kamath(Data.HR.PP{i}(:,3),false);
         %Data.HR.PP{i}(:,3) = karlsson(Data.HR.PP{i}(:,3),false);
         %Data.HR.PP{i}(:,3) = malik(Data.HR.PP{i}(:,3),false);
-    end
+    end 
     
     %colored_lineplot(Data.HR.PP{1}(:,3),Data.HR.PP{1}(:,4))
 
@@ -45,20 +45,14 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     Data.ECG.Aligned_Metrics = {};
     
     for i=1:length(Data.HR.PP)
-%          ret = rmssd_calc(Data.HR.PP{i}(:,3), false, false);
-%          disp(Data.HR.files{i});
-%          disp('RMSSD:' + string(ret));
-%          ret = pnnx_calc(Data.HR.PP{i}(:,3),50, false, false);
-%          disp('PNN50:' + string(ret));
-%          disp('Percent Removed:' + string(sum(isnan(Data.HR.PP{i}(:,3)))/length(Data.HR.PP{i}(:,3))));
          Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, {[5,0], 'second'}, false);
          
-         Data.HR.PP{i}(:,end) = []; %get rid of affect labeling
-         [ecg_aligned, Data.ECG.Aligned_Metrics{i}] = ecg_rr_align(Data.HR.PP{i}(:,[1,3]),Data.ECG.Raw{i}(:,[1,3]), 130, 'verbose', false, 'disp_plot', true);
-         Data.HR.PP{i}(:,end+1:end+3) = ecg_aligned(:,3:5); %Only look at [Q,R,S] complex
+%          Data.HR.PP{i}(:,end) = []; %get rid of affect labeling
+%          [ecg_aligned, Data.ECG.Aligned_Metrics{i}] = ecg_rr_align(Data.HR.PP{i}(:,[1,3]),Data.ECG.Raw{i}(:,[1,3]), 130, 'verbose', false, 'disp_plot', true);
+%          Data.HR.PP{i}(:,end+1:end+3) = ecg_aligned(:,3:5); %Only look at [Q,R,S] complex
          
          [on_, off_, un_] = onset_sample(Data.HR.PP{i}(:,3:end), Data.HR.Affect{i}, aff_list,...
-                        'band',[4,0], 'omit_nan',true, 'dilate', 30);
+                        'band',[4,0], 'omit_nan',true, 'dilate', 10);
          on_mat(end+1:end+length(on_(:,1)),:) = on_(:,1:end);
          off_mat(end+1:end+length(off_(:,1)),:) = off_(:,1:end);
          un_mat(end+1:end+length(un_(:,1)),:) = un_(:,1:end);
@@ -75,17 +69,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 %     end
     
     % Run log regression on all data concatenated together
-    [h,p] = ttest2(on_mat, off_mat);
-    disp(string(h));
-    disp(string(p));
     big = vertcat(Data.HR.PP{:});
-    
-%     ret = rmssd_calc(big(:,3), false, false);
-%     disp('big');
-%     disp('RMSSD:' + string(ret));
-%     ret = pnnx_calc(big(:,3),50, false, false);
-%     disp('PNN50:' + string(ret));
-%     disp('Percent Removed:' + string(sum(isnan(big(:,3)))/length(big(:,3))));
     
 %     preprocessing_diagnostic(big(:,3), big(:,end));
     
