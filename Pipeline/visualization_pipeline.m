@@ -37,9 +37,7 @@ function [] = visualization_pipeline(varargin)
 %       the screen at once. This prevents confusion about what plots belong together.
 %       Default is false.
 
-    aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
-        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
-
+    
     p = inputParser;
     addParameter(p, 'hr_files', {}, @iscell);
     addParameter(p, 'ecg_files', {}, @iscell);
@@ -55,7 +53,12 @@ function [] = visualization_pipeline(varargin)
     if isempty(p.Results.aff_files)==0
         align = true;
     end
-        
+    
+    % If a list of affects is not provided, use this default one
+    if ~iscell(p.Results.aff_list)
+        p.Results.aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
+            'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
+    end
 
     %Load in data
     Data = pshr_load('HR', p.Results.hr_files, 'ECG', p.Results.ecg_files,...
@@ -83,9 +86,10 @@ function [] = visualization_pipeline(varargin)
             [dump, f_nam] = fileparts(Data.HR.files{i});
 
             if align && ~isempty(Data.HR.Affect{i})
-                Data.HR.Raw{i} = affect_mark(Data.HR.Raw{i}, Data.HR.Affect{i}, aff_list, 'NumberCategories', true);
+                Data.HR.Raw{i} = affect_mark(Data.HR.Raw{i}, Data.HR.Affect{i}, p.Results.aff_list, 'NumberCategories', true);
                 colored_lineplot(Data.HR.Raw{i}(:,[1,3]), Data.HR.Raw{i}(:,4),...
-                    'title', f_nam, 'NumCategories', length(aff_list), 'legend',true, 'fig_gen', false);
+                    'title', f_nam, 'xlabel', 'Timepoint (ms)', 'ylabel', 'RR-interval (ms)','NumCategories', length(p.Results.aff_list),...
+                    'legend',true, 'cat_key', p.Results.aff_list, 'fig_gen', false);
             else
                 if p.Results.ignore_timestamps
                     plot(Data.HR.Raw{i}(:,3));
@@ -129,9 +133,10 @@ function [] = visualization_pipeline(varargin)
             [dump, f_nam] = fileparts(Data.ECG.files{i});
 
             if align && ~isempty(Data.ECG.Affect{i})
-                Data.ECG.Raw{i} = affect_mark(Data.ECG.Raw{i}, Data.ECG.Affect{i}, aff_list,'NumberCategories', true);
+                Data.ECG.Raw{i} = affect_mark(Data.ECG.Raw{i}, Data.ECG.Affect{i}, p.Results.aff_list,'NumberCategories', true);
                 colored_lineplot(Data.ECG.Raw{i}(:,3), Data.ECG.Raw{i}(:,4),...
-                    'title', f_nam,'NumCategories', length(aff_list),'legend', true,'fig_gen', false);
+                    'title', f_nam,'xlabel', 'Index number', 'ylabel', 'Voltage (uV)','NumCategories', length(p.Results.aff_list),...
+                    'legend', true, 'cat_key', p.Results.aff_list,'fig_gen', false);
             else
                 plot(Data.ECG.Raw{i}(:,3));
                 title(f_nam);

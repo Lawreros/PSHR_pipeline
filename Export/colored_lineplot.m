@@ -4,14 +4,18 @@ function [] = colored_lineplot(mat, label,varargin)
 % region over a lineplot.
 
 % Required Inputs:
-%   mat: [n-by-1 or n-by-2 matrix] 
-
-% Optional Parameters:
+%   mat: [n-by-1 or n-by-2 matrix] matrix containing the values you wish to
+%   plot. If two columns are provided, the first column is assumed to be the
+%   x-value, while the second column is the y-value. If only one column is
+%   provided, it is assumed to be the y-values, with x-values generated
+%   corresponding to the row number.
+%
 %   label: [n-by-1 vector] either a vector of numbers or a cell array of
 %       strings, labeling each datapoint. This function will take the input
 %       values and convert them into categories, where it then asigns each
 %       category a color
 
+% Optional Parameters:
 %   title: [string] Title of the figure you wish to create. Default is
 %       'Shaded Plot'.
 %
@@ -30,6 +34,12 @@ function [] = colored_lineplot(mat, label,varargin)
 %   legend: [bool] Super hacky, but writes text onto the figure to label
 %       what each of the shaded regions represents. Default is true.
 %
+%   cat_key: [1-by-c cell array] Cell array containing strings for each of
+%       the categories corresponding to a given label number (excluding 0).
+%       These will be applied to the created legened, replacing the
+%       placeholder numbers. The input argument for `legend` must be `true`
+%       for this to take effect. Default is {}.
+%
 %   fig_gen: [bool] Whether to plot the results as a new figure. If false,
 %       then this function can work with subplot. Default is true.
 
@@ -40,6 +50,7 @@ function [] = colored_lineplot(mat, label,varargin)
     addParameter(p,'xlabel','x-axis', @ischar);
     addParameter(p,'ylabel','y-axis', @ischar);
     addParameter(p,'legend',true,@islogical);
+    addParameter(p,'cat_key',{},@iscell);
     addParameter(p,'fig_gen',true,@islogical);
     
     parse(p,varargin{:});
@@ -109,11 +120,21 @@ function [] = colored_lineplot(mat, label,varargin)
     % https://www.mathworks.com/matlabcentral/answers/231531-legend-for-a-patches-object
     
     if p.Results.legend
-        label = num2str(k_);
+        if length(p.Results.cat_key) >= max(k_)
+            if find(k_ == 0)
+                label = transpose([{'Control'},p.Results.cat_key(k_(k_>0))]);
+            else
+                label = transpose(p.Results.cat_key(k_(k_>0)));
+            end
+        else
+            label = num2str(k_);
+        end
+        
         %hold on;
         for il = 1:length(k_)
             hl(il) = patch(NaN,NaN, color_key(k_(il)+1,:),'FaceAlpha',.2);
         end
+        
         legend(hl,label);
     end
 
