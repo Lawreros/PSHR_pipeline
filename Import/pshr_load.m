@@ -260,13 +260,6 @@ function [Data] = pshr_load(varargin)
     % standardized)
     
     if p.Results.align
-    
-        % realtime = "11:19:15"
-        % videotime = 728 - 1 for lag
-
-        %pol_time = (((((11*60)+19)*60)+15)*1000);
-        %vid_time = 727*1000;
-        %algn = pol_time - vid_time;
 
         %Check if there is any HR or ECG data loaded. If so, then generate the
         %index numbers for the start and stop.
