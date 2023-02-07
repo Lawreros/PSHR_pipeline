@@ -8,9 +8,9 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 %   aff_files: [1-by-n cell array]
 
     aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
-        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
+        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants', 'meta_chunk'};
     
-    Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
+    Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false, 'meta', 15);
 %   Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files, 'align', false, 'verbose', false);
 
 %     for i = 1:length(ecg_files)
@@ -23,7 +23,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     %% RR-interval preprocessing
     for i = 1:length(hr_files)
         Data.HR.PP{i} = Data.HR.Raw{i};
-        Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list,'NumberCategories',false); %mark the affect locations
+%         Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list,'NumberCategories',false); %mark the affect locations
         % We'll just work with bandpassing for now...
         %Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
         %Data.HR.PP{i}(:,3) = acar(Data.HR.PP{i}(:,3), 5, false);
@@ -52,7 +52,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 %          Data.HR.PP{i}(:,end+1:end+3) = ecg_aligned(:,3:5); %Only look at [Q,R,S] complex
          
          [on_, off_, un_] = onset_sample(Data.HR.PP{i}(:,3:end), Data.HR.Affect{i}, aff_list,...
-                        'band',[4,0], 'omit_nan',true, 'dilate', 10);
+                        'band',[5,0], 'omit_nan',true, 'dilate', 8);
          on_mat(end+1:end+length(on_(:,1)),:) = on_(:,1:end);
          off_mat(end+1:end+length(off_(:,1)),:) = off_(:,1:end);
          un_mat(end+1:end+length(un_(:,1)),:) = un_(:,1:end);
@@ -77,7 +77,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     i = 1;
     while i < 500
 %         [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:)] = gen_regression(big(:,[3:end-1]),big(:,end), 'log');
-        [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([on_mat;un_mat],[zeros(size(un_mat,1),1); ones(size(on_mat,1),1)], 'log');
+        [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([un_mat;on_mat],[zeros(size(un_mat,1),1); ones(size(on_mat,1),1)], 'log');
         i = i+1;
     end
     
@@ -91,6 +91,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
         histogram(Data.HR.RegPP(:,i,6));
         histogram(Data.HR.RegPP(:,i,1));
         legend('upper bound', 'lower bound', 'beta');
+        title(strcat('estimated value of coefficient: ', string(i)));
         %boxchart([Data.HR.RegPP(:,i,5),Data.HR.RegPP(:,i,6)]);
     end
     
@@ -99,11 +100,13 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     for i = 1:size(Data.HR.RegPP,2)
         subplot(row,col,i)
         histogram(Data.HR.RegPP(:,i,4));
+        title(strcat('p-value for coefficient: ',string(i)));
     end
     
     
     % Plot the accuracy results
     figure;
+    titles = {'Non-Prob Accuracy','Prob Accuracy'};
     for i = 1:2
         subplot(1,2,i)
         histogram(Data.HR.PPhat(:,1,i));
@@ -111,12 +114,14 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
         histogram(Data.HR.PPhat(:,2,i));
         histogram(Data.HR.PPhat(:,3,i));
         hold off;
+        title(titles{i});
         legend('Lower Bound', 'Pred', 'Upper Bound');
     end
     
     % Plot spread of AUC
     figure;
     histogram(Data.HR.AUC)
+    title('AUC Values');
     
     disp('done regression');
 
@@ -165,13 +170,13 @@ function [mat] = feature_generation(mat, bin, band)
 %   bin: [1-by-2 cell array] The bin type you want to use
 %   band: [1-by-2 matrix]
 
-    mat(:,5) = rmssd_calc(mat(:,3), bin, band);
-    mat(:,6) = pnnx_calc(mat(:,3),50, bin, band);
+    mat(:,end+1) = rmssd_calc(mat(:,3), bin, band);
+    mat(:,end+1) = pnnx_calc(mat(:,3),50, bin, band);
 %     mat(:,7) = sdnn_calc(mat(:,3),bin,band);
 %     mat(:,8) = sdsd_calc(mat(:,3),bin,band);
     
     %move coding into last column
-    mat(:,end+1) = mat(:,4);
-    mat(:,4) = [];
+%     mat(:,end+1) = mat(:,4);
+%     mat(:,4) = [];
 
 end

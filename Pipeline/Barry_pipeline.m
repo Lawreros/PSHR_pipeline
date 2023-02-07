@@ -1,5 +1,20 @@
 function [] = Barry_pipeline(hr_files, ecg_files, varargin)
-% Pipeline which analyzes the data collected by Barry
+% Pipeline which analyzes the data collected by Barry and displays the
+% RMSSD and pNN50 collected.
+%
+% Required Inputs:
+%   hr_files: [1-by-n cell array] cell array containing a list of all of
+%       the HR files to be included in the analysis
+%   
+%   ecg_files: [1-by-n cell array] cell array containing a list of all the
+%       ECG files to be included in the analysis.
+%
+% Optional Inputs:
+%   visualize: [bool] Whether to generate figures of  the data from the 
+%   hr_files and ecg_files. Default is false.
+%
+%   individual_plots: [bool] Whether the generated figures are to be
+%       seperate for each file, or put into a subplot. Default is false.
 
     p = inputParser;
     addRequired(p,'hr_files',@iscell);
@@ -11,18 +26,19 @@ function [] = Barry_pipeline(hr_files, ecg_files, varargin)
     % Load data from files
     Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'align', false);
     
-    % Create structure of data under different preprocessing
-    % methods
+    % Apply bandpass and acar filtering to the raw HR data in order to get rid of
+    % outliers and compare model performance
     for i = 1:length(hr_files)
         Data.HR.PP.raw{i} = Data.HR.Raw{i}(:,[1:3]);
-%         prep.acar{i} = acar(Data.HR.Raw{i}(:,3), 5, false);
         Data.HR.PP.bandpass{i}(:,3) = bandpass(Data.HR.Raw{i}(:,3),300,1600,false);
         Data.HR.PP.bandpass{i}(:,1) = Data.HR.Raw{i}(:,1);
-%         prep.kamath{i} = kamath(Data.HR.Raw{i}(:,3), false);
-%         prep.karlsson{i} = karlsson(Data.HR.Raw{i}(:,3), false);
-%         prep.malik{i} = malik(Data.HR.Raw{i}(:,3), false);
+        
+        Data.HR.PP.acar{i}(:,3) = acar(Data.HR.Raw{i}(:,3),5,false);
+        Data.HR.PP.acar{i}(:,1) = Data.HR.Raw{i}(:,1);
     end
 
+    % typ = list of fields in Data.HR.PP (in this case 'raw','bandpass' and
+    % 'acar')
     typ = fieldnames(Data.HR.PP);
     
     % Iterate through all of the different preprocessing methods

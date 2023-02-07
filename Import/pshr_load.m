@@ -260,13 +260,6 @@ function [Data] = pshr_load(varargin)
     % standardized)
     
     if p.Results.align
-    
-        % realtime = "11:19:15"
-        % videotime = 728 - 1 for lag
-
-        %pol_time = (((((11*60)+19)*60)+15)*1000);
-        %vid_time = 727*1000;
-        %algn = pol_time - vid_time;
 
         %Check if there is any HR or ECG data loaded. If so, then generate the
         %index numbers for the start and stop.
@@ -350,6 +343,17 @@ end
 function [new_array] = vectorize(matrix_array)
     %Take the raw array and concatonate all of the data entries into a
     %vector for easy manipulation later
+    
+    % Input:
+    % matrix_array: [n-by-m matrix] matrix containing the values that you
+    % wish to vecorize the values of. For RR-interval/ECG data, this results
+    % in reorganizing all of the RR-intervals/voltages into a single column.
+    % NaN's are placed in new matrix entries, such as timestamps for the
+    % 2nd or 3rd non-zero RR-interval value.
+    
+    % Returns:
+    % new_array: [n-by-x matrix] matrix reorganized such that all
+    % RR-interval/ECG values are in one column.
     
 
     [r, c] = size(matrix_array);

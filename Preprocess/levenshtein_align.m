@@ -20,6 +20,11 @@ function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost
 %       calculation. The equation of cost is: abs(X-Y)/subcost. Increasing
 %       subcost will weight against substitution/deletion. Recommended value is
 %       10.
+%
+%   time_pen: [int] denominator to divide the absolute difference between
+%       the two columns being aligned as an added weight to subcost. The equation
+%       for cost becomes: abs(X-Y)/subcost + abs(X-Y)/time_pen. If 0 then
+%       this penality method will not be included with the subcost calculation.
 
 % Returns:
 %   aligned: [n-by-b matrix] the resulting contents of mat_2 after being 
@@ -47,26 +52,26 @@ function [aligned, move] = levenshtein_align(mat_1, col_1, mat_2, col_2, subcost
     % Go through the combinations of values and calculate the
     % substitution costs between values
     if time_pen
-    for j = 2:size(vb,1)
-        for i = 2:size(va,1)
-            if va(i,2) == vb(j,2)
-                substitutionCost = 0;
-            else
-                substitutionCost = (abs(va(i,2) - vb(j,2))/subcost)+(abs(va(i,1)-vb(j,1))/time_pen);
+        for j = 2:size(vb,1)
+            for i = 2:size(va,1)
+                if va(i,2) == vb(j,2)
+                    substitutionCost = 0;
+                else
+                    substitutionCost = (abs(va(i,2) - vb(j,2))/subcost)+(abs(va(i,1)-vb(j,1))/time_pen);
+                end
+                lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
             end
-            lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
         end
-    end
     else
         for j = 2:size(vb,1)
-        for i = 2:size(va,1)
-            if va(i,2) == vb(j,2)
-                substitutionCost = 0;
-            else
-                substitutionCost = (abs(va(i,2) - vb(j,2))/subcost);
+            for i = 2:size(va,1)
+                if va(i,2) == vb(j,2)
+                    substitutionCost = 0;
+                else
+                    substitutionCost = (abs(va(i,2) - vb(j,2))/subcost);
+                end
+                lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
             end
-            lev(i,j) = min([lev(i-1,j)+1, lev(i,j-1)+1, lev(i-1, j-1)+substitutionCost]);
-        end
         end
     end
 
