@@ -5,70 +5,63 @@
 clear all;
 
 % Location of directory containing the files to be compared
-inp_dir = 'Reliability_Training/';
+%inp_dir = './sample/';
+inp_dir = './sample/';
 
-aff_1 = 'Chat&Chew_2022-03-18_1255_V01_ANSWER_KEY.csv';
-aff_2 = {'Chat&Chew_2022-03-18_1255_V01_Liu.csv',...
-    'Chat&Chew_2022-03-18_1255_V01_Baldie.csv',...
-    'Chat&Chew_2022_03-18_1255_V01_Zhao.csv'};
-
-% % aff_1 the "ground truth"
-% aff_1 = 'SalivaPlay_Chat & Chew_2022-06-03_1255_V01_Kessler.csv';
-
-% aff_2 the file(s) to compared to aff_1
-% aff_2 = {'SalivaPlay_Chat & Chew_2022-06-03_1255_V01_Montanez.csv',...
-%         'SalivaPlay_Chat & Chew_2022-06-03_1255_V01_Kessler.csv'};
+aff_1 = 'coding_comp_1.csv';
+aff_2 = {'coding_comp_2.csv',...
+    'coding_comp_3.csv'};
 
 % Where to save the results of the coding comparisons. If there is a 
 out_file = 'test_comp.xlsx';
 
-
 % What column to use when aligning the files (generally the Time_sec column
 % for timepoint alignment)
-
 align_col = 1;
-
 
 % Which columns to compare across, including the timestamp column (which is
 % assumed to be the first entry in comp_cols in both files. The columns to compare across
 % are generally the 'Affect1', 'Affect2', 'Affect3' columns).
-
 comp_cols = [2,3,4];
 
 
 for z = 1:length(aff_2)
 
-
+    % Read in the files as tables
     tab_1 = readtable(strcat(inp_dir,aff_1), 'Format', 'auto');
     tab_2 = readtable(strcat(inp_dir,aff_2{z}), 'Format', 'auto');
-
-    % Change column names so you don't have duplicate issues
-%     tab_2.Properties.VariableNames{2} = 'Affect1_2';
-%     tab_2.Properties.VariableNames{3} = 'Affect2_2';
-%     tab_2.Properties.VariableNames{4} = 'Affect3_2';
-%     tab_2.Properties.VariableNames{17} = 'on_camera_2'; %TODO: This is for the new coding format, will be wrong for 03-18 coding
-%     tab_2.Properties.VariableNames{18} = 'problem_yn_2'; % ""
-
     
+    
+    % Combine the two tables, aligning by the 'align_col' column
     comp_tab = tab_1(:,[align_col,comp_cols]);
     comp_tab = outerjoin(comp_tab, tab_2(:,[align_col,comp_cols]),'Key',tab_1.Properties.VariableNames{align_col});
+    
+    
+    % Check that both tables have the same number of rows:
+    if height(tab_1) ~= height(tab_2)
+        disp(strcat('WARNING: The number of rows for "', aff_1,'" : ', string(height(tab_1)),' is not equal to the number of rows for "', aff_2{z},'" : ', string(height(tab_2))));
+        disp('This will result in any affect during this mismatched time to be in disagreement.');
+        input('To continue the analysis, hit ENTER');
+        
+        % If tab_2 is longer, use that to replace the times from tab_1.
+        % Because the first column is used for the time entry for
+        % mismatches, this will prevent "Disagreements at time: '' ", which
+        % messes up the output excel sheet.
+        if height(tab_1) < height(tab_2)
+            comp_tab{:,1} = comp_tab{:,length(comp_cols)+2};
+        end
+        
+    end
+    
+    % Standardize everything, converting ' ' and NaN into '':
     comp_tab = convertvars(comp_tab, @isnumeric, @nanblank);
-    
-    
-    % Standardize everything:
     for i = 1:length(comp_tab.Properties.VariableNames)
-        %t.Var1(strcmp(t.Var1,'N/A')) = {''};
         var_nam = comp_tab.Properties.VariableNames{i};
-%         sum(strcmp(comp_tab.(var_nam),' '))
         if sum(strcmp(comp_tab.(var_nam),' ')) > 0
             comp_tab.(var_nam)(strcmp(comp_tab.(var_nam),' ')) = {''};
         end
     end
     
-    %Make table for comparison
-%     comp_tab = tab_1(:,[1:4,17,18]);%25,26]);
-%     comp_tab = [comp_tab, tab_2(:,[2:4,17,18])];%25,26])];
-
     %free up some memory
     clear tab_1 tab_2;
 
@@ -80,17 +73,19 @@ for z = 1:length(aff_2)
     comp_agree = {'Affect'};
 
     for i = 1:r
-%         comp_1 = table2cell(comp_tab(i,2:4));
+        % Convert row r of the two tables into cell arrays
         comp_1 = table2cell(comp_tab(i,2:length(comp_cols)+1));
-        %comp_1 = comp_1(~isempty(comp_1));
-%         comp_2 = table2cell(comp_tab(i,7:9));
         comp_2 = table2cell(comp_tab(i,length(comp_cols)+3:end));
-        %comp_2 = comp_2(~isempty(comp_2));
-
+        
+        comp_1 = comp_1(~cellfun('isempty',comp_1));
+        comp_2 = comp_2(~cellfun('isempty',comp_2));
+        
+        % Create cell list of any strings found in comp_1 that are not part
+        % of comp_2 (i.e. qq) and vice versa (i.e. zz)
         qq = comp_1(~ismember(comp_1, comp_2));
         zz = comp_2(~ismember(comp_2, comp_1));
 
-        %Create list of agreements
+        %Create list of agreements between comp_1 and comp_2
         pp = unique([comp_1(ismember(comp_1, comp_2)),comp_2(ismember(comp_2, comp_1))]);
 
         for q = 1:length(pp)
@@ -104,6 +99,7 @@ for z = 1:length(aff_2)
 
         end
 
+        
         if ~isempty(qq) || ~isempty(zz) %If there is a disagreement
             disp(strcat('Disagreement found at time:', string(comp_tab{i,1})));
 
@@ -113,12 +109,11 @@ for z = 1:length(aff_2)
             elseif isempty(zz)
                 b = 'n/a';
                 a = strjoin(qq, '&');
-            else % Both groups have a unique affect
+            else % Both groups have a unique affect combination
                 b = strjoin(zz,'&');
                 a = strjoin(qq,'&');
             end
-
-            %key = strcat(a, '_vs_', b);
+            
 
             %Add to the array
 
@@ -194,11 +189,6 @@ for z = 1:length(aff_2)
         end
     end
 
-    % Calculate agreement rate for total problematic behavior
-%     comp_agree{end+1,1} = "Existence of Problem Behavior";
-%     comp_agree{end,3} = sum(abs(comp_tab.problem_yn - comp_tab.problem_yn_2));
-%     comp_agree{end,2} = height(comp_tab) - comp_agree{end,3};
-
     % Calculate rates of agreement
     comp_agree{1,4} = "Agreement Rate";
     comp_agree{1,2} = "Seconds of Agreement";
@@ -219,23 +209,20 @@ for z = 1:length(aff_2)
     
     % Save information into excell file
     if ischar(out_file)
-        writecell(cc, out_file, 'Sheet', z, 'Range', 'A2:Z15')
+        writecell(cc, out_file, 'Sheet', z, 'Range', 'A2:Z15', 'WriteMode', 'overwrite')
         writecell(bb, out_file, 'Sheet', z, 'Range', 'A16:Z29')
         writecell(comp_agree, out_file, 'Sheet',z,'Range','A30:Z50');
     end
-        
+    
+    % Clear up more memory
     clear comp_agree comp_tab comp_tab bb;   
 end
-    
-%Plot agreement and disagreement histogram
-
-
-
-
 
 
 
 function output = nanblank(values)
+% nanblank: This function take a set of values and replaces all NaN values
+% with ''. This is to make affects consistently strings.
     mask = isnan(values);
     if nnz(mask)
       output = string(values);
