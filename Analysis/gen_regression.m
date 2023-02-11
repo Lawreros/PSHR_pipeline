@@ -105,16 +105,6 @@ function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_ty
 %             disp(strcat('paired t-test result for feature: ',string(q),' =', string(p_)));
 %         end
         
-        % Check covariance
-        disp('covariance for problematic:');
-        disp(cov([train.cat_1;test.cat_1;unused.cat_1],1));
-        disp('correlation for problematic:');
-        disp(corrcoef([train.cat_1;test.cat_1;unused.cat_1]));
-        disp('covariance for non-problematic:');
-        disp(cov([train.cat_0;test.cat_0;unused.cat_0],1));
-        disp('correlation for non-problematic:');
-        disp(corrcoef([train.cat_0;test.cat_0;unused.cat_0]));
-        
 %         new_mat = [p_mat; np_mat(samp,:)];
 %         % Create testing data
 %         test_dat = np_mat(not_samp,:);

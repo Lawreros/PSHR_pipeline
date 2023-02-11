@@ -21,7 +21,7 @@ hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_03-18-2022_cropped.t
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-24-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-31-2022_cropped.txt',...
     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_11-07-2022_cropped.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
-% 
+
 %Affect file
 aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_V01_Kessler.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-04-22_1255_V01_Baldie.csv',...
@@ -47,6 +47,7 @@ aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_
     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv',...
     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
 
+
 % hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
 %     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
 %     '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt',...
@@ -58,21 +59,19 @@ aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_
 %     '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
 
 
-
-
 % For each applicable affect, run table_combo to get just the face_related
 % behavior and omission start and ends for problematic behavior
- aff_list = {{'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
+aff_list = {{'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
          'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'}};
-%aff_list_2 = {{'SIB','ISB','polar strap adjustment/removal',...
-%        'inappropriate movement','crying', 'pulling at pants','off camera'}};
+aff_list_2 = {{'SIB','ISB','polar strap adjustment/removal','inappropriate movement',...
+        'crying','pulling at pants','off camera', 'not problem'}};
 
-target = {{'inappropriate face related behavior'}};
+target = {{'repetitive behaviors'}}; %'inappropriate face related behavior',
     
 %t_test_pipelin(hr_files, aff_files, {{'Timer_Used'}}, aff_list, {[5,0], 'second'}, true, true);
-%t_test_pipelin(hr_files, aff_files, target, aff_list_2, {[5,0], 'second'}, true, true);
+t_test_pipelin(hr_files, aff_files, target, aff_list_2, {[5,0], 'second'}, true, false);
 
-t_test_pipelin(hr_files, aff_files, aff_list, {}, {[5,0],'second'}, false, true);
+%t_test_pipelin(hr_files, aff_files, aff_list, {}, {[5,0],'second'}, true, false);
 
 
 function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, onset)
@@ -104,9 +103,6 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
         Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
     end
     
-    
-    
-
     if duration
         %% Duration sample
         % Sample the HR data using the new affect tables, then run a t-test on the
@@ -133,12 +129,11 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
 
         % Select data using starts and stops
         dur_mat = [];
-        dur_dump = [];
         cont_mat = [];
-        cont_dump = [];
-        a = 10;
+        a = 10; % Minimum duration to count as a space outside of both target and omission
         for i = 1:length(new_tabs)
-
+            dur_dump = [];
+            cont_dump = [];
             if ~isempty(new_tabs{i}{1,2})
                 disp(strcat('Running data from :',store_names{i}))
 
@@ -163,7 +158,7 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
 
                 % Add buffer around all of the non-control starts/stops in order to
                 % select control timepoints more than X away from affects
-                [starts, ends] = dilate(starts, ends, -10, a);
+                [starts, ends] = dilate(starts, ends, 0, a);
 
                  % Select all target data
                 for j = 1:length(new_tabs{i}{1,2})
@@ -172,7 +167,7 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
 
                 % Select all control data
                 for j = 1:length(starts)
-                    cont_dump = [cont_dump;new_dat{i}(starts(j):ends(j),:)];
+                    cont_dump = [cont_dump;new_dat{i}(starts(j):min(ends(j),size(new_dat{i},1)),:)];
                 end
 
                 dur_mat = [dur_mat; dur_dump];
@@ -180,22 +175,105 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
             end
 
         end
+        
+        
+        %%%% Remove later
+        
+        % C&C = 1,2,4,5,6,7,8,16,18
+        % Art = 3,14,15,17,19,20,21,22,23
+%         % Speech = 9,10,11,12,13
+%         
+%         CC{1} = vertcat(dur_mat{[1,2,4,5,6,7,8,16,18]});
+%         CC{2} = vertcat(cont_mat{[1,2,4,5,6,7,8,16,18]});
+%         CC{1}(any(isnan(CC{1}), 2), :) = [];
+%         CC{2}(any(isnan(CC{2}), 2), :) = [];
+%         
+%         art{1} = vertcat(dur_mat{[3,14,15,17,19,20,21,22,23]});
+%         art{2} = vertcat(cont_mat{[3,14,15,17,19,20,21,22,23]});
+%         art{1}(any(isnan(art{1}), 2), :) = [];
+%         art{2}(any(isnan(art{2}), 2), :) = [];
+%         
+%         speech{1} = vertcat(dur_mat{[9,10,11,12,13]});
+%         speech{2} = vertcat(cont_mat{[9,10,11,12,13]});
+%         speech{1}(any(isnan(speech{1}), 2), :) = [];
+%         speech{2}(any(isnan(speech{2}), 2), :) = [];
+% 
+%         figure;
+%         z = [1, 1];
+%         ratio = [1,2];
+%         sets = {'CC','art'};
+%         
+%         for q = 2:size(dur_mat{1},2)
+%             subplot(2,2,q-1);
+%             histogram(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
+%             hold on;
+%             histogram(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
+%             legend(sets);
+%             hold off;
+%             
+%             n_1 = length(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
+%             n_2 = length(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
+%             
+%             mu_1 = mean(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
+%             mu_2 = mean(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
+%             
+%             sd_1 = std(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
+%             sd_2 = std(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
+%             
+%             pooled = sqrt(((n_1-1)*sd_1^2 + (n_2-1)*sd_2^2)/(n_1+n_2));
+%             
+%             disp(strcat('d = ', string((mu_1-mu_2)/pooled)));
+%             
+%             
+%             [h, p_, ci, stats] = ttest2(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')),...
+%                 eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')), 'Vartype', 'unequal');
+%             
+%             t_stats(1,q) = p_;
+%             disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
+%             disp(strcat('MEANS: target : ', string(nanmean(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')))),...
+%                 ' control : ', string(nanmean(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)'))))));
+%             disp('95% estimated difference:');
+%             disp(ci);
+%             disp('Esitmated standard deviation');
+%             disp(stats.sd);
+%         end
+                
+        %%%%
 
         % Run a two sample t-test on the two groups for results, along with
         % confidence interval
         t_stats=zeros(1,size(dur_mat,2));
+        
+        dur_mat(any(isnan(dur_mat), 2), :) = [];
+        cont_mat(any(isnan(cont_mat), 2), :) = [];
 
         if isempty(dur_mat)
             disp('No instances of target event(s) occuring. This may be due to misspelling of the target(s).');
         else
             for q = 1:size(dur_mat,2)
+                
+                n_1 = length(dur_mat(:,q));
+                n_2 = length(cont_mat(:,q));
+             
+                mu_1 = mean(dur_mat(:,q));
+                mu_2 = mean(cont_mat(:,q));
+             
+                sd_1 = std(dur_mat(:,q));
+                sd_2 = std(cont_mat(:,q));
+             
+                pooled = sqrt(((n_1-1)*sd_1^2 + (n_2-1)*sd_2^2)/(n_1+n_2));
+             
+                disp(strcat('d = ', string((mu_1-mu_2)/pooled)));
+                
+                
+                
                 [h, p_, ci, stats] = ttest2(dur_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
                 t_stats(1,q) = p_;
                 disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
                 disp(strcat('MEANS: target : ', string(nanmean(dur_mat(:,q))),' control : ', string(nanmean(cont_mat(:,q)))));
                 disp('95% estimated difference:');
                 disp(ci);
-                disp('Esitmated standard deviation');
+                disp('Estimated standard deviation');
                 disp(stats.sd);
             end
         end
@@ -250,6 +328,19 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
         title('AUC Results')
         
         
+        
+        % ADD OPTION FOR CORRELATION/COVARIANCE FOR DIFFERENT FEATURES
+        
+%          % Check covariance
+%         disp('covariance for problematic:');
+%         disp(cov([train.cat_1;test.cat_1;unused.cat_1],1));
+%         disp('correlation for problematic:');
+%         disp(corrcoef([train.cat_1;test.cat_1;unused.cat_1]));
+%         disp('covariance for non-problematic:');
+%         disp(cov([train.cat_0;test.cat_0;unused.cat_0],1));
+%         disp('correlation for non-problematic:');
+%         disp(corrcoef([train.cat_0;test.cat_0;unused.cat_0]));
+%         
         
 
     end
