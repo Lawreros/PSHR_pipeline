@@ -12,14 +12,13 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
 %       data.
 %   subcost: [int or float] substitution cost coefficient for use in
 %       Levenshtein calculation (see levenshtein_align). Default is 10.
+%
+%   time_pen: [int] time penalty denominator to use in Levenshtein
+%       calculation (see levenshtein_align). Default is 0.
+%
 %   verbose: [bool] Whether the function should plot the results of the
 %       alignment.
 %   
-% Additional Inputs:
-%   This function utilizes both functions ecg_PQRST and levenshtein_align
-%   in its calculation. Thus, any parameters used by either function also
-%   accepted by this function and passed onward
-%
 % Returns:
 %   ecg_aligned: [n-by-6 matrix] results from feeding the output
 %       `time_matrix` through the function levenshtein_align
@@ -33,6 +32,7 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
     addRequired(p,'ecg',validMatrix);
     addRequired(p, 'sample_rate',@isscalar);
     addParameter(p,'subcost', 10, @isscalar);
+    addParameter(p, 'time_pen', 0, @isscalar);
     addParameter(p, 'verbose', false, @islogical)
     parse(p,rr,ecg,sample_rate,varargin{:});
     
@@ -62,7 +62,7 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
     rr(:,2) = bandpass(rr(:,2), 300, 1600, false);
     
     % Calculate the RR-interval locations/durations from the ECG data
-    [ecg_locs, ecg_times] = ecg_PQRST(ecg,'sample_rate',p.Results.sample_rate,varargin{:});
+    [ecg_locs, ecg_times] = ecg_PQRST(ecg,'sample_rate',p.Results.sample_rate,varargin{:},'disp_plot', p.Results.verbose);
     
     % With the calculated RR data from ECG, align the two matrices
     [ecg_aligned, lev_transform] = levenshtein_align(rr, 2, ecg_times, 4, p.Results.subcost, 10000);
@@ -99,10 +99,14 @@ function [ecg_aligned, aligned_metrics]=ecg_rr_align(rr, ecg, sample_rate, varar
         subplot(1,2,1);
         histogram(aligned_metrics.time.diff/1000,[-1,0,1,2,3,4],'Normalization','probability');
         title("(RR-interval timestamp) - (ECG R-peak timestamp)");
+        xlabel("Seconds");
+        ylabel("Proportion");
         
         subplot(1,2,2);
         histogram(aligned_metrics.val.diff,[-70:10:70],'Normalization','probability');
         title("(RR-interval) - (ECG RR estimate)");
+        xlabel("Milliseconds")
+        ylabel("Proportion");
         
         figure;
         subplot(2,1,1)

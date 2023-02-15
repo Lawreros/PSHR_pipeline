@@ -1,39 +1,62 @@
-function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
+function [Data] = regression_pipeline(hr_files, ecg_files, ecg_features, aff_files, target, omit, bin, duration, verbose)
 % This function is the default pipeline for regression analysis of
 % collected affect data.
 
 % Inputs:
-%   hr_files: [1-by-n cell array]
-%   ecg_files: [1-by-n cell array]
-%   aff_files: [1-by-n cell array]
+%   hr_files: [1-by-n cell array] List of all the files containing
+%       RR-intervals for loading using pshr_load
+%
+%   ecg_files: [1-by-n cell array] List of all the files containing ECG
+%       data for loading using pshr_load
+%
+%   aff_files: [1-by-n cell array] List of all affect files containing
+%       coding for the RR-interval/ECG files
+%
+% Returns:
+%   Data: [struct] Structure containing the loaded data and the results of
+%       the regresion analysis.
+
 
     aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants', 'meta_chunk'};
     
-    Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false, 'meta', 15);
-%   Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files, 'align', false, 'verbose', false);
-
-%     for i = 1:length(ecg_files)
-%         [ecg_aligned, aligned_metrics] = ecg_rr_align(Data.HR.Raw{i}(:,[1,3]), Data.ECG.Raw{i}(:,[1,3]), 130, 'verbose', true);
-%         disp(ecg_files{i})
-%         aligned_metrics.val
-%         aligned_metrics.time
-%     end
-%     
+    if iscell(ecg_files)
+        Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files, 'align', true, 'verbose', verbose);
+    else
+        Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false, 'meta', 15);
+    end
+    
+    if ecg_features
+        Data.ECG.Aligned_Metrics = {};
+    end
+      
     %% RR-interval preprocessing
     for i = 1:length(hr_files)
+        % Create new copy of Data.HR.Raw for PreProcessing
         Data.HR.PP{i} = Data.HR.Raw{i};
-%         Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list,'NumberCategories',false); %mark the affect locations
-        % We'll just work with bandpassing for now...
-        %Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
-        %Data.HR.PP{i}(:,3) = acar(Data.HR.PP{i}(:,3), 5, false);
-        %Data.HR.PP{i}(:,3) = kamath(Data.HR.PP{i}(:,3),false);
-        %Data.HR.PP{i}(:,3) = karlsson(Data.HR.PP{i}(:,3),false);
-        %Data.HR.PP{i}(:,3) = malik(Data.HR.PP{i}(:,3),false);
+        
+        % Apply basic bandpass to HR data
+        Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
+        new_tabs{q} = table_combo(Data.HR.Affect{i}, target{:}, 'omit', omit{:});
+
+        
+        Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, bin, false);
+        
+        % If they specified ecg_features, then append them to Data.HR.PP
+        % using the 
+        if ecg_features
+            [ecg_aligned, Data.ECG.Aligned_Metrics{i}] = ecg_rr_align(Data.HR.Raw{i}(:,[1,3]), Data.ECG.Raw{i}(:,[1,3]), 130, 'verbose', verbose);
+            disp(ecg_files{i})
+            Data.HR.PP{i}(:,end+1:end+3) = ecg_aligned(:,3:5); %Only look at [Q,R,S] complex
+        end
+        
+        % Add a column denoting which timepoints are part of aff_list
+        % (currently just a binary 0 or 1, hence NumberCategories = false)
+%         Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i}, aff_list, 'NumberCategories', false); %mark the affect locations
     end 
     
-    %colored_lineplot(Data.HR.PP{1}(:,3),Data.HR.PP{1}(:,4))
-
+    
+    
 
     %% Function to make sure that the quantity of problematic and nonproblematic behavior datapoints are approximately the same
     
@@ -42,21 +65,17 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     off_mat = [];
     un_mat = [];
     
-    Data.ECG.Aligned_Metrics = {};
-    
+    % Onset calculation
     for i=1:length(Data.HR.PP)
-         Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, {[5,0], 'second'}, false);
-         
-%          Data.HR.PP{i}(:,end) = []; %get rid of affect labeling
-%          [ecg_aligned, Data.ECG.Aligned_Metrics{i}] = ecg_rr_align(Data.HR.PP{i}(:,[1,3]),Data.ECG.Raw{i}(:,[1,3]), 130, 'verbose', false, 'disp_plot', true);
-%          Data.HR.PP{i}(:,end+1:end+3) = ecg_aligned(:,3:5); %Only look at [Q,R,S] complex
-         
          [on_, off_, un_] = onset_sample(Data.HR.PP{i}(:,3:end), Data.HR.Affect{i}, aff_list,...
                         'band',[5,0], 'omit_nan',true, 'dilate', 8);
          on_mat(end+1:end+length(on_(:,1)),:) = on_(:,1:end);
          off_mat(end+1:end+length(off_(:,1)),:) = off_(:,1:end);
          un_mat(end+1:end+length(un_(:,1)),:) = un_(:,1:end);
     end
+    
+    % Duration calculation
+    
     
 
     %% Finally get the actual regression portion of the analysis
@@ -69,15 +88,13 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
 %     end
     
     % Run log regression on all data concatenated together
-    big = vertcat(Data.HR.PP{:});
-    
-%     preprocessing_diagnostic(big(:,3), big(:,end));
-    
+%     big = vertcat(Data.HR.PP{:});
     
     i = 1;
-    while i < 500
+    while i < 200
 %         [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:)] = gen_regression(big(:,[3:end-1]),big(:,end), 'log');
-        [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([un_mat;on_mat],[zeros(size(un_mat,1),1); ones(size(on_mat,1),1)], 'log');
+        [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.AUC(i,1)] = gen_regression([un_mat;on_mat],[zeros(size(un_mat,1),1); ones(size(on_mat,1),1)],...
+            'log', 'verbose', false);
         i = i+1;
     end
     
@@ -123,8 +140,6 @@ function [Data] = regression_pipeline(hr_files, ecg_files, aff_files, verbose)
     histogram(Data.HR.AUC)
     title('AUC Values');
     
-    disp('done regression');
-
 end
 
 
@@ -166,7 +181,7 @@ function [mat] = feature_generation(mat, bin, band)
 % sessions
 
 % Inputs:
-%   mat: [n-by-m matrix]
+%   mat: [n-by-m matrix] 
 %   bin: [1-by-2 cell array] The bin type you want to use
 %   band: [1-by-2 matrix]
 
@@ -174,9 +189,4 @@ function [mat] = feature_generation(mat, bin, band)
     mat(:,end+1) = pnnx_calc(mat(:,3),50, bin, band);
 %     mat(:,7) = sdnn_calc(mat(:,3),bin,band);
 %     mat(:,8) = sdsd_calc(mat(:,3),bin,band);
-    
-    %move coding into last column
-%     mat(:,end+1) = mat(:,4);
-%     mat(:,4) = [];
-
 end
