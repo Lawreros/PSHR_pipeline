@@ -154,7 +154,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, ecg_features, aff_fil
         % understanding of the performance across many different random
         % samples
         
-        while i < p.Results.iterations
+        while i <= p.Results.iterations
             [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.AUC(i,1)] = gen_regression([cont_mat(:,2:end);dur_mat(:,2:end)],...
                 [zeros(size(cont_mat,1),1); ones(size(dur_mat,1),1)],...
                 'log', 'verbose', false);
@@ -259,7 +259,7 @@ function [Data] = regression_pipeline(hr_files, ecg_files, ecg_features, aff_fil
         
         
         i = 1;
-        while i < p.Results.iterations
+        while i <= p.Results.iterations
             [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.AUC(i,1)] = gen_regression([cont_mat(:,2:end);onset_mat(:,2:end)],[zeros(size(cont_mat,1),1); ones(size(onset_mat,1),1)],...
                 'log', 'verbose', false);
             i = i+1;

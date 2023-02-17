@@ -1,4 +1,4 @@
-function [] = random_forest_pipeline(hr_files,aff_files,varargin)
+function [conf_mat, feat_imp] = random_forest_pipeline(hr_files,aff_files,varargin)
 % Pipeline for the creation of a random forest model
 % Required Inputs:
 %   mat: [1-by-n cell array]
@@ -13,6 +13,9 @@ function [] = random_forest_pipeline(hr_files,aff_files,varargin)
     p = inputParser;
     addParameter(p,'ordinal',false, @islogical);
     addParameter(p,'verbose',true, @islogical);
+    addParameter(p, 'duration', true, @islogical);
+    addParameter(p, 'onset', true, @islogical);
+    addParameter(p,'iterations',100,@isscalar);
     
     parse(p,varargin{:});
     
@@ -30,17 +33,59 @@ function [] = random_forest_pipeline(hr_files,aff_files,varargin)
         Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list); %mark the affect locations
         % We'll just work with bandpassing for now...
         Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
-        %Data.HR.PP{i}(:,3) = acar(Data.HR.PP{i}(:,3), 5, false);
-        %Data.HR.PP{i}(:,3) = kamath(Data.HR.PP{i}(:,3),false);
-        %Data.HR.PP{i}(:,3) = karlsson(Data.HR.PP{i}(:,3),false);
-        %Data.HR.PP{i}(:,3) = malik(Data.HR.PP{i}(:,3),false);
     end
     
 
     %% Function to make sure that the quantity of problematic and nonproblematic behavior datapoints are approximately the same
     
-    if onset %If you want to do the onset analysis data for training
+    if p.Results.duration %Just fit the data for the entire dataset, making sure to do a train-test split
+        
+        for i=1:length(Data.HR.PP)
+            Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, {[5,0], 'second'}, false);
+        end
+        
+        big = vertcat(Data.HR.PP{:});
+        
+        i = 1;
+        acc_mat = [];
+        conf_mat = [];
+        feat_imp = [];
+        while i <= p.Results.iterations
+            [train, test, unused] = train_test_split(big(:,[1:end-1]),big(:,end), [0.5 0.5], 'split', 0.8);
+
+            [acc,b,c,d,f] = random_forest([train.cat_0;test.cat_0;train.cat_1;test.cat_1],...
+                                    [zeros(size([train.cat_0;test.cat_0],1),1);ones(size([train.cat_1;test.cat_1],1),1)],...
+                                    100, 0.2, true);
+            
+            acc_mat = [acc_mat,acc];                    
+            conf_mat(end+1,:) = d;
+            if f
+                feat_imp(end+1,:) = f;
+            end
+            i = i+1;
+        end
+        
+        if feat_imp
+            si = size(test.cat_0,2)-1;  %since hr_data has is_affect, need to exclude
+            labs =  {'time','BPM','RR-interval','RMSSD','pNN50'}; %feature_names;
+
+            %feature importance
+            figure
+            for j = 1:si
+                subplot(1, si, j);
+                histogram(feat_imp(:,j) ./ sum(abs(feat_imp),2));
+                title(strcat('Normalized feature importance for: ',labs(j+1),' (Duration)'));
+            end
+        end
+        
+        figure
+        histogram(acc_mat);
+        title("Accuracy of Random Forest model (Duration)");
+    end
     
+    
+    
+    if p.Results.onset %If you want to do the onset analysis data for training
         on_mat = [];
         off_mat = [];
         un_mat = [];
@@ -57,43 +102,42 @@ function [] = random_forest_pipeline(hr_files,aff_files,varargin)
 
 
         i = 1;
+        acc_mat = [];
         conf_mat = [];
         feat_imp = [];
-        while i < 400
+        while i <= p.Results.iterations
             [train, test, unused] = train_test_split([on_mat;un_mat], [zeros(size(un_mat,1),1); ones(size(on_mat,1),1)], [0.5 0.5], 'split', 0.8);
 
-            [a,b,c,d,f] = random_forest([train.cat_0;test.cat_0;train.cat_1;test.cat_1],...
+            [acc,b,c,d,f] = random_forest([train.cat_0;test.cat_0;train.cat_1;test.cat_1],...
                                         [zeros(size([train.cat_0;test.cat_0],1),1);ones(size([train.cat_1;test.cat_1],1),1)],...
-                                        100, 0.2,{});%, {'RR-interval','RMSSD','pNN50'});
+                                        100, 0.2, true);
 
-
-    %         [a,b,c,d] = random_forest([on_mat;un_mat],[zeros(size(un_mat,1),1); ones(size(on_mat,1),1)], 100, 0.2, {'RR-interval','RMSSD','pNN50'});
+            acc_mat = [acc_mat,acc]; 
             conf_mat(end+1,:) = d;
-            feat_imp(end+1,:) = f;
+            if f
+                feat_imp(end+1,:) = f;
+            end
             i = i+1;
         end
-    
-    else %Just fit the data for the entire dataset, making sure to do a train-test split
         
-        for i=1:length(Data.HR.PP)
-            Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, {[5,0], 'second'}, false);
-        end
-        
-        big = vertcat(Data.HR.PP{:});
-        
-        i = 1;
-        conf_mat = [];
-        feat_imp = [];
-        while i < 400
-            [train, test, unused] = train_test_split(big(:,[1:end-1]),big(:,end), [0.5 0.5], 'split', 0.8);
+        if feat_imp
+            si = size(test.cat_0,2)-1;  %since hr_data has is_affect, need to exclude
+            labs =  {'time','BPM','RR-interval','RMSSD','pNN50'}; %feature_names;
 
-            [a,b,c,d,f] = random_forest([train.cat_0;test.cat_0;train.cat_1;test.cat_1],...
-                                    [zeros(size([train.cat_0;test.cat_0],1),1);ones(size([train.cat_1;test.cat_1],1),1)],...
-                                    100, 0.2,{});
-            conf_mat(end+1,:) = d;
-            feat_imp(end+1,:) = f;
-            i = i+1;
+            %feature importance
+            figure
+            for j = 1:si
+                subplot(1, si, j);
+                histogram(feat_imp(:,j) ./ sum(abs(feat_imp),2));
+                title(strcat('Normalized feature importance for: ',labs(j+1),' (Onset)'));
+            end
         end
+        
+        figure
+        histogram(acc_mat);
+        title("Accuracy of Random Forest model (Onset)");
+        
+        
     end
     
 end
