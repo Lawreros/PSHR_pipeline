@@ -250,6 +250,27 @@ function [Data] = pshr_load(varargin)
                     
                 end
                 
+                % Check for presence of Demand/No-demand use
+                
+                Data.Affect.Demand{i} = {};
+                if sum(strcmp('DVs_ND', Data.Affect.Raw{i}.Properties.VariableNames)) %If there is a "D vs. ND" column found 
+                    buffer = [0, transpose(diff(Data.Affect.Raw{i}.DVs_ND))];       % in the Affect file
+                    
+                    buffer = find(buffer);
+                    starts = [];
+                    ends = [];
+                    
+                    for j = 1:2:length(buffer)
+                        starts = [starts, Data.Affect.Raw{i}.Time_sec(buffer(j))];
+                        ends = [ends, Data.Affect.Raw{i}.Time_sec(buffer(j+1)-1)];
+                    end
+                    
+                    Data.Affect.Times{i}{end+1,1} = 'Demand';
+                    Data.Affect.Times{i}{end,2} = starts;
+                    Data.Affect.Times{i}{end,3} = ends;
+                    
+                end
+                
             end
                 
         end
