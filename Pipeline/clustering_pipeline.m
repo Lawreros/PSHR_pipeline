@@ -1,18 +1,31 @@
 function [idx] = clustering_pipeline(hr_files,aff_files,varargin)
 % Pipeline for the creation of a random forest model
 % Required Inputs:
-%   mat: [1-by-n cell array]
+%   hr_files: [1-by-n cell array] list containing the location of the hr
+%       files you wish to load and analyze.
+%
+%   aff_files: [1-by-n cell array] list containging the locations of the
+%       coded Affect files that you wish to load and analyze.
 %
 % Optional Parameters:
-%   disp_plot: [bool] Whether to plot the data in mat with the
-%       different waves indicated in the figure. Default is false.
+%   bin: [1-by-2 cell array] Used for creating the feature_gen vector
+%       results from a sliding bin of Y seconds or entries. This takes the
+%       format of {[before, after], 'units'}, so if you want to have a bin 
+%       of 5 seconds before (including current RR-interval) and 3 seconds 
+%       after: {[5,3], 'second'} or if you want the 5 entries before and 
+%       3 entries after the index: {[5,3], 'measure'}. Default value is
+%       {[5,0], 'second'}.
+%
+%   plots: [bool] whether to plot a series of 3D scatterplots of the
+%       different pairs of features. Default is false.
 
 % Returns:
-%   a
+%   idx: [1-by-n matrix] Matrix containing the cluster id for each of the
+%       datapoints.
 
     p = inputParser;
-    addParameter(p,'ordinal',false, @islogical);
-    addParameter(p,'verbose',true, @islogical);
+    addParameter(p,'plots',false, @islogical);
+    addParameter(p,'bin', {[5,0], 'second'}, @iscell);
     
     parse(p,varargin{:});
     
@@ -30,35 +43,25 @@ function [idx] = clustering_pipeline(hr_files,aff_files,varargin)
         Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list); %mark the affect locations
         % We'll just work with bandpassing for now...
         Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
-        %Data.HR.PP{i}(:,3) = acar(Data.HR.PP{i}(:,3), 5, false);
-        %Data.HR.PP{i}(:,3) = kamath(Data.HR.PP{i}(:,3),false);
-        %Data.HR.PP{i}(:,3) = karlsson(Data.HR.PP{i}(:,3),false);
-        %Data.HR.PP{i}(:,3) = malik(Data.HR.PP{i}(:,3),false);
     end
     
 
-    %% Function to make sure that the quantity of problematic and nonproblematic behavior datapoints are approximately the same
+    %% Generate additional features and call DBSCAN clustering on the data
     
      for i=1:length(Data.HR.PP)
-        Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, {[5,0], 'second'}, false);
+        Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, p.Results.bin, false);
      end
         
      big = vertcat(Data.HR.PP{:});
-        
-%      i = 1;
-%      while i < 400
-%         [train, test, unused] = train_test_split(big(:,[3:end-1]),big(:,end), [0.5 0.5], 'split', 0.8);
 
-     [idx] = newFdbscan(big(:,3:end-1), {'RR-interval','RMSSD','pNN50','SDNN','SDSD'}, big(:,end), 50, 10, true);
+     [idx] = newFdbscan(big(:,3:end-1), {'RR-interval','RMSSD','pNN50','SDNN','SDSD'}, big(:,end), 50, 10, p.Results.plots);
      
      dats = unique(idx);
      for i = 2:length(dats)
-         disp(strcat('Percentage of points belonging to cluster ',string(dats(i)),': ', string(sum(idx==dats(i))*100/length(idx)),'%'))
+         disp(strcat('Percentage of points belonging to cluster ',string(dats(i)),': ', string(sum(idx(:,1)==dats(i))*100/length(idx)),'%'))
      end
      
-     disp(strcat('Percentage of unassigned datapoints: ', string(sum(idx==-1)*100/length(idx)),'%'));
-%         i = i+1;
-%      end
+     disp(strcat('Percentage of unassigned datapoints: ', string(sum(idx(:,1)==-1)*100/length(idx)),'%'));
 end
 
 
@@ -67,9 +70,12 @@ function [mat] = feature_generation(mat, bin, band)
 % sessions
 
 % Inputs:
-%   mat: [n-by-m matrix]
-%   bin: [1-by-2 cell array] The bin type you want to use
-%   band: [1-by-2 matrix]
+%   mat: [n-by-m matrix] where the third column is the data used for
+%       feature generation
+%   bin: [1-by-2 cell array] The bin type you want to use for the feature
+%       calculation
+%   band: [1-by-2 matrix] The start and end index you wish to analyze (set
+%       this to false to use all available data)
 
     mat(:,5) = rmssd_calc(mat(:,3), bin, band);
     mat(:,6) = pnnx_calc(mat(:,3),50, bin, band);

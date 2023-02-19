@@ -1,24 +1,29 @@
 function idx = newFdbscan(M1,labs,M2,epsilon,minpoints,plotting)
 %Creates 3D plots of every combination of M1 features and returns id values
 %of clusters
-    %   Inputs:
-    %       M1: [n-by-m matrix] a matrix where each column is a different feature and 
-    %           each row is a different datapoint. Must have at least 2
-    %           columns
-    %       labs: [1-by-m cell array] of string labels for each column in M1
-    %       M2: [n-by-1 vector] of 0's or 1's where 1 is problematic behavior
-    %       epsilon: distance DBscan used to determine which points belong
-    %       in the same cluster. The larger the data set, most likely the
-    %       larger the epsilon. Set default to 20 and play around with it. 
-    %       minpoints: Number of minimum points to make a cluster. The larger the data set, most likely the
-    %       larger the number of minpoints. Set default to 20 and play around with it. 
-    %       Plotting: boolean value, if true plots will generate
-
-    %       
-    %   Outputs:
-    %       idx: id values for the each point, assigning each point to a cluster
-    %       If plotting is set to 1 (true), function displays 3d plots of
-    %       every combination of features from M1 with M2 as the z axis
+%   Inputs:
+%       M1: [n-by-m matrix] a matrix where each column is a different feature and 
+%           each row is a different datapoint. Must have at least 2
+%           columns
+%
+%       labs: [1-by-m cell array] of string labels for each column in M1
+%
+%       M2: [n-by-1 vector] of 0's or 1's where 1 is problematic behavior
+%       
+%       epsilon: [float] distance DBscan used to determine which points belong
+%           in the same cluster. The larger the data set, most likely the
+%           larger the epsilon. Set default to 20 and play around with it.
+%
+%       minpoints: [int] Number of minimum points to make a cluster. The larger the
+%           data set, most likely the larger the number of minpoints. 
+%           Set default to 20 and play around with it.
+%
+%       Plotting: [bool] if true plots will generate
+%       
+%   Outputs:
+%       idx: id values for the each point, assigning each point to a cluster
+%           If plotting is set to 1 (true), function displays 3d plots of
+%           every combination of features from M1 with M2 as the z axis
 
     for z = 2:size(M1,2)
        
@@ -68,7 +73,7 @@ function idx = newFdbscan(M1,labs,M2,epsilon,minpoints,plotting)
                 ylabel(labs{k})
                 zlabel("affect")
                 title(labs{j} + " vs " + labs{k} + " with affect");
-                legend;
+%                 legend;
                 grid on
                 grid minor
                 hold off;
@@ -76,6 +81,7 @@ function idx = newFdbscan(M1,labs,M2,epsilon,minpoints,plotting)
 
             end 
         end
+        legend;
     end
     idx(:,1) = [];  %deletes first column of idx    
 end
