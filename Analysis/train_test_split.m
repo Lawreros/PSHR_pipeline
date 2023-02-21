@@ -4,12 +4,14 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
 
 % Required Inputs:
 %   mat: [n-by-k matrix] Matrix consisting of the data you wish to seperate
-%   into training and testing parameters
+%       into training and testing parameters
 %
 %   label: [n-by-1 matrix] Vector of integer labels for all rows of mat.
 %
 %   ratio: [1-by-m matrix] Matrix containing the ratio of each category
-%   that you wish to have in both the training and testing subsets.
+%       that you wish to have in both the training and testing subsets. The
+%       number of ratio entries should be equal to the number of unique
+%       values in 'label'.
 
 
 % Optional Parameters:
@@ -18,7 +20,7 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
 %   ignore_nan: [bool] Whether to ignore any rows of mat or label with NaNs
 %       in them. Default is true.
 
-% Retruns:
+% Returns:
 %   train: [struct] training data, split up by numerical affect label
 %   test: [struct] testing data
 %   unused: [struct] extra data not put into either the training or testing
@@ -31,6 +33,7 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     p = inputParser;
     addParameter(p, 'split', 0.8, @isscalar);
     addParameter(p, 'ignore_nan', true, @islogical);
+    addParameter(p, 'verbose', false, @islogical);
     parse(p,varargin{:});
     
     
@@ -46,8 +49,10 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     
     [ii, jj, kk] = unique(label); % [categories, locations, sorted output]
     f = histc(kk,1:numel(jj)).'; % number of each category
-    disp('Category quantity: [Non-problematic   Problematic]');
-    disp(f);
+    if p.Results.verbose
+        disp('Category quantity: [Non-problematic   Problematic]');
+        disp(f);
+    end
     
     % Check that provided ratio matches number of categories
     if length(ratio) ~= length(f)
@@ -59,7 +64,7 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     
     % Take the smallest category and use that as a reference for the others
     
-    % other_categoreis / smallest = new count
+    % other_categories / smallest = new count
     % Check that works, if not then iterate through subtracting 1 from the
     % smaller category until things work? No
     
@@ -116,6 +121,4 @@ function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
     % Return struct where it is train.(category) = sub_matrix
     % Also return test.(category) = sub_matrix or NaN if there is nothing
     % left
-%     disp('done')
-
 end

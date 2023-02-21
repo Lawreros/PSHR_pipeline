@@ -5,21 +5,28 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
 
 % Required Inputs:
 %   mat:[n-by-m matrix] the given matrix you are sampling rows from
+%
 %   aff_table:[a-by-3 cell array] Found in the Data.(type).Affect structure
 %       as an output of load_affect.m, contains the index values of the 
 %       start and stop points for each affect
+%
 %   aff_list: [1-by-x cell array] list of affects from aff_table to use. If
 %       false, then all affects present will be marked.
 
 % Optional Inputs:
 %   band: [1-by-2 vector] The number of entries before and after the onset
-%       to include in the returned matrix. Default is [0,0] for just the 
-%       onset value.
-%   offset: [bool] Whether to return a matrix of the ends of each affect.
-%       Default is true.
+%       to include in the returned matrix. For example, [3,1] is used for the
+%       three entries before the onset and 1 value after (this will results
+%       in 5 values being used, with the last value being the second from 
+%       last value being the first second of the affect). Default is [0,0]
+%       for just the onset value.
+%
 %   omit_nan: [bool] Whether to omit rows which contain NaN values from both
 %       on_mat and off_mat. This may result in on_mat and off_mat having
 %       different numbers of rows. Default is false.
+%
+%   dilate: [int] Amount to dilate affect instance start/end times when
+%       sampling for control values. Default is 3
 
 % Output:
 %   on_mat: [o-by-m matrix] matrix of the onsets
@@ -27,9 +34,9 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
 %       optional input 'offset' is false
 
     p = inputParser;
-    addParameter(p, 'band', [5,0], @ismatrix);
+    addParameter(p, 'band', [0,0], @ismatrix);
     addParameter(p, 'omit_nan', false, @islogical);
-    addParameter(p, 'dilate', 0, @isscalar);
+    addParameter(p, 'dilate', 3, @isscalar);
     parse(p,varargin{:});
     
     a = sum(p.Results.band);
@@ -100,7 +107,8 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
     
     nstarts = starts;
     nends = ends;
-    while size(non_mat,1) < size(on_mat,1)
+    cap = size(mat,1); % have maximum value to stop while loop from going forever
+    while (size(non_mat,1) < size(on_mat,1)) && (nends(1) <= cap)
         
         [nstarts, nends] = dilate(nstarts, nends, p.Results.dilate + randi(3), a); % Add some randomness to dilation/sampling
         [dump_on, dump_off] = samp_(mat, nstarts, nends, p.Results.band);
@@ -146,9 +154,31 @@ function [on_mat, off_mat] = samp_(mat, starts, ends, band)
 
 end
 
+
 function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 % Function which dilates the non-zero values of vector vec by the amount
-% specified by amnt
+% specified by amnt. In other words, if you want to add 5 seconds before
+% and after each affect instance (pair of start/stop timepoints), you call
+% this function with amnt = 5
+%
+% Inputs:
+%   starts: [1-by-n matrix] The start times for a given affect
+%
+%   ends: [1-by-n matrix] The end times for a given affect
+%
+%   amnt: [int] The amount to dialte the start and end times. This value
+%       can either be positive or negative.
+%
+%   cap: [int] The minimum amount of time between the start and stop of two
+%       different instances of an affect for them to be considered seperate.
+%       For example, if cap = 5, then if instance_1 and instance_2 of a given
+%       affect are less than 5 seconds/timepoints apart they are lumped
+%       together and considered one instance of the affect.
+%
+% Returns:
+%   dstarts: [1-by-m matrix] The dilated start timepoints
+%
+%   dends: [1-by-m matrix] The dilated end timepoints
 
     di_vec = [];
 

@@ -30,8 +30,8 @@ function [maccu, mprecision, mrecall, c_matrix, feature_importance] = random_for
 %
 %       mrecall: [float] recall of the classification model
 %
-%       c_matrix: confusion matrix in the form 
-%           [True Positives False Negatives, False Positives True Negatives]
+%       c_matrix: [1-by-4 matrix] confusion matrix in the form 
+%           [True Positives, False Negatives, False Positives, True Negatives]
 %
 %       OPTIONAL: a feature importance plot
 

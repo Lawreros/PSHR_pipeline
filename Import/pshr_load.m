@@ -299,7 +299,7 @@ function [Data] = pshr_load(varargin)
             
                 if isfield(Data, 'HR') %Added to see if any HR data was loaded/the HR struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0
-                        fprintf(strcat("\n\nHR data found, generating start and stop indexes for ", Data.HR.files{q},'\n\n'));
+                        fprintf(strcat("\nHR data found, generating start and stop indexes for ", Data.HR.files{q},'\n'));
                         Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn, p.Results.verbose);
                     else
                         Data.HR.Affect{q} = {};
@@ -308,7 +308,7 @@ function [Data] = pshr_load(varargin)
 
                 if isfield(Data, 'ECG') %Added to see if any ECG data was loaded/the ECG struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.ECG.Raw{q})==0
-                        fprintf(strcat("\n\nECG data found, generating start and stop indexes for ", Data.ECG.files{q},'\n\n'));
+                        fprintf(strcat("\nECG data found, generating start and stop indexes for ", Data.ECG.files{q},'\n'));
                         Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn, p.Results.verbose);
                     else
                         Data.ECG.Affect{q} = {};
