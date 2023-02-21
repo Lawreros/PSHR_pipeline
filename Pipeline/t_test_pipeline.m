@@ -1,80 +1,4 @@
-hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_03-18-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_04-22-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_04-25-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_05-06-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_05-27-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_06-03-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_06-17-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_06-24-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_06-23-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_07-07-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-03-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-12-2022_part1_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_08-12-2022_part2_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-12-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-23-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-30-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-03-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-17-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-24-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_10-31-2022_cropped.txt',...
-    '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_11-07-2022_cropped.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
-
-%Affect file
-aff_files = {'~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-03-18_1255_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-04-22_1255_V01_Baldie.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-04-25_OGCP_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-05-06_1255_V01_Liu.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-05-27_1255_V01_Baldie.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-06-03_1255_V01_Liu.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-06-17_1255_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-06-24_1255_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-06-23_1255_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-07-07_1255_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-03_1255_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-12_1429_1255_V01_Montanez_Part1.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Speech_2022-08-12_1622_1255_V01_Montanez_Part2.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-09-12_OGCP_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-09-23_1255_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-09-26_OGCP_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Chat&Chew_2022-09-30_1255_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-03_OGCP_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-17_OGCP_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-24_OGCP_V01_Kessler.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv',...
-    '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
-
-
-% hr_files = {'~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-19-2022_cropped.txt',...
-%     '~/Documents/MATLAB/Approved_Data/HR_cropped/HR_09-26-2022_cropped.txt',...
-%     '~/Documents/MATLAB/Approved_Data/HR/HR_10-31-2022.txt',...
-%     '~/Documents/MATLAB/Approved_Data/HR/HR_11-07-2022.txt'}; %The name of the HR file(s) you want to analyze (seperated by commas)
-% 
-% aff_files = {'~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-19_OGCP_V01_Kessler.csv',...
-%     '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-09-26_OGCP_V01_Montanez.csv',...
-%     '~/Documents/MATLAB/Approved_Data/Coding/Art_2022-10-31_OGCP_V01_Montanez.csv',...
-%     '~/Documents/MATLAB/Approved_Data/Timer_coding/Art_2022-11-07_OGCP_V01_Kessler.csv'};
-
-
-% For each applicable affect, run table_combo to get just the face_related
-% behavior and omission start and ends for problematic behavior
-aff_list = {{'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
-         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'}};
-aff_list_2 = {{'SIB','ISB','polar strap adjustment/removal','inappropriate movement',...
-        'crying','pulling at pants','off camera', 'not problem'}};
-
-target = {{'repetitive behaviors'}}; %'inappropriate face related behavior',
-    
-%t_test_pipelin(hr_files, aff_files, {{'Timer_Used'}}, aff_list, {[5,0], 'second'}, true, true);
-t_test_pipelin(hr_files, aff_files, target, aff_list_2, {[5,0], 'second'}, true, false);
-
-%t_test_pipelin(hr_files, aff_files, aff_list, {}, {[5,0],'second'}, true, false);
-
-
-function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, onset)
+function [] = t_test_pipeline(hr_files, aff_files, target, varargin)
 % Pipeline for running t-tests on different aspects of the PHYSMON
 % collected data. Effectively any combination of analyses you could want
 % will be referenced here.
@@ -82,18 +6,61 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
 % Required Inputs:
 %   hr_files: [1-by-n cell array] cell array containing the HR files that
 %       you wish to run the t-test on
+%
 %   aff_files: [1-by-n cell array] cell array containing the affect files
 %       which you wish to use with the hr_files you provided (in the same
 %       order).
-%   target: [1-by-n cell array] cell array containing the targets as {{'A','B'},{'C'}}
-%   omit: []
-%   duration: [bool] Whether to run duration analysis
-%   onset: [bool] Whether to run onset analysis
-
+%
+%   target: [1-by-m cell array] cell array containing the target affects 
+%       formatted as {{'A','B'},{'C'}}. This is used to call
+%       Import/table_combo, so see there for more information.
+%
+%
 % Optional Parameters:
-
+%   bin: [1-by-2 cell array] Used for creating a vector of the
+%       feature results from a sliding bin of Y seconds or entries. This takes the
+%       format of {[before, after], 'units'}, so if you want to have a bin 
+%       of 5 seconds before (including current RR-interval) and 3 seconds 
+%       after: {[5,3], 'second'} or if you want the 5 entries before and 
+%       3 entries after the index: {[5,3], 'measure'}
+%       If you don't want this, set bin to false.
+%
+%   omit: [1-by-b cell array] cell array containing the affects to omit, 
+%       formatted as {{'A','B'},{'C'}}. This is used to call
+%       Import/table_combo, so see there for more information.
+%
+%   duration: [bool] Whether to run the t-test analysis using data
+%       collected from the timepoints during the target affects against
+%       comparison to contol data from timepoints outside of the target
+%       affects. If false, then this analysis is not run.
+%
+%   onset: [bool] Whether to run the t-test analysis using data
+%       collected from the timepoints during the target affects against
+%       comparison to contol data from timepoints outside of the target
+%       affects. If false, then this analysis is not run.
+%
+%   band: [1-by-2 vector] The number of entries before and after the onset
+%       to include in the returned matrix. Default is [3,0] for the three entries
+%       before the onset (this will results in 4 values being used, with 
+%       the last value being the first timepoint of the affect).
+%
 % Returns:
 %   
+
+    p = inputParser;
+    addParameter(p, 'bin', {[5,0], 'second'}, @iscell);
+    addParameter(p, 'omit', {{'nothing'}}, @iscell);
+    addParameter(p, 'duration', true, @islogical);
+    addParameter(p, 'onset', true, @islogical);
+    addParameter(p, 'band',[3,0], @ismatrix);
+    
+    parse(p,varargin{:});
+    
+    omit = p.Results.omit;
+    bin = p.Results.bin;
+    duration = p.Results.duration;
+    onset = p.Results.onset;
+    
 
     Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
     
@@ -116,7 +83,7 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                 new_tabs{q} = table_combo(Data.HR.Affect{i}, target{:}, 'omit', omit{:});
 
                 % Run the feature_generation function on the HR data
-                new_dat{q} = feature_generation(Data.HR.PP{i}, bin, false);
+                [new_dat{q}, keys] = feature_generation(Data.HR.PP{i}, bin, false, [1,1,0,0]);
 
                 store_names{q} = Data.HR.files{i};
                 q=q+1;
@@ -125,12 +92,15 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
 
             end
         end
+        
+        %Add to keys
+        keys = [{'Timestamp'},{'BPM'},{'RR-interval'}, keys];
 
 
         % Select data using starts and stops
         dur_mat = [];
         cont_mat = [];
-        a = 10; % Minimum duration to count as a space outside of both target and omission
+%         a = 10; % Minimum duration to count as a space outside of both target and omission
         for i = 1:length(new_tabs)
             dur_dump = [];
             cont_dump = [];
@@ -144,10 +114,17 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                 om_vec = affect_mark(zeros(size(new_dat{i},1),1), new_tabs{i}(2,:), false);
                 om_vec(:,1)=[];
 
+                % Find times both omit and target affect(s) are not present
+                % to use as control. Get start and stop times for these
+                % control periods
                 inst = find((aff_vec + om_vec)==0);
                 vec = inst(2:end)-inst(1:end-1);
-                idx = find(vec > a);
-                starts =[inst(1)];
+                
+                % If there is a break in the control period greater than
+                % 2 indices, then mark it as a start/stop time
+                idx = find(vec > 2);% a);
+                
+                starts =[inst(1)]; % Account for the fact that the first timepoint may be part of control
                 ends =[];
 
                 for k=1:length(idx)
@@ -157,8 +134,8 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                 ends = [ends, inst(end)]; %grab the last ending
 
                 % Add buffer around all of the non-control starts/stops in order to
-                % select control timepoints more than X away from affects
-                [starts, ends] = dilate(starts, ends, 0, a);
+                % select control timepoints more than -sum(bin{1}) indices away from affects
+                [starts, ends] = dilate(starts, ends, -sum(bin{1}), sum(bin{1}));
 
                  % Select all target data
                 for j = 1:length(new_tabs{i}{1,2})
@@ -170,6 +147,9 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                     cont_dump = [cont_dump;new_dat{i}(starts(j):min(ends(j),size(new_dat{i},1)),:)];
                 end
 
+                % Create two big matrices for the data from the duration of
+                % the target affects and the control timepoints across all
+                % provided files
                 dur_mat = [dur_mat; dur_dump];
                 cont_mat = [cont_mat; cont_dump];
             end
@@ -177,69 +157,6 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
         end
         
         
-        %%%% Remove later
-        
-        % C&C = 1,2,4,5,6,7,8,16,18
-        % Art = 3,14,15,17,19,20,21,22,23
-%         % Speech = 9,10,11,12,13
-%         
-%         CC{1} = vertcat(dur_mat{[1,2,4,5,6,7,8,16,18]});
-%         CC{2} = vertcat(cont_mat{[1,2,4,5,6,7,8,16,18]});
-%         CC{1}(any(isnan(CC{1}), 2), :) = [];
-%         CC{2}(any(isnan(CC{2}), 2), :) = [];
-%         
-%         art{1} = vertcat(dur_mat{[3,14,15,17,19,20,21,22,23]});
-%         art{2} = vertcat(cont_mat{[3,14,15,17,19,20,21,22,23]});
-%         art{1}(any(isnan(art{1}), 2), :) = [];
-%         art{2}(any(isnan(art{2}), 2), :) = [];
-%         
-%         speech{1} = vertcat(dur_mat{[9,10,11,12,13]});
-%         speech{2} = vertcat(cont_mat{[9,10,11,12,13]});
-%         speech{1}(any(isnan(speech{1}), 2), :) = [];
-%         speech{2}(any(isnan(speech{2}), 2), :) = [];
-% 
-%         figure;
-%         z = [1, 1];
-%         ratio = [1,2];
-%         sets = {'CC','art'};
-%         
-%         for q = 2:size(dur_mat{1},2)
-%             subplot(2,2,q-1);
-%             histogram(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
-%             hold on;
-%             histogram(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
-%             legend(sets);
-%             hold off;
-%             
-%             n_1 = length(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
-%             n_2 = length(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
-%             
-%             mu_1 = mean(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
-%             mu_2 = mean(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
-%             
-%             sd_1 = std(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')));
-%             sd_2 = std(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')));
-%             
-%             pooled = sqrt(((n_1-1)*sd_1^2 + (n_2-1)*sd_2^2)/(n_1+n_2));
-%             
-%             disp(strcat('d = ', string((mu_1-mu_2)/pooled)));
-%             
-%             
-%             [h, p_, ci, stats] = ttest2(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')),...
-%                 eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)')), 'Vartype', 'unequal');
-%             
-%             t_stats(1,q) = p_;
-%             disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-%             disp(strcat('MEANS: target : ', string(nanmean(eval(strcat(sets{1},'{z(1)}(1:ratio(1):end,q)')))),...
-%                 ' control : ', string(nanmean(eval(strcat(sets{2},'{z(2)}(1:ratio(2):end,q)'))))));
-%             disp('95% estimated difference:');
-%             disp(ci);
-%             disp('Esitmated standard deviation');
-%             disp(stats.sd);
-%         end
-                
-        %%%%
-
         % Run a two sample t-test on the two groups for results, along with
         % confidence interval
         t_stats=zeros(1,size(dur_mat,2));
@@ -250,8 +167,11 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
         if isempty(dur_mat)
             disp('No instances of target event(s) occuring. This may be due to misspelling of the target(s).');
         else
+            disp("------------------------------------------");
+            disp("DURATION ANALYSIS RESULTS");
             for q = 1:size(dur_mat,2)
                 
+                % Calculate the parameters for Cohen's d
                 n_1 = length(dur_mat(:,q));
                 n_2 = length(cont_mat(:,q));
              
@@ -262,72 +182,21 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                 sd_2 = std(cont_mat(:,q));
              
                 pooled = sqrt(((n_1-1)*sd_1^2 + (n_2-1)*sd_2^2)/(n_1+n_2));
-             
-                disp(strcat('d = ', string((mu_1-mu_2)/pooled)));
                 
+                disp("------------------------------------------");
+                disp(strcat("Cohen's d for feature : ",keys{q}," = ", string((mu_1-mu_2)/pooled)));
                 
-                
-                [h, p_, ci, stats] = ttest2(dur_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
+                % Run ttest with the assumption of unequal variance
+                [h, p_, ci, stats] = ttest2(dur_mat(:,q),cont_mat(:,q), 'vartype', 'unequal');
                 t_stats(1,q) = p_;
-                disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-                disp(strcat('MEANS: target : ', string(nanmean(dur_mat(:,q))),' control : ', string(nanmean(cont_mat(:,q)))));
-                disp('95% estimated difference:');
+                disp(strcat('two-sample t-test result for feature :', keys{q},' = ', string(p_)));
+                disp(strcat('target mean: ', string(nanmean(dur_mat(:,q))),' control mean: ', string(nanmean(cont_mat(:,q)))));
+                disp('95% CI estimated difference:');
                 disp(ci);
                 disp('Estimated standard deviation');
                 disp(stats.sd);
             end
         end
-        
-        i=1;
-        while i < 500
-    %         [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:)] = gen_regression(big(:,[3:end-1]),big(:,end), 'log');
-            [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([dur_mat(:,3:5);cont_mat(:,3:5)],[zeros(size(dur_mat,1),1); ones(size(cont_mat,1),1)], ...
-                'log', 'verbose',false);
-            i = i+1;
-        end
-
-        % Plot the histograms for the beta values and the confidence intervals
-        row = floor(sqrt(size(Data.HR.RegPP,2)));
-        col = ceil(size(Data.HR.RegPP,2)/row);
-        for i =1:size(Data.HR.RegPP,2)
-            subplot(row,col,i)
-            histogram(Data.HR.RegPP(:,i,5));
-            hold on;
-            histogram(Data.HR.RegPP(:,i,6));
-            histogram(Data.HR.RegPP(:,i,1));
-            legend('upper bound', 'lower bound', 'beta');
-            %boxchart([Data.HR.RegPP(:,i,5),Data.HR.RegPP(:,i,6)]);
-        end
-        title('Beta values and 95% confidence intervals');
-
-        % Plot p-values for the coefficents
-        figure;
-        for i = 1:size(Data.HR.RegPP,2)
-            subplot(row,col,i)
-            histogram(Data.HR.RegPP(:,i,4));
-        end
-        title('coefficient p-values');
-
-
-        % Plot the accuracy results
-        figure;
-        for i = 1:2
-            subplot(1,2,i)
-            histogram(Data.HR.PPhat(:,1,i));
-            hold on;
-            histogram(Data.HR.PPhat(:,2,i));
-            histogram(Data.HR.PPhat(:,3,i));
-            hold off;
-            legend('Lower Bound', 'Pred', 'Upper Bound');
-        end
-        title('Accuracy results');
-
-        % Plot spread of AUC
-        figure;
-        histogram(Data.HR.AUC);
-        title('AUC Results')
-        
-        
         
         % ADD OPTION FOR CORRELATION/COVARIANCE FOR DIFFERENT FEATURES
         
@@ -341,18 +210,20 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
 %         disp('correlation for non-problematic:');
 %         disp(corrcoef([train.cat_0;test.cat_0;unused.cat_0]));
 %         
-        
-
     end
 
     if onset
-        %% Onset Sample
+        % Onset Sample
         % Pass the HR data and new affect tables into onset_sample in order to get
         % the samples of the onsets and controls
 
         q=1;
         store_names = {};
         new_tabs = {};
+        
+        % Go through each HR file with an associated affect file and create
+        % a new start/stop table for the target affects, omitting the
+        % "omit" affects
         for i = 1:length(Data.HR.Affect)
 
             if ~isempty(Data.HR.Affect{i})
@@ -366,7 +237,7 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
                 end
 
                 % Run the feature_generation function on the HR data
-                new_dat{q} = feature_generation(Data.HR.PP{i}, bin, false);
+                [new_dat{q}, keys] = feature_generation(Data.HR.PP{i}, bin, false, [1,1,0,0]);
 
                 store_names{q} = Data.HR.files{i};
                 q=q+1;
@@ -376,18 +247,25 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
             end
         end
 
+        %Add to keys
+        keys = [{'Timestamp'},{'BPM'},{'RR-interval'}, keys];
 
 
         onset_mat = [];
         offset_mat = [];
         cont_mat = [];
-
+        
         for i = 1:length(new_tabs)
-
-            % format is (data, union, omission, band, offset)
+            
             if ~isempty(new_tabs{i}{1,2})
                 disp(strcat('Running data from :',store_names{i}))
-                [on_dump, off_dump, cont_dump] = onset_sample_2(new_dat{i}, new_tabs{i}(1,:), new_tabs{i}(2,:), 'band', [3,0], 'dilate', 6);
+                
+                % Sample [onset, offset, and control] timpoints using the
+                % provided start/stop times from the target/omit affects
+                [on_dump, off_dump, cont_dump] = onset_sample(new_dat{i}, new_tabs{i}(1,:), new_tabs{i}(2,:), 'band', p.Results.band, 'dilate', 6);
+                
+                % Create three big matrices to dump these sampled data
+                % points
                 onset_mat = [onset_mat; on_dump];
                 offset_mat = [offset_mat; off_dump];
                 cont_mat = [cont_mat; cont_dump];
@@ -399,218 +277,72 @@ function [] = t_test_pipelin(hr_files, aff_files, target, omit, bin, duration, o
         % Run a two sample t-test on the two groups for results, along with
         % confidence interval
         t_stats=zeros(1,size(onset_mat,2));
-
-        for q = 1:size(onset_mat,2)
-            [h, p_, ci, stats] = ttest2(onset_mat(:,q),cont_mat(:,q), 'Vartype', 'unequal');
-            t_stats(1,q) = p_;
-            disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-            disp(strcat('MEANS: TARGET : ', string(nanmean(onset_mat(:,q))),' CONTROL : ', string(nanmean(cont_mat(:,q)))));
-            disp('95% estimated difference:');
-            disp(ci);
-            disp('Esitmated standard deviation');
-            disp(stats.sd);
-        end
         
-        i=1;
-        while i < 500
-    %         [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:)] = gen_regression(big(:,[3:end-1]),big(:,end), 'log');
-            [Data.HR.RegPP(i,:,:), Data.HR.PPhat(i,:,:), Data.HR.Ttest(i,:), Data.HR.AUC(i,1)] = gen_regression([onset_mat(:,3:5);cont_mat(:,3:5)],[zeros(size(onset_mat,1),1); ones(size(cont_mat,1),1)], ...
-                'log', 'verbose',false);
-            i = i+1;
-        end
+        onset_mat(any(isnan(onset_mat), 2), :) = [];
+        cont_mat(any(isnan(cont_mat), 2), :) = [];
 
-        % Plot the histograms for the beta values and the confidence intervals
-        row = floor(sqrt(size(Data.HR.RegPP,2)));
-        col = ceil(size(Data.HR.RegPP,2)/row);
-        for i =1:size(Data.HR.RegPP,2)
-            subplot(row,col,i)
-            histogram(Data.HR.RegPP(:,i,5));
-            hold on;
-            histogram(Data.HR.RegPP(:,i,6));
-            histogram(Data.HR.RegPP(:,i,1));
-            legend('upper bound', 'lower bound', 'beta');
-            %boxchart([Data.HR.RegPP(:,i,5),Data.HR.RegPP(:,i,6)]);
-        end
-        title('Beta values and 95% confidence intervals');
-
-        % Plot p-values for the coefficents
-        figure;
-        for i = 1:size(Data.HR.RegPP,2)
-            subplot(row,col,i)
-            histogram(Data.HR.RegPP(:,i,4));
-        end
-        title('coefficient p-values');
-
-
-        % Plot the accuracy results
-        figure;
-        for i = 1:2
-            subplot(1,2,i)
-            histogram(Data.HR.PPhat(:,1,i));
-            hold on;
-            histogram(Data.HR.PPhat(:,2,i));
-            histogram(Data.HR.PPhat(:,3,i));
-            hold off;
-            legend('Lower Bound', 'Pred', 'Upper Bound');
-        end
-        title('Accuracy results');
-
-        % Plot spread of AUC
-        figure;
-        histogram(Data.HR.AUC);
-        title('AUC Results')
-        
-    end
-
-end
-
-
-
-
-%% Extra functions
-
-function [on_mat, off_mat, un_mat] = onset_sample_2(mat, keep_table, omit_table, varargin)
-% This function takes a given matrix of values along with the affect start
-% and end index table and returns a matrix consisting of a given selection
-% of rows before/after each onset.
-
-% Required Inputs:
-%   mat:[n-by-m matrix] the given matrix you are sampling rows from
-%   aff_table:[a-by-3 cell array] Found in the Data.(type).Affect structure
-%       as an output of load_affect.m, contains the index values of the 
-%       start and stop points for each affect
-%   aff_list: [1-by-x cell array] list of affects from aff_table to use. If
-%       false, then all affects present will be marked.
-
-% Optional Inputs:
-%   band: [1-by-2 vector] The number of entries before and after the onset
-%       to include in the returned matrix. Default is [0,0] for just the 
-%       onset value.
-%   offset: [bool] Whether to return a matrix of the ends of each affect.
-%       Default is true.
-%   omit_nan:[bool] Whether to omit rows which contain NaN values from both
-%       on_mat and off_mat. This may result in on_mat and off_mat having
-%       different numbers of rows. Default is false.
-
-% Output:
-%   on_mat: [o-by-m matrix] matrix of the onsets
-%   off_mat: [f-by-m matrix] matrix of the offsets. An empty matrix if the
-%       optional input 'offset' is false
-
-    p = inputParser;
-    addParameter(p, 'band', [0,0], @ismatrix);
-    addParameter(p, 'omit_nan', false, @islogical);
-    addParameter(p, 'dilate', 0, @isscalar);
-    parse(p,varargin{:});
-    
-    a = sum(p.Results.band);
-    
-    
-    % ALSO THIS SAMPLING IS SUCCEPTABLE TO VERY SHORT AFFECTS, WHERE THE
-    % END POINTS MY HAVE BINS WHICH SPAN THE ENTIRE AFFECT, DO NOT USE
-    % OFFSETS WITHOUT THINKING THIS THROUGH
-    
-    aff_vec = affect_mark(zeros(size(mat,1),1), keep_table, false);
-    aff_vec(:,1)=[];
-    om_vec = affect_mark(zeros(size(mat,1),1), omit_table, false);
-    om_vec(:,1)=[];
-    inst = find(aff_vec==1);
-    vec = inst(2:end)-inst(1:end-1);
-    idx = find(vec > a); % find starts greater in distance then the band being used so you don't
-                         % accidently sample from another problematic
-                         % behavior
-    starts =[inst(1)];
-    ends =[];
-        
-    for k=1:length(idx)
-        % Check to make sure that you aren't pulling onsets from areas that
-        % overlap with the omit times
-        if mean(om_vec(inst(idx(k)+1)-a:inst(idx(k)+1))) == 0 && mean(om_vec(inst(idx(k)):inst(idx(k))+a)) == 0
-            starts = [starts,inst(idx(k)+1)];
-            ends = [ends,inst(idx(k))];
-        end
-    end
-    ends = [ends, inst(end)]; %grab the last ending
-    
-    [on_mat, off_mat] = samp_(mat, starts, ends, p.Results.band);
-    
-    
-    if length(keep_table{1,2}) ~= length(starts)
-        disp('DISPARITY');
-    end
-    
-    
-    % Combine both the target and omits together and dilate from there to
-    % get control measurements
-    non_mat = [];
-    noff_mat = [];
-    
-    inst = find(aff_vec + om_vec);
-    vec = inst(2:end)-inst(1:end-1);
-    idx = find(vec > a); 
-    starts =[inst(1)];
-    ends =[];
-        
-    for k=1:length(idx)
-        starts = [starts,inst(idx(k)+1)];
-        ends = [ends,inst(idx(k))];
-    end
-    ends = [ends, inst(end)]; %grab the last ending
-        
-    non_mat = [];
-    noff_mat = [];
-    
-    nstarts = starts;
-    nends = ends;
-    while size(non_mat,1) < size(on_mat,1)
-        
-        [nstarts, nends] = dilate(nstarts, nends, p.Results.dilate, a);
-        [dump_on, dump_off] = samp_(mat, nstarts, nends, p.Results.band);
-        
-        non_mat = [non_mat;dump_on];
-        noff_mat = [noff_mat;dump_off];
-    end
-    un_mat = [non_mat; noff_mat];
-    clear non_mat noff_mat
-    
-
-    if p.Results.omit_nan
-        on_mat(any(isnan(on_mat),2),:) = [];
-        off_mat(any(isnan(off_mat),2),:) = [];
-        un_mat(any(isnan(un_mat),2),:) = [];
-    end
-
-end
-
-function [on_mat, off_mat] = samp_(mat, starts, ends, band)
-    a = sum(band);
-    b = band(1);
-    c = band(2);
-    
-    lim = size(mat,1);
-    
-    on_mat=[];
-    off_mat=[];
-    
-    for i = 1:length(starts)
-        if starts(i) > b && starts(i)+c <= lim
-            on_mat(end+1:end+1+a,:) = mat(starts(i)-b:starts(i)+c,:);
-        end
-    end
-    
-    if ends
-        for i = 1:length(ends)
-            if ends(i)+c <= lim && ends(i)-b > 0
-                off_mat(end+1:end+1+a,:) = mat(ends(i)-b:ends(i)+c,:);
+        if isempty(onset_mat)
+            disp('No instances of target event(s) occuring. This may be due to misspelling of the target(s).');
+        else
+            disp("------------------------------------------");
+            disp("ONSET ANALYSIS RESULTS");
+            for q = 1:size(onset_mat,2)
+                
+                % Calculate the parameters for Cohen's d
+                n_1 = length(onset_mat(:,q));
+                n_2 = length(cont_mat(:,q));
+             
+                mu_1 = mean(onset_mat(:,q));
+                mu_2 = mean(cont_mat(:,q));
+             
+                sd_1 = std(onset_mat(:,q));
+                sd_2 = std(cont_mat(:,q));
+             
+                pooled = sqrt(((n_1-1)*sd_1^2 + (n_2-1)*sd_2^2)/(n_1+n_2));
+             
+                disp("------------------------------------------");
+                disp(strcat("Cohen's d for feature :", keys{q}, '=', string((mu_1-mu_2)/pooled)));
+                
+                % Run ttest with the assumption of unequal variance
+                [h, p_, ci, stats] = ttest2(onset_mat(:,q),cont_mat(:,q), 'vartype', 'unequal');
+                t_stats(1,q) = p_;
+                
+                disp(strcat('two-sample t-test result for feature : ', keys{q},' = ', string(p_)));
+                disp(strcat('target mean : ', string(nanmean(onset_mat(:,q))),' control mean : ', string(nanmean(cont_mat(:,q)))));
+                disp('95% CI estimated difference:');
+                disp(ci);
+                disp('Estimated standard deviation');
+                disp(stats.sd);
             end
         end
     end
-
 end
+
 
 function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 % Function which dilates the non-zero values of vector vec by the amount
-% specified by amnt
+% specified by amnt. In other words, if you want to add 5 seconds before
+% and after each affect instance (pair of start/stop timepoints), you call
+% this function with amnt = 5
+%
+% Inputs:
+%   starts: [1-by-n matrix] The start times for a given affect
+%
+%   ends: [1-by-n matrix] The end times for a given affect
+%
+%   amnt: [int] The amount to dialte the start and end times. This value
+%       can either be positive or negative.
+%
+%   cap: [int] The minimum amount of time between the start and stop of two
+%       different instances of an affect for them to be considered seperate.
+%       For example, if cap = 5, then if instance_1 and instance_2 of a given
+%       affect are less than 5 seconds/timepoints apart they are lumped
+%       together and considered one instance of the affect.
+%
+% Returns:
+%   dstarts: [1-by-m matrix] The dilated start timepoints
+%
+%   dends: [1-by-m matrix] The dilated end timepoints
 
     di_vec = [];
 
@@ -635,21 +367,4 @@ function [dstarts, dends] = dilate(starts, ends, amnt, cap)
     end
     dends =[dends, inst(end)];
     
-end
-
-
-function [mat] = feature_generation(mat, bin, band)
-% Function for generating the different features for multiple recording
-% sessions
-
-% Inputs:
-%   mat: [n-by-m matrix]
-%   bin: [1-by-2 cell array] The bin type you want to use
-%   band: [1-by-2 matrix]
-
-    mat(:,4) = rmssd_calc(mat(:,3), bin, band);
-    mat(:,5) = pnnx_calc(mat(:,3),50, bin, band);
-%     mat(:,6) = sdnn_calc(mat(:,3),bin,band);
-%     mat(:,7) = sdsd_calc(mat(:,3),bin,band);
-
 end

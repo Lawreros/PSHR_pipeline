@@ -1,4 +1,4 @@
-function [idx] = clustering_pipeline(hr_files,aff_files,varargin)
+function [idx] = clustering_pipeline(hr_files,aff_files,target,varargin)
 % Pipeline for the creation of a random forest model
 % Required Inputs:
 %   hr_files: [1-by-n cell array] list containing the location of the hr
@@ -24,66 +24,64 @@ function [idx] = clustering_pipeline(hr_files,aff_files,varargin)
 %       datapoints.
 
     p = inputParser;
-    addParameter(p,'plots',false, @islogical);
     addParameter(p,'bin', {[5,0], 'second'}, @iscell);
+    addParameter(p,'omit', {{'nothing'}}, @iscell);
+    addParameter(p,'plots',false, @islogical);
     
     parse(p,varargin{:});
-    
-    
-    % Load in data
-     aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
-        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
     
     Data = pshr_load('HR', hr_files, 'Affect', aff_files, 'align', true, 'verbose', false);
 
     
-    %% RR-interval preprocessing
-    for i = 1:length(hr_files)
-        Data.HR.PP{i} = Data.HR.Raw{i};
-        Data.HR.PP{i} = affect_mark(Data.HR.PP{i}, Data.HR.Affect{i},aff_list); %mark the affect locations
-        % We'll just work with bandpassing for now...
-        Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
-    end
-    
+    % Create key for improved figure plotting
+    key = [{'RR'}];
 
     %% Generate additional features and call DBSCAN clustering on the data
+    % Iterate through the files and preproces them using bandpass filtering
+    % before calculating features (RMSSD, pNN50, etc.)
+    for i = 1:length(hr_files)
+        % Create new copy of Data.HR.Raw for PreProcessing
+        Data.HR.PP{i} = Data.HR.Raw{i};
+
+        % Apply basic bandpass to HR data
+        Data.HR.PP{i}(:,3) = bandpass(Data.HR.PP{i}(:,3), 300, 1600, false);
+        [Data.HR.PP{i}, k] = feature_generation(Data.HR.PP{i}, p.Results.bin, false, [1,1,1,1]);
+        if i == 1
+            key = [key,k];
+        end
+    end
+
+
+
+    q=1;
+    for i = 1:length(Data.HR.Affect)
+
+        if ~isempty(Data.HR.Affect{i})
+            % Run table_combo to get the start/stop times for both the
+            % target affects and the affects to omit
+            new_tabs{q} = table_combo(Data.HR.Affect{i}, target{:}, 'omit', p.Results.omit{:});
+
+            % Create new_dat for data manipulation
+            new_dat{q} = Data.HR.PP{i};
+                
+            new_dat{q} = affect_mark(new_dat{i}, new_tabs{i}(1,:), false);
+                
+            q=q+1;
+        else
+            % Skip any data without a corresponding affect file
+            disp(strcat('No affect found for :', Data.HR.files{i}));
+
+        end
+    end
     
-     for i=1:length(Data.HR.PP)
-        Data.HR.PP{i} = feature_generation(Data.HR.PP{i}, p.Results.bin, false);
-     end
-        
-     big = vertcat(Data.HR.PP{:});
+    big = vertcat(new_dat{:});
 
-     [idx] = newFdbscan(big(:,3:end-1), {'RR-interval','RMSSD','pNN50','SDNN','SDSD'}, big(:,end), 50, 10, p.Results.plots);
-     
-     dats = unique(idx);
-     for i = 2:length(dats)
-         disp(strcat('Percentage of points belonging to cluster ',string(dats(i)),': ', string(sum(idx(:,1)==dats(i))*100/length(idx)),'%'))
-     end
-     
-     disp(strcat('Percentage of unassigned datapoints: ', string(sum(idx(:,1)==-1)*100/length(idx)),'%'));
-end
+    [idx] = newFdbscan(big(:,3:end-1), key, big(:,end), 50, 10, p.Results.plots);
 
-
-function [mat] = feature_generation(mat, bin, band)
-% Function for generating the different features for multiple recording
-% sessions
-
-% Inputs:
-%   mat: [n-by-m matrix] where the third column is the data used for
-%       feature generation
-%   bin: [1-by-2 cell array] The bin type you want to use for the feature
-%       calculation
-%   band: [1-by-2 matrix] The start and end index you wish to analyze (set
-%       this to false to use all available data)
-
-    mat(:,5) = rmssd_calc(mat(:,3), bin, band);
-    mat(:,6) = pnnx_calc(mat(:,3),50, bin, band);
-    mat(:,7) = sdnn_calc(mat(:,3),bin,band);
-    mat(:,8) = sdsd_calc(mat(:,3),bin,band);
+    dats = unique(idx);
+    for i = 2:length(dats)
+        disp(strcat('Percentage of points belonging to cluster ',string(dats(i)),': ', string(sum(idx(:,1)==dats(i))*100/length(idx)),'%'))
+    end
     
-    %move coding into last column
-    mat(:,end+1) = mat(:,4);
-    mat(:,4) = [];
-
+    disp(strcat('Percentage of unassigned datapoints: ', string(sum(idx(:,1)==-1)*100/length(idx)),'%'));
 end
