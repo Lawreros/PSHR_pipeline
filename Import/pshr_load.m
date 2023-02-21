@@ -250,6 +250,27 @@ function [Data] = pshr_load(varargin)
                     
                 end
                 
+                % Check for presence of Demand/No-demand use
+                
+                Data.Affect.Demand{i} = {};
+                if sum(strcmp('DVs_ND', Data.Affect.Raw{i}.Properties.VariableNames)) %If there is a "D vs. ND" column found 
+                    buffer = [0, transpose(diff(Data.Affect.Raw{i}.DVs_ND))];       % in the Affect file
+                    
+                    buffer = find(buffer);
+                    starts = [];
+                    ends = [];
+                    
+                    for j = 1:2:length(buffer)
+                        starts = [starts, Data.Affect.Raw{i}.Time_sec(buffer(j))];
+                        ends = [ends, Data.Affect.Raw{i}.Time_sec(buffer(j+1)-1)];
+                    end
+                    
+                    Data.Affect.Times{i}{end+1,1} = 'Demand';
+                    Data.Affect.Times{i}{end,2} = starts;
+                    Data.Affect.Times{i}{end,3} = ends;
+                    
+                end
+                
             end
                 
         end
@@ -278,7 +299,7 @@ function [Data] = pshr_load(varargin)
             
                 if isfield(Data, 'HR') %Added to see if any HR data was loaded/the HR struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.HR.Raw{q})==0
-                        fprintf(strcat("\n\nHR data found, generating start and stop indexes for ", Data.HR.files{q},'\n\n'));
+                        fprintf(strcat("\nHR data found, generating start and stop indexes for ", Data.HR.files{q},'\n'));
                         Data.HR.Affect{q} = time_adjust(Data.HR.Raw{q}, Data.Affect.Times{q}, algn, p.Results.verbose);
                     else
                         Data.HR.Affect{q} = {};
@@ -287,7 +308,7 @@ function [Data] = pshr_load(varargin)
 
                 if isfield(Data, 'ECG') %Added to see if any ECG data was loaded/the ECG struct field exists
                     if isempty(Data.Affect.Times{q})==0 && isempty(Data.ECG.Raw{q})==0
-                        fprintf(strcat("\n\nECG data found, generating start and stop indexes for ", Data.ECG.files{q},'\n\n'));
+                        fprintf(strcat("\nECG data found, generating start and stop indexes for ", Data.ECG.files{q},'\n'));
                         Data.ECG.Affect{q} = time_adjust(Data.ECG.Raw{q}, Data.Affect.Times{q}, algn, p.Results.verbose);
                     else
                         Data.ECG.Affect{q} = {};

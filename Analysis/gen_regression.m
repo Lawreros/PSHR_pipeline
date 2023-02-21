@@ -1,4 +1,4 @@
-function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_type, varargin)
+function [mdl, pihats, AUC] = gen_regression(mat, target, regression_type, varargin)
 % Function which taken in input matrix of features and returns the results
 % of a variety of regressions. MATLAB's regression functions exclude any
 % datapoints which contain NaN values in their regression.
@@ -52,83 +52,7 @@ function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_ty
     
     parse(p,varargin{:});
     
-    
-    % Get the correct ratio of categories: (for now just assume 50/50 for
-    % problematic and nonproblematic)
-    if p.Results.test
-        
-        [train, test, unused] = train_test_split(mat, target, [0.5 0.5], 'split', 0.8);
-        
-        % Run t-test on data
-        [r,f] = size(train.cat_0);
-        t_stats=[];
-        for q = 1:f
-            [h, p_, ci, stats] = ttest2([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)],[train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)], 'Vartype', 'unequal');
-            t_stats(1,q) = p_;
-            disp(strcat('two-sample t-test result for feature ', string(q),' = ', string(p_)));
-            disp(strcat('MEANS: NON-PROB : ', string(mean([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)])),' PROB : ', string(mean([train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]))));
-            disp('95% estimated difference:');
-            disp(ci);
-            disp('Esitmated standard deviation');
-            disp(stats.sd);
-            %a = length([train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q)]);
-            %b = length([train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]);
-            %boxchart([repmat(0,a,1);repmat(1,b,1)],[train.cat_0(:,q);test.cat_0(:,q);unused.cat_0(:,q);train.cat_1(:,q);test.cat_1(:,q);unused.cat_1(:,q)]);
-            
-            [h,p_] = ttest([train.cat_0(:,q);test.cat_0(:,q)],[train.cat_1(:,q);test.cat_1(:,q)]);
-            t_stats(1,f+q) = p_;
-            disp(strcat('paired t-test result for feature: ',string(q),' =', string(p_)));
-        end        
-        
-        %%%%
-%         target(any(isnan(mat),2),:) = [];
-%         mat(any(isnan(mat),2),:) = [];
-%     
-%         np_mat = mat(target==0,:);
-%         p_mat = mat(target==1,:);
-%         
-%         % Run t-test on data
-%         [r, f] = size(np_mat);
-%         for q = 1:f
-%             [h,p_] = ttest2(np_mat(:,q), p_mat(:,q));
-%             disp(strcat('two-sample t-test result for feature: ',string(q),' =', string(p_)));
-%         end
-        
-        
-        % Calculate based off of smallest group (problematic)
-%         samp = randsample(length(np_mat), round(length(p_mat)*1));
-%         not_samp = [1:length(np_mat)];
-%         not_samp(samp) = [];
-%         
-%         for q = 1:f
-%             [h,p_] = ttest(np_mat(samp,q), p_mat(:,q));
-%             disp(strcat('paired t-test result for feature: ',string(q),' =', string(p_)));
-%         end
-        
-        % Check covariance
-        disp('covariance for problematic:');
-        disp(cov([train.cat_1;test.cat_1;unused.cat_1],1));
-        disp('correlation for problematic:');
-        disp(corrcoef([train.cat_1;test.cat_1;unused.cat_1]));
-        disp('covariance for non-problematic:');
-        disp(cov([train.cat_0;test.cat_0;unused.cat_0],1));
-        disp('correlation for non-problematic:');
-        disp(corrcoef([train.cat_0;test.cat_0;unused.cat_0]));
-        
-%         new_mat = [p_mat; np_mat(samp,:)];
-%         % Create testing data
-%         test_dat = np_mat(not_samp,:);
-%         new_target = [ones(length(p_mat),1);zeros(length(samp),1)];
-%         
-%         if p.Results.verbose
-%             disp(strcat('Subset of :',string(length(samp)),' from :',string(length(np_mat)),'for non-problematic'));
-%             disp(strcat('Problematic :',string(length(samp))));
-%         end
-%         
-%         mat = new_mat;
-%         target = new_target;
-%         clear new_mat new_target
-    end
+    [train, test, unused] = train_test_split(mat, target, [0.5 0.5], 'split', 0.8);
     
     switch regression_type
         case 'linear'
@@ -146,7 +70,6 @@ function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_ty
                     disp(mdl);
                 end
             else
-%                 [B, dev, stats] = mnrfit(mat, categorical(target), 'model','nominal');
                 [B,dev,stats] = mnrfit([train.cat_0;train.cat_1],categorical([zeros(length(train.cat_0(:,1)),1);ones(length(train.cat_1(:,1)),1)]), 'model', 'nominal');
                 LL = stats.beta - 1.96.*stats.se;
                 UL = stats.beta + 1.96.*stats.se;
@@ -161,40 +84,39 @@ function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_ty
                 end
                 
                 % Test the generated model:
-%                 pihat = mnrval(B, test_dat);
                 [pihat, dlow, dhi] = mnrval(B, [test.cat_0;test.cat_1],stats);
+                cat_0_len = size(test.cat_0, 1);
+                cat_1_len = size(test.cat_1, 1);
                 pihats = [];
                 
-                % Convert probabilities into binary values and account for
-                % both lower and higher bounds
-                for q = 1:3
-                    if q == 1
-                        pdump = round(pihat-dlow);
-                        % if both probs are > 50% then set both to 0
-                        pdump(sum(pdump,2)>1,:)=0;
-                    elseif q ==2
-                        pdump = round(pihat);
-                    else
-                        pdump = round(pihat+dhi);
-                        % if both probs are > 50% then set both to 0
-                        pdump(sum(pdump,2)>1,:)=0;
-                    end
-
-    %                 disp(strcat('Accuracy :', string(nansum(pihat(:,1))),'/',string(length(pihat)),...
-    %                     '=',string(nansum(pihat(:,1))/length(pihat
-                    acc = pdump - [2*ones(length(test.cat_0(:,1)),1);-2*ones(length(test.cat_1(:,1)),1)];
-
-                    disp('Accuracy for non-prob: '+string(length(find(acc(:,1)==-1))/length(test.cat_0(:,1))));
-                    disp('Accuracy for prob: '+string(length(find(acc(:,2)==3))/length(test.cat_1(:,1))));
-                    pdump = [length(find(acc(:,1)==-1))/length(test.cat_0(:,1)), length(find(acc(:,2)==3))/length(test.cat_1(:,1))];
                 
-                    [X,Y,T,AUC] = perfcurve([zeros(length(test.cat_0(:,1)),1);ones(length(test.cat_1(:,1)),1)],pihat(:,2),1);
-                    
-                    if AUC > 0.6
-                        disp("hey!");
+                for q = 1:3
+                    if q == 1 % Worst case scenario
+                        pdump(1:cat_0_len,1) = pihat(1:cat_0_len,1) - dlow(1:cat_0_len,1);
+                        
+                        pdump(cat_0_len+1:length(pihat),1) = pihat(cat_0_len+1:end,1) + dhi(cat_0_len+1:end,1);
+                        
+                    elseif q == 2 % Nothing
+                        pdump = round(pihat(:,1));
+                
+                    else % Best case scenario
+                        pdump(1:cat_0_len,1) = pihat(1:cat_0_len,1) + dhi(1:cat_0_len,1);
+                        
+                        pdump(cat_0_len+1:length(pihat),1) = pihat(cat_0_len+1:end,1) - dlow(cat_0_len+1:end,1);
                     end
+                    
+                    acc = [sum(round(pdump(1:cat_0_len,1)) == 1)/cat_0_len, sum(round(pdump(cat_0_len+1:end,1)) == 0)/cat_1_len];
+                    
+                    if p.Results.verbose
+                        disp('Accuracy for non-target: '+string(acc(1)));
+                        disp('Accuracy for target: '+string(acc(2)));
+                    end
+                    pdump = acc;
+                
+                    [X,Y,T,AUC] = perfcurve([zeros(cat_0_len,1);ones((cat_1_len),1)],pihat(:,2),1);
                     
                     pihats = [pihats; pdump];
+                    
                 end
                 
             end
@@ -203,5 +125,4 @@ function [mdl, pihats, t_stats, AUC] = gen_regression(mat, target, regression_ty
             return
     end
     
-
 end

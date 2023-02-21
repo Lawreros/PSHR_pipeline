@@ -1,25 +1,32 @@
-function [on_mat, off_mat, un_mat] = onset_sample(mat, aff_table, aff_list, varargin)
+function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, varargin)
 % This function takes a given matrix of values along with the affect start
 % and end index table and returns a matrix consisting of a given selection
 % of rows before/after each onset.
 
 % Required Inputs:
 %   mat:[n-by-m matrix] the given matrix you are sampling rows from
+%
 %   aff_table:[a-by-3 cell array] Found in the Data.(type).Affect structure
 %       as an output of load_affect.m, contains the index values of the 
 %       start and stop points for each affect
+%
 %   aff_list: [1-by-x cell array] list of affects from aff_table to use. If
 %       false, then all affects present will be marked.
 
 % Optional Inputs:
 %   band: [1-by-2 vector] The number of entries before and after the onset
-%       to include in the returned matrix. Default is [0,0] for just the 
-%       onset value.
-%   offset: [bool] Whether to return a matrix of the ends of each affect.
-%       Default is true.
-%   omit_nan:[bool] Whether to omit rows which contain NaN values from both
+%       to include in the returned matrix. For example, [3,1] is used for the
+%       three entries before the onset and 1 value after (this will results
+%       in 5 values being used, with the last value being the second from 
+%       last value being the first second of the affect). Default is [0,0]
+%       for just the onset value.
+%
+%   omit_nan: [bool] Whether to omit rows which contain NaN values from both
 %       on_mat and off_mat. This may result in on_mat and off_mat having
 %       different numbers of rows. Default is false.
+%
+%   dilate: [int] Amount to dilate affect instance start/end times when
+%       sampling for control values. Default is 3
 
 % Output:
 %   on_mat: [o-by-m matrix] matrix of the onsets
@@ -28,43 +35,64 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, aff_table, aff_list, vara
 
     p = inputParser;
     addParameter(p, 'band', [0,0], @ismatrix);
-    addParameter(p, 'offset', true, @islogical);
     addParameter(p, 'omit_nan', false, @islogical);
-    addParameter(p, 'dilate', 0, @isscalar);
+    addParameter(p, 'dilate', 3, @isscalar);
     parse(p,varargin{:});
     
-    on_mat = [];
-    off_mat = [];
     a = sum(p.Results.band);
-    b = p.Results.band(1);
-    c = p.Results.band(2);
     
-
-    if ~iscell(aff_list)
-        % put all of aff_table's affects into aff_list, removing common
-        % mistakes/errors
-        aff_list = {};
-        for i = 1:length(aff_table)
-            if ~any(strcmp(aff_table{i},{' ', 'not problem', 'off camera'}))
-                aff_list{end+1} = aff_table{i};
-            end
-        end
-    end
-    
-    % TODO: Make vector of 1's or 0's then find the onsets, the current way
-    % is not compatible with the "meta_chunk" added affect
     
     % ALSO THIS SAMPLING IS SUCCEPTABLE TO VERY SHORT AFFECTS, WHERE THE
     % END POINTS MY HAVE BINS WHICH SPAN THE ENTIRE AFFECT, DO NOT USE
     % OFFSETS WITHOUT THINKING THIS THROUGH
     
-    aff_vec = affect_mark([], aff_table, aff_list);
-    aff_vec = aff_vec;
+    aff_vec = affect_mark(zeros(size(mat,1),1), keep_table, false);
+    aff_vec(:,1)=[];
+    om_vec = affect_mark(zeros(size(mat,1),1), omit_table, false);
+    om_vec(:,1)=[];
     inst = find(aff_vec==1);
     vec = inst(2:end)-inst(1:end-1);
     idx = find(vec > a); % find starts greater in distance then the band being used so you don't
                          % accidently sample from another problematic
                          % behavior
+    starts =[];%;[inst(1)];
+    ends =[];
+    
+    idx = [1;idx;length(inst)];
+        
+    for k=1:length(idx)-1
+        % Check to make sure that you aren't pulling onsets from areas that
+        % overlap with the omit times at any point
+        if mean(om_vec(max(1,inst(idx(k)+1)-a):inst(idx(k)+1))) == 0 && ...
+                mean(om_vec(inst(idx(k+1)):min(length(aff_vec),inst(idx(k+1))+a))) == 0
+            
+            if k == 1 %clunky fix for the first start value
+                starts = [starts,inst(idx(k))];
+            else
+                starts = [starts,inst(idx(k)+1)];
+            end
+            
+            ends = [ends,inst(idx(k+1))];
+        end
+    end
+%     ends = [ends, inst(end)]; %grab the last ending
+    
+    [on_mat, off_mat] = samp_(mat, starts, ends, p.Results.band);
+    
+    
+    if length(keep_table{1,2}) ~= length(starts)
+        disp('DISPARITY');
+    end
+    
+    
+    % Combine both the target and omits together and dilate from there to
+    % get control measurements
+    non_mat = [];
+    noff_mat = [];
+    
+    inst = find(aff_vec + om_vec);
+    vec = inst(2:end)-inst(1:end-1);
+    idx = find(vec > a); 
     starts =[inst(1)];
     ends =[];
         
@@ -73,17 +101,16 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, aff_table, aff_list, vara
         ends = [ends,inst(idx(k))];
     end
     ends = [ends, inst(end)]; %grab the last ending
-    
-    [on_mat, off_mat] = samp_(mat, starts, ends, p.Results.band);
-    
+        
     non_mat = [];
     noff_mat = [];
     
     nstarts = starts;
     nends = ends;
-    while size(non_mat,1) < size(on_mat,1)
+    cap = size(mat,1); % have maximum value to stop while loop from going forever
+    while (size(non_mat,1) < size(on_mat,1)) && (nends(1) <= cap)
         
-        [nstarts, nends] = dilate(nstarts, nends, p.Results.dilate, a);
+        [nstarts, nends] = dilate(nstarts, nends, p.Results.dilate + randi(3), a); % Add some randomness to dilation/sampling
         [dump_on, dump_off] = samp_(mat, nstarts, nends, p.Results.band);
         
         non_mat = [non_mat;dump_on];
@@ -91,24 +118,8 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, aff_table, aff_list, vara
     end
     un_mat = [non_mat; noff_mat];
     clear non_mat noff_mat
+    
 
-    %%
-%     for i = 1:length(aff_table)
-%         if any(strcmp(aff_list, aff_table(i,1)))
-%             for j = 1:length(aff_table{i,2})
-%                 % Append data to onset table
-%                 on_mat(end+1:end+1+a,:) = mat(aff_table{i,2}(j)-b:aff_table{i,2}(j)+c,:);
-%                 
-%                 % If they want offset data
-%                 if p.Results.offset
-%                     off_mat(end+1:end+1+a,:) = mat(aff_table{i,3}(j)-b:aff_table{i,3}(j)+c,:);
-%                 end
-%                 
-%                 %new_mat(aff_table{i,2}(j):aff_table{i,3}(j),end) = 1;    
-%             end
-%         end
-%     end
-    %%
     if p.Results.omit_nan
         on_mat(any(isnan(on_mat),2),:) = [];
         off_mat(any(isnan(off_mat),2),:) = [];
@@ -128,14 +139,14 @@ function [on_mat, off_mat] = samp_(mat, starts, ends, band)
     off_mat=[];
     
     for i = 1:length(starts)
-        if starts(i) >= b && starts(i)+c <= lim
+        if starts(i) > b && starts(i)+c <= lim
             on_mat(end+1:end+1+a,:) = mat(starts(i)-b:starts(i)+c,:);
         end
     end
     
     if ends
         for i = 1:length(ends)
-            if ends(i)+c <= lim
+            if ends(i)+c <= lim && ends(i)-b > 0
                 off_mat(end+1:end+1+a,:) = mat(ends(i)-b:ends(i)+c,:);
             end
         end
@@ -143,9 +154,31 @@ function [on_mat, off_mat] = samp_(mat, starts, ends, band)
 
 end
 
+
 function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 % Function which dilates the non-zero values of vector vec by the amount
-% specified by amnt
+% specified by amnt. In other words, if you want to add 5 seconds before
+% and after each affect instance (pair of start/stop timepoints), you call
+% this function with amnt = 5
+%
+% Inputs:
+%   starts: [1-by-n matrix] The start times for a given affect
+%
+%   ends: [1-by-n matrix] The end times for a given affect
+%
+%   amnt: [int] The amount to dialte the start and end times. This value
+%       can either be positive or negative.
+%
+%   cap: [int] The minimum amount of time between the start and stop of two
+%       different instances of an affect for them to be considered seperate.
+%       For example, if cap = 5, then if instance_1 and instance_2 of a given
+%       affect are less than 5 seconds/timepoints apart they are lumped
+%       together and considered one instance of the affect.
+%
+% Returns:
+%   dstarts: [1-by-m matrix] The dilated start timepoints
+%
+%   dends: [1-by-m matrix] The dilated end timepoints
 
     di_vec = [];
 
