@@ -5,7 +5,6 @@
 clear all;
 
 % Location of directory containing the files to be compared
-%inp_dir = './sample/';
 inp_dir = './sample/';
 
 aff_1 = 'coding_comp_1.csv';
@@ -193,7 +192,7 @@ for z = 1:length(aff_2)
     comp_agree{1,4} = "Agreement Rate";
     comp_agree{1,2} = "Seconds of Agreement";
     comp_agree{1,3} = "Seconds of Disagreement";
-    for i = 2:length(comp_agree)
+    for i = 2:size(comp_agree,1)
         
         if isempty(comp_agree{i,2})
             comp_agree{i,2} = 0;
