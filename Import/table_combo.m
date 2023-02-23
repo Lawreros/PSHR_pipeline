@@ -1,41 +1,18 @@
-%
-% % Set up example variables for processing
-% clear all;
-% 
-% aff_1 = {'a';'b';'c'};
-% start_1 = {[1,9];[2,7,14,24];[13,20]};
-% end_1 = {[4,11];[2,8,17,26];[15,24]};
-% tab_1 = [aff_1, start_1, end_1];
-% 
-% aff_2 = {'d';'e'};
-% start_2 = {[1,6,13];[3,18]};
-% end_2 = {[2,8,29];[4,19]};
-% tab_2 = [aff_2, start_2, end_2];
-% 
-% aff_3 = {'f';'g'};
-% start_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
-% end_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
-% tab_3 = [aff_3, start_3, end_3];
-%  
-% anser = table_comb(tab_1, {'a'},{'b'}, tab_2, {'d'});
-% 
-% disp('wait');
-
 function [final_table] = table_combo(varargin)
 % Function which takes N matrices consisting of start and end timepoints
 % and combines them
 
-% Parameter:
-%   ex_end : whether to apply the exclusions at the end or during
-
 % input the different types of tables are parse the results
 
 % Order is:
-% table_1, {columns}, {columns}, 'omit', {columns}, {columns}, 'exclude', {columns} 
+% table_1, {affect(s)}, {affect(s)}, 'omit', {affect(s)}, table_2, {affect(s)},
+% {affect(s)}, 'omit',...
 
-% Inputing an empty {} into either the omit or exclude will result in all
-% other categories that have not already been explicitly specified being
-% placed into those categories.
+% Order of events is 1) (Unions -> Intersections -> omits) individual
+% tables, then 2) Unions -> Intersections across tables
+
+% Inputing an empty {} into omit will result in all other categories that
+% have not already been explicitly specified being omitted.
 
 
     % Find the location of the table variables in varargin
@@ -135,7 +112,7 @@ function [com_tab] = create_sub_table(tab, ex_end)
     
     usd = []; % Keep track of all categories used
     com_tab = {};
-    if iscell(tab.unions)
+    if iscell([tab.unions{:}])
         % Go through each union pair and also make unified omits
         for i = 1:size(tab.unions,2)
             grb = [];
@@ -163,13 +140,11 @@ function [com_tab] = create_sub_table(tab, ex_end)
     
     % If omit is empty cell array, then omit all instances that have not been
     % mentioned in unions
-    if isempty(tab.omits)
+    if isempty(tab.omits{:})
         n_grb = [1:1:length(tab.raw(:,1))];
         n_grb(usd) = [];
         com_tab(end+1,:) = gen_union(tab.raw(n_grb,:));
-        
-        com_tab{end,1} = 'omit';
-        
+                
         skip_flg = false;
         
     elseif iscell(tab.omits{1}) % They specify a union of things to omit
@@ -180,6 +155,11 @@ function [com_tab] = create_sub_table(tab, ex_end)
                 grb = [grb, find(ismember(tab.raw(:,1), tab.omits{i}{j}))];
             end
             om_tab(i,:) = gen_union(tab.raw(grb,:));
+            
+            %Add proper union title, in case some of the categories are not
+            %found in tab.raw
+            om_tab{i,1} = strjoin(tab.omits{i},'_U_');
+            
         end
         
         if length(om_tab(:,1)) > 1 % If they want to omit the intersection between categories
@@ -188,14 +168,14 @@ function [com_tab] = create_sub_table(tab, ex_end)
             com_tab(end+1,:) = om_tab;
         end
         
-        com_tab{end,1} = 'omit';
+%         com_tab{end,1} = strcat('omit_', com_tab{end,1});
         
         skip_flg = false;
         
     else %They have not mentioned omitting at all
         % Do nothing as they don't want to omit anything
         skip_flg = true;
-        com_tab(end+1,:) = {'omit_Blank', [], []};
+        com_tab(end+1,:) = {'',[],[]};%{'omit_Blank', [], []};
     end
     
     
@@ -213,6 +193,13 @@ function [com_tab] = create_sub_table(tab, ex_end)
         com_tab(end+1,:) = {'exclude',[],[]};        
     end
     
+    
+    % Add parenthesis around all table operations to better seperate them
+    for i = 1:length(com_tab(:,1))
+        if ~isempty(com_tab{i,1})
+            com_tab{i,1} = strcat('(', com_tab{i,1},')');
+        end
+    end
     
 end
 
@@ -245,6 +232,8 @@ function [final_tab] = create_master_table(tab)
         % ((A U B)*omit(C)) N (D U E) = ((A U B) N (D U E))*omit(C)
         master_union_tab(k,:) = omit(gen_union(dump), gen_union(om_dump(q-(j-2):q,:)));
         
+        % TODO: ADD PARENTHESIS HERE
+        
     end
     
     % Generate a list of intersections
@@ -271,8 +260,14 @@ function [un] = gen_union(tab)
     %(also would work in gen_inter)
 
     dump = zeros(1,max([tab{:,3}]));
+    
+    non_empty = [];
 
     for i = 1:length(tab(:,1))
+        
+        if ~isempty(tab{i,1})
+            non_empty = [non_empty,i];
+        end
         if ~isempty(tab{i,2})
             for j = 1:length(tab{i,2})
                 dump(tab{i,2}(j):tab{i,3}(j)) = 1;
@@ -287,7 +282,11 @@ function [un] = gen_union(tab)
     
 
     % Create the resulting union cell array
-    un = {strjoin(tab(:,1),'_U_'), starts, ends};
+    if ~isempty(non_empty)
+        un = {strjoin(tab(non_empty,1),'_U_'), starts, ends};
+    else
+        un = {'', starts, ends};
+    end
     
 end
 
@@ -321,26 +320,35 @@ end
 function [om_tab] = omit(tab_1, tab_2)
 % Omit the entries of tab_2 from tab_1
 
-    dump = zeros(2,max([tab_1{:,3},tab_2{:,3}]));
-    
-    for j = 1:length(tab_1{1,2})
-        dump(1,tab_1{1,2}(j):tab_1{1,3}(j)) = 1;
+    % Check that there is something to omit from tab_2
+    if isempty([tab_2{:,3}])
+        om_tab = tab_1; % Just return tab_1
+        if ~isempty([tab_2{:,1}])
+%             om_tab{1,1} = strcat(tab_1{1,1}(1:end-1),'_omit_', tab_2{1,1}(2:end));
+            om_tab{1,1} = strcat(tab_1{1,1},'_omit_', tab_2{1,1});
+        end
+    else
+        dump = zeros(2,max([tab_1{:,3},tab_2{:,3}]));
+
+        for j = 1:length(tab_1{1,2})
+            dump(1,tab_1{1,2}(j):tab_1{1,3}(j)) = 1;
+        end
+
+        for j = 1:length(tab_2{1,2})
+            dump(2,tab_2{1,2}(j):tab_2{1,3}(j)) = NaN;
+        end
+
+        dump = sum(dump,1)>0;
+
+        % Find the new start and stop times for the omission
+        vec = find([0, dump]-[dump, 0]);
+        starts = vec(1:2:end);
+        ends = vec(2:2:end)-1;
+
+        % Create the resulting omission cell array
+%         om_tab = {strcat(tab_1{1,1}(1:end-1),'_omit_',tab_2{1,1}(2:end)), starts, ends};
+        om_tab = {strcat(tab_1{1,1},'_omit_',tab_2{1,1}), starts, ends};
     end
-    
-    for j = 1:length(tab_2{1,2})
-        dump(2,tab_2{1,2}(j):tab_2{1,3}(j)) = NaN;
-    end
-    
-    
-    dump = sum(dump,1)>0;
-    
-    % Find the new start and stop times for the omission
-    vec = find([0, dump]-[dump, 0]);
-    starts = vec(1:2:end);
-    ends = vec(2:2:end)-1;
-    
-    % Create the resulting omission cell array
-    om_tab = {strcat(tab_1{1,1},'_omit_',tab_2{1,1}), starts, ends};
     
 end
 
