@@ -8,7 +8,7 @@ function idx = newFdbscan(M1,labs,M2,epsilon,minpoints,plotting)
 %
 %       labs: [1-by-m cell array] of string labels for each column in M1
 %
-%       M2: [n-by-1 vector] of 0's or 1's where 1 is problematic behavior
+%       M2: [n-by-1 vector] of 0's or 1's where 1 is target affect
 %       
 %       epsilon: [float] distance DBscan used to determine which points belong
 %           in the same cluster. The larger the data set, most likely the

@@ -32,21 +32,17 @@ aff_files = {'./sample/A_coding.csv',...
     './sample/B_coding.csv'};
 
 %% Load and organize data from iPhone files
-Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files,'align',true);
-
-
-%% ECG and RR alignment
-[ecg_aligned, aligned_metrics] = ecg_rr_align(Data.HR.Raw{2}(:,[1,3]), Data.ECG.Raw{2}(:,[1,3]), 130, 'verbose', false);
-
+% Data = pshr_load('HR', hr_files, 'ECG', ecg_files, 'Affect', aff_files,'align',false);
+ 
 
 %% Visualization Pipeline
 aff_list = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
-        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
+        'repetitive behaviors','inappropriate movement','crying', 'pulling at pants', 'Demand'};
 
 visualization_pipeline('hr_files', hr_files, 'aff_files', aff_files, 'ecg_files', ecg_files, 'aff_list', aff_list, 'individual_plots',false);
 
 
-%% Table Combination
+%% Table Combination Example
 % Set up example variables for processing
 % aff_1 = {'a';'b';'c'};
 % start_1 = {[1,9];[2,7,14,24];[13,20]};
@@ -62,30 +58,30 @@ visualization_pipeline('hr_files', hr_files, 'aff_files', aff_files, 'ecg_files'
 % start_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
 % end_3 = {[1,3,7,13,18,23,28];[2,5,10,15,20,25,29]};
 % tab_3 = [aff_3, start_3, end_3];
-  
-%anser = table_combo(tab_1, {'a'},{'b'}, tab_2, {'d'});
-
+%   
+% anser = table_combo(tab_1, {'a','b'}, 'omit', {'z'});
 
 %% Affect Marking
-%new_mat = affect_mark([], anser, {'a_U_b'}, 'NumberCategories', true);
 
+% Below is a cell array containing all of the problematic behaviors (so you
+% don't have to manually type each of them in)
+target = {'SIB','ISB','inappropriate face related behavior','polar strap adjustment/removal'...
+         'repetitive behaviors','inappropriate movement','crying', 'pulling at pants'};
 
-%% Onset and Offset
+%% Regression Pipeline Examples
 
+Data = regression_pipeline(hr_files, ecg_files, aff_files, {{'Demand','crying','SIB','repetitive behaviors'}},...
+    'omit', {{'example','ignore'}}, 'onset', true, 'on_band', [3,0], ...
+    'offset', true, 'off_band', [0,3], 'duration', true, 'onoff', true, 'ecg_features',false);
 
+%% Classification Pipeline Examples
+idx = clustering_pipeline(hr_files, aff_files, {target}, 'plots', true);
 
-%% Train/Test Split
-
-
-
-%% Classification Functions
-
-
-
-%% Regression Pipeline
-%Data = regression_pipeline(hr_files, ecg_files, aff_files, false);
-
+Data = random_forest_pipeline(hr_files, ecg_files, aff_files, {{'Demand'}}, 'bin', {[5,0],'second'},...
+    'omit', {{'example','ignore'}}, 'onset', true, 'on_band', [3,0], 'ecg_features',true,...
+    'offset', true, 'off_band', [0,3], 'duration', true, 'onoff', true, 'iterations', 30, 'tree_num', 60);
 
 %% Affect Comparison Pipeline
-
-
+t_test_pipeline(hr_files, ecg_files, aff_files, {{'Demand'}}, 'bin', {[5,0],'second'},...
+    'omit', {{'example','ignore'}}, 'onset', true, 'on_band', [3,0], 'ecg_features',true,...
+    'offset', true, 'off_band', [0,3], 'duration', true, 'onoff', true);

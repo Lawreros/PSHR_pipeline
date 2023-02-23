@@ -14,32 +14,40 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
 %       false, then all affects present will be marked.
 
 % Optional Inputs:
-%   band: [1-by-2 vector] The number of entries before and after the onset
-%       to include in the returned matrix. For example, [3,1] is used for the
-%       three entries before the onset and 1 value after (this will results
-%       in 5 values being used, with the last value being the second from 
-%       last value being the first second of the affect). Default is [0,0]
-%       for just the onset value.
+%   on_band: [1-by-2 matrix] The bounds, relative to the first timepoint of
+%       a target affect instance, which define what counts as an "onset". For
+%       example, inputting [3,2] would define onset as the first datapoint
+%       of an instance of the target affect, the three datapoints
+%       immediatly before the first datapoint, and the two datapoints after
+%       the first datapoint. Default is [0,0].
+% 
+%   off_band: [1-by-2 matrix] The bounds, relative to the first timepoint of
+%       a target affect instance, which define what counts as an "offset". For
+%       example, inputting [3,2] would define offset as the last datapoint
+%       of an instance of the target affect, the three datapoints
+%       immediatly before the last datapoint, and the two datapoints after
+%       the last datapoint. Default is [0,0].
 %
 %   omit_nan: [bool] Whether to omit rows which contain NaN values from both
 %       on_mat and off_mat. This may result in on_mat and off_mat having
 %       different numbers of rows. Default is false.
 %
 %   dilate: [int] Amount to dilate affect instance start/end times when
-%       sampling for control values. Default is 3
+%       sampling for control values. Default is 5.
 
 % Output:
 %   on_mat: [o-by-m matrix] matrix of the onsets
-%   off_mat: [f-by-m matrix] matrix of the offsets. An empty matrix if the
-%       optional input 'offset' is false
+%   off_mat: [f-by-m matrix] matrix of the offsets
 
     p = inputParser;
-    addParameter(p, 'band', [0,0], @ismatrix);
+    addParameter(p, 'on_band', [0,0], @ismatrix);
+    addParameter(p, 'off_band', [0,0], @ismatrix);
     addParameter(p, 'omit_nan', false, @islogical);
-    addParameter(p, 'dilate', 3, @isscalar);
+    addParameter(p, 'dilate', 5, @isscalar);
     parse(p,varargin{:});
     
-    a = sum(p.Results.band);
+    a = sum(p.Results.on_band);
+    b = sum(p.Results.off_band);
     
     
     % ALSO THIS SAMPLING IS SUCCEPTABLE TO VERY SHORT AFFECTS, WHERE THE
@@ -64,7 +72,7 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
         % Check to make sure that you aren't pulling onsets from areas that
         % overlap with the omit times at any point
         if mean(om_vec(max(1,inst(idx(k)+1)-a):inst(idx(k)+1))) == 0 && ...
-                mean(om_vec(inst(idx(k+1)):min(length(aff_vec),inst(idx(k+1))+a))) == 0
+                mean(om_vec(inst(idx(k+1)):min(length(aff_vec),inst(idx(k+1))+b))) == 0
             
             if k == 1 %clunky fix for the first start value
                 starts = [starts,inst(idx(k))];
@@ -77,12 +85,8 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
     end
 %     ends = [ends, inst(end)]; %grab the last ending
     
-    [on_mat, off_mat] = samp_(mat, starts, ends, p.Results.band);
+    [on_mat, off_mat] = samp_(mat, starts, ends, p.Results.on_band, p.Results.off_band);
     
-    
-    if length(keep_table{1,2}) ~= length(starts)
-        disp('DISPARITY');
-    end
     
     
     % Combine both the target and omits together and dilate from there to
@@ -101,17 +105,29 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
         ends = [ends,inst(idx(k))];
     end
     ends = [ends, inst(end)]; %grab the last ending
-        
+    
+    % "not-onset" and "not-offset" matrices to store the control values
     non_mat = [];
     noff_mat = [];
     
     nstarts = starts;
     nends = ends;
-    cap = size(mat,1); % have maximum value to stop while loop from going forever
-    while (size(non_mat,1) < size(on_mat,1)) && (nends(1) <= cap)
+    
+    
+    if p.Results.omit_nan
+        on_mat(any(isnan(on_mat),2),:) = [];
+        off_mat(any(isnan(off_mat),2),:) = [];
+    end
+    
         
-        [nstarts, nends] = dilate(nstarts, nends, p.Results.dilate + randi(3), a); % Add some randomness to dilation/sampling
-        [dump_on, dump_off] = samp_(mat, nstarts, nends, p.Results.band);
+    % Calculate the amount of onset and/or offset measurements
+    q = size(on_mat,1)+size(off_mat,1);
+    cap = size(mat,1); % have maximum value to stop while loop from going forever
+    
+    while (size(non_mat,1) < q) && (nends(1) <= cap)
+        
+        [nstarts, nends] = dilate(nstarts, nends, [p.Results.dilate + randi(3),p.Results.dilate + randi(3)], a); % Add some randomness to dilation/sampling
+        [dump_on, dump_off] = samp_(mat, nstarts, nends, p.Results.on_band, p.Results.off_band);
         
         non_mat = [non_mat;dump_on];
         noff_mat = [noff_mat;dump_off];
@@ -121,17 +137,15 @@ function [on_mat, off_mat, un_mat] = onset_sample(mat, keep_table, omit_table, v
     
 
     if p.Results.omit_nan
-        on_mat(any(isnan(on_mat),2),:) = [];
-        off_mat(any(isnan(off_mat),2),:) = [];
         un_mat(any(isnan(un_mat),2),:) = [];
     end
 
 end
 
-function [on_mat, off_mat] = samp_(mat, starts, ends, band)
-    a = sum(band);
-    b = band(1);
-    c = band(2);
+function [on_mat, off_mat] = samp_(mat, starts, ends, on_band, off_band)
+    a = sum(on_band);
+    b = on_band(1);
+    c = on_band(2);
     
     lim = size(mat,1);
     
@@ -144,6 +158,11 @@ function [on_mat, off_mat] = samp_(mat, starts, ends, band)
         end
     end
     
+    
+    a = sum(off_band);
+    b = off_band(1);
+    c = off_band(2);
+    
     if ends
         for i = 1:length(ends)
             if ends(i)+c <= lim && ends(i)-b > 0
@@ -153,7 +172,6 @@ function [on_mat, off_mat] = samp_(mat, starts, ends, band)
     end
 
 end
-
 
 function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 % Function which dilates the non-zero values of vector vec by the amount
@@ -166,8 +184,10 @@ function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 %
 %   ends: [1-by-n matrix] The end times for a given affect
 %
-%   amnt: [int] The amount to dialte the start and end times. This value
-%       can either be positive or negative.
+%   amnt: [1-by-2 matrix] The amount to dialte the start and end times. This value
+%       can either be positive or negative, with the first value being
+%       subtracted from start times and the second being added to end
+%       times.
 %
 %   cap: [int] The minimum amount of time between the start and stop of two
 %       different instances of an affect for them to be considered seperate.
@@ -182,8 +202,8 @@ function [dstarts, dends] = dilate(starts, ends, amnt, cap)
 
     di_vec = [];
 
-    d_starts = max(1,starts-amnt);
-    d_ends = ends+amnt;
+    d_starts = max(1,starts-amnt(1));
+    d_ends = ends+amnt(2);
     
     for i = 1:length(d_starts)
         di_vec(d_starts(i):d_ends(i),1)=1;

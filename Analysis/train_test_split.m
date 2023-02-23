@@ -1,30 +1,42 @@
 function [train, test, unused] = train_test_split(mat, label, ratio, varargin)
 % Function which, when given a vector of different categories, and a ratio
-% of different types of ...
+% of different types of each label, splits a matrix into train/test/unused
+% groupings.
 
 % Required Inputs:
 %   mat: [n-by-k matrix] Matrix consisting of the data you wish to seperate
 %       into training and testing parameters
 %
-%   label: [n-by-1 matrix] Vector of integer labels for all rows of mat.
+%   label: [n-by-1 matrix] Vector of integer labels for all rows of mat,
+%       the number will correspond to the field name in the train and test
+%       structs.
 %
 %   ratio: [1-by-m matrix] Matrix containing the ratio of each category
 %       that you wish to have in both the training and testing subsets. The
 %       number of ratio entries should be equal to the number of unique
-%       values in 'label'.
+%       values in 'label'. For example, inputing [0.3, 0.7] means that the
+%       struct 'train' should have 30% category 0 and 70% category 1 (same
+%       with struct 'test'). All datapoints omitted in order to make this
+%       ratio will be put into struct 'unused', which does not obey this
+%       ratio.
 
 
 % Optional Parameters:
 %   split: [float] The train/test split percentage as a decimal. 0.8 will
 %       mean that 80% of the data points are put into the training set
+%
 %   ignore_nan: [bool] Whether to ignore any rows of mat or label with NaNs
 %       in them. Default is true.
 
 % Returns:
-%   train: [struct] training data, split up by numerical affect label
-%   test: [struct] testing data
+%   train: [struct] training data, split up into multiple fields by 
+%       numerical affect label
+%
+%   test: [struct] testing data, split up into multiple fields by 
+%       numerical affect label
+%
 %   unused: [struct] extra data not put into either the training or testing
-%       sets due to the splitting process
+%       sets due to the splitting and ratio process
 
 
     % Get the different catagories

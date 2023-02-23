@@ -7,7 +7,8 @@ function [maccu, mprecision, mrecall, c_matrix, feature_importance] = random_for
 %       present in the data (n>=3).
 %       In addition, the timestamp must be the first column.
 %
-%   is_affect: [n-by-1 vector] vector of 0s and 1s.
+%   is_affect: [n-by-1 vector] vector of 0s and 1s denoting the
+%       classification of each datapoint
 %       1 = problematic behavior
 %       0 = nonproblematic behavior
 %
@@ -98,24 +99,9 @@ function [maccu, mprecision, mrecall, c_matrix, feature_importance] = random_for
 
     %prompt if feature importance plot is needed
     if ~isempty(feature_importance)
-        
-%         si = size(hr_data,2)-1;  %since hr_data has is_affect, need to exclude
-%         hr_data.Properties.VariableNames(1:si) = feature_names;
-        
-%         hr_data.Properties.VariableNames(1) = {'time'};
-%         hr_data.Properties.VariableNames(2:si) = feature_names;
 
         %feature importance
         feature_importance=oobPermutedPredictorImportance(model);
-%         figure
-%         bar(feature_importance)
-%         title('Feature Importance Estimates')
-%         xlabel('Predictor variable')
-%         ylabel('Importance')
-%         h=gca;
-%         h.XTickLabel=hr_data.Properties.VariableNames(2:end-1);
-%         h.XTickLabelRotation=45;
-%         h.TickLabelInterpreter='none';
     else
         feature_importance = [];
     end

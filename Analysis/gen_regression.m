@@ -8,7 +8,7 @@ function [mdl, pihats, AUC] = gen_regression(mat, target, regression_type, varar
 %       row is assumed to be a different feature vector.
 %
 %   target: [n-by-1 matrix] vector containing the target classification/value
-%       for each datapoint
+%       for each datapoint.
 
 % Optional Parameters:
 %   ordinal: [bool] whether the data you are providing has ordinal target
@@ -24,6 +24,8 @@ function [mdl, pihats, AUC] = gen_regression(mat, target, regression_type, varar
 %       20% category 0, 30% category 1, and 50% category 2. All datapoints excluded
 %       for the sake of this ratio will be used for testing.
 %       Default is [0.5, 0.5], if [] then all datapoints will be used.
+%       [currently only analysis of two categories is supported]
+%   
 %
 %   verbose: [bool] whether to have the results of the various tests
 %       printed to the Command Window.
@@ -36,11 +38,17 @@ function [mdl, pihats, AUC] = gen_regression(mat, target, regression_type, varar
 % Returns:
 %   mdl: [p-by-4 matrix] matrix containing regression coefficients along
 %       with the SE, tStats, and pValue for each coefficient
-
-%   pihat: [q-by-n matrix] vector containing the predictive results of
-%       running the regression model on the remaining datapoints not used for
-%       training. Each column represents the probability that the datapoint
-%       belongs to that category.
+%
+%   pihat: [3-by-2 matrix] a matrix containing the accuracy results of 
+%       the trained logistic regression when classifying the test data. The
+%       first dimension is the [worst, pred, best], where worst = worst 
+%       case scenario of the 95% confidence interval, best = best case 
+%       scenario of the 95% confidence interval, and pred is the unadjusted
+%       predictive accuracy of the regression model. The second dimension
+%       is size 2 for the two categories, 1 = non-target, 2 = target.
+%
+%   AUC: [float] The AUC value for the trained regression model's performance
+%       on the test data    
 
 
     % Parse any additional settings:
@@ -113,6 +121,8 @@ function [mdl, pihats, AUC] = gen_regression(mat, target, regression_type, varar
                     end
                     pdump = acc;
                 
+                    % Run perfcurve in order to get the AUC of the trained
+                    % model on the test data
                     [X,Y,T,AUC] = perfcurve([zeros(cat_0_len,1);ones((cat_1_len),1)],pihat(:,2),1);
                     
                     pihats = [pihats; pdump];
